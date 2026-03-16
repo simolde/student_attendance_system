@@ -20,12 +20,19 @@ export default async function AdminDashboardPage() {
       <p className="mt-2">Welcome, {session.user.name ?? session.user.email}</p>
       <p className="mt-1">Role: {session.user.role}</p>
 
-      <div className="mt-6">
+      <div className="mt-6 flex flex-col gap-3">
         <Link
           href="/dashboard/admin/students"
           className="inline-block rounded border px-4 py-2"
         >
           Go to Student Management
+        </Link>
+
+        <Link
+          href="/dashboard/admin/users"
+          className="inline-block rounded border px-4 py-2"
+        >
+          Go to User Management
         </Link>
       </div>
     </div>
