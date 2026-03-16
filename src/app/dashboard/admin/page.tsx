@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { hasRole, ROLES } from "@/lib/rbac";
+import Link from "next/link";
 
 export default async function AdminDashboardPage() {
   const session = await auth();
@@ -18,7 +19,15 @@ export default async function AdminDashboardPage() {
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
       <p className="mt-2">Welcome, {session.user.name ?? session.user.email}</p>
       <p className="mt-1">Role: {session.user.role}</p>
-      <p className="mt-4">Only SUPER_ADMIN and ADMIN can view this page.</p>
+
+      <div className="mt-6">
+        <Link
+          href="/dashboard/admin/students"
+          className="inline-block rounded border px-4 py-2"
+        >
+          Go to Student Management
+        </Link>
+      </div>
     </div>
   );
 }
