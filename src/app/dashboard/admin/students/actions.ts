@@ -4,7 +4,13 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
+
+export type FormState = {
+  error?: string;
+  success?: string;
+};
 
 const createSectionSchema = z.object({
   name: z.string().min(1, "Section name is required"),
@@ -31,7 +37,10 @@ async function requireAdmin() {
   return session;
 }
 
-export async function createSection(formData: FormData) {
+export async function createSection(
+  prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
   await requireAdmin();
 
   const parsed = createSectionSchema.safeParse({
@@ -39,17 +48,30 @@ export async function createSection(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message || "Invalid section data");
+    return {
+      error: parsed.error.issues[0]?.message || "Invalid section data",
+    };
   }
 
-  await prisma.section.create({
-    data: {
-      name: parsed.data.name,
-    },
-  });
+  try {
+    await prisma.section.create({
+      data: {
+        name: parsed.data.name,
+      },
+    });
+
+    revalidatePath("/dashboard/admin/students");
+
+    return { success: "Section created successfully" };
+  } catch {
+    return { error: "Section already exists or could not be created" };
+  }
 }
 
-export async function createStudent(formData: FormData) {
+export async function createStudent(
+  prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
   await requireAdmin();
 
   const parsed = createStudentSchema.safeParse({
@@ -60,29 +82,47 @@ export async function createStudent(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message || "Invalid student data");
+    return {
+      error: parsed.error.issues[0]?.message || "Invalid student data",
+    };
   }
 
-  const existingUser = await prisma.user.findUnique({
-    where: { email: parsed.data.email },
-  });
+  try {
+    const existingUser = await prisma.user.findUnique({
+      where: { email: parsed.data.email },
+    });
 
-  if (existingUser) {
-    throw new Error("Email already exists");
-  }
+    if (existingUser) {
+      return { error: "Email already exists" };
+    }
 
-  await prisma.user.create({
-    data: {
-      name: parsed.data.name,
-      email: parsed.data.email,
-      role: "STUDENT",
-      isActive: true,
-      student: {
-        create: {
-          studentNo: parsed.data.studentNo,
-          sectionId: parsed.data.sectionId,
+    const existingStudentNo = await prisma.student.findUnique({
+      where: { studentNo: parsed.data.studentNo },
+    });
+
+    if (existingStudentNo) {
+      return { error: "Student number already exists" };
+    }
+
+    await prisma.user.create({
+      data: {
+        name: parsed.data.name,
+        email: parsed.data.email,
+        role: "STUDENT",
+        isActive: true,
+        student: {
+          create: {
+            studentNo: parsed.data.studentNo,
+            sectionId: parsed.data.sectionId,
+          },
         },
       },
-    },
-  });
+    });
+
+    revalidatePath("/dashboard/admin/students");
+
+    return { success: "Student created successfully" };
+  } catch {
+    return { error: "Student could not be created" };
+  }
 }

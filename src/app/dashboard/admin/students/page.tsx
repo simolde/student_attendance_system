@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
-import { createSection, createStudent } from "./actions";
+import StudentManagementForms from "./forms";
 
 export default async function AdminStudentsPage() {
   const session = await auth();
@@ -36,95 +36,7 @@ export default async function AdminStudentsPage() {
         Only ADMIN and SUPER_ADMIN can access this page.
       </p>
 
-      <div className="mt-8 grid gap-6 md:grid-cols-2">
-        <div className="rounded-lg border bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">Create Section</h2>
-
-          <form action={createSection} className="mt-4 space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Section Name
-              </label>
-              <input
-                name="name"
-                type="text"
-                placeholder="e.g. Grade 7 - A"
-                className="w-full rounded border px-3 py-2"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="rounded bg-black px-4 py-2 text-white"
-            >
-              Add Section
-            </button>
-          </form>
-        </div>
-
-        <div className="rounded-lg border bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">Create Student</h2>
-
-          <form action={createStudent} className="mt-4 space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium">Full Name</label>
-              <input
-                name="name"
-                type="text"
-                placeholder="Student full name"
-                className="w-full rounded border px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">Email</label>
-              <input
-                name="email"
-                type="email"
-                placeholder="student@email.com"
-                className="w-full rounded border px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Student Number
-              </label>
-              <input
-                name="studentNo"
-                type="text"
-                placeholder="2026-0001"
-                className="w-full rounded border px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">Section</label>
-              <select
-                name="sectionId"
-                className="w-full rounded border px-3 py-2"
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Select a section
-                </option>
-                {sections.map((section) => (
-                  <option key={section.id} value={section.id}>
-                    {section.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              type="submit"
-              className="rounded bg-black px-4 py-2 text-white"
-            >
-              Add Student
-            </button>
-          </form>
-        </div>
-      </div>
+      <StudentManagementForms sections={sections} />
 
       <div className="mt-10 rounded-lg border bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold">Sections</h2>
