@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import UserManagementForms from "./forms";
+import UserTableActions from "./user-table-actions";
 
 export default async function AdminUsersPage() {
   const session = await auth();
@@ -53,6 +54,7 @@ export default async function AdminUsersPage() {
                   <th className="border px-3 py-2 text-left">Role</th>
                   <th className="border px-3 py-2 text-left">Active</th>
                   <th className="border px-3 py-2 text-left">Created</th>
+                  <th className="border px-3 py-2 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -66,6 +68,15 @@ export default async function AdminUsersPage() {
                     </td>
                     <td className="border px-3 py-2">
                       {new Date(user.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="border px-3 py-2">
+                      <UserTableActions
+                        user={{
+                          id: user.id,
+                          role: user.role,
+                          isActive: user.isActive,
+                        }}
+                      />
                     </td>
                   </tr>
                 ))}

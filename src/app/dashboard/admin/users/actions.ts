@@ -20,6 +20,15 @@ const createUserSchema = z.object({
   role: z.enum(["SUPER_ADMIN", "ADMIN", "TEACHER", "STAFF", "STUDENT"]),
 });
 
+const updateRoleSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  role: z.enum(["SUPER_ADMIN", "ADMIN", "TEACHER", "STAFF", "STUDENT"]),
+});
+
+const toggleActiveSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+});
+
 async function requireAdmin() {
   const session = await auth();
 
@@ -80,4 +89,64 @@ export async function createUser(
   } catch {
     return { error: "Failed to create user" };
   }
+}
+
+export async function updateUserRole(formData: FormData) {
+  const session = await requireAdmin();
+
+  const parsed = updateRoleSchema.safeParse({
+    userId: formData.get("userId"),
+    role: formData.get("role"),
+  });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message || "Invalid role update");
+  }
+
+  const { userId, role } = parsed.data;
+
+  if (session.user.id === userId && role !== ROLES.SUPER_ADMIN && role !== ROLES.ADMIN) {
+    throw new Error("You cannot remove your own admin access");
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { role },
+  });
+
+  revalidatePath("/dashboard/admin/users");
+}
+
+export async function toggleUserActive(formData: FormData) {
+  const session = await requireAdmin();
+
+  const parsed = toggleActiveSchema.safeParse({
+    userId: formData.get("userId"),
+  });
+
+  if (!parsed.success) {
+    throw new Error("Invalid user");
+  }
+
+  const { userId } = parsed.data;
+
+  if (session.user.id === userId) {
+    throw new Error("You cannot deactivate your own account");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isActive: true },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { isActive: !user.isActive },
+  });
+
+  revalidatePath("/dashboard/admin/users");
 }
