@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import AttendanceForm from "./form";
 
 export default async function TeacherAttendancePage({
@@ -28,8 +29,7 @@ export default async function TeacherAttendancePage({
 
   const params = await searchParams;
   const selectedSectionId = params.sectionId ?? "";
-  const selectedDate =
-    params.date ?? new Date().toISOString().slice(0, 10);
+  const selectedDate = params.date ?? new Date().toISOString().slice(0, 10);
 
   const sections = await prisma.section.findMany({
     orderBy: { name: "asc" },
@@ -49,6 +49,15 @@ export default async function TeacherAttendancePage({
       <p className="mt-2 text-sm text-gray-600">
         Available to SUPER_ADMIN, ADMIN, TEACHER, and STAFF.
       </p>
+
+      <div className="mt-4">
+        <Link
+          href="/dashboard/teacher/attendance/history"
+          className="inline-block rounded border px-4 py-2"
+        >
+          View Attendance History
+        </Link>
+      </div>
 
       <div className="mt-6">
         <AttendanceForm
