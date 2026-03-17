@@ -2,6 +2,28 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+function getActionVariant(action: string) {
+  if (action.includes("DEACTIVATE")) return "destructive";
+  if (action.includes("CREATE")) return "default";
+  return "secondary";
+}
 
 export default async function AuditLogsPage() {
   const session = await auth();
@@ -30,50 +52,64 @@ export default async function AuditLogsPage() {
   });
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Audit Logs</h1>
-      <p className="mt-2 text-sm text-gray-600">
-        Latest 100 activity records.
-      </p>
-
-      <div className="mt-6 overflow-x-auto rounded-lg border bg-white">
-        <table className="min-w-full border text-sm">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border px-3 py-2 text-left">Date</th>
-              <th className="border px-3 py-2 text-left">User</th>
-              <th className="border px-3 py-2 text-left">Action</th>
-              <th className="border px-3 py-2 text-left">Entity</th>
-              <th className="border px-3 py-2 text-left">Entity ID</th>
-              <th className="border px-3 py-2 text-left">Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="border px-3 py-4 text-center">
-                  No audit logs yet.
-                </td>
-              </tr>
-            ) : (
-              logs.map((log) => (
-                <tr key={log.id}>
-                  <td className="border px-3 py-2">
-                    {new Date(log.createdAt).toLocaleString()}
-                  </td>
-                  <td className="border px-3 py-2">
-                    {log.user?.name ?? log.user?.email ?? "System"}
-                  </td>
-                  <td className="border px-3 py-2">{log.action}</td>
-                  <td className="border px-3 py-2">{log.entity}</td>
-                  <td className="border px-3 py-2">{log.entityId ?? "-"}</td>
-                  <td className="border px-3 py-2">{log.description ?? "-"}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+    <div className="p-6 space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold">Audit Logs</h1>
+        <p className="mt-2 text-muted-foreground">
+          Latest 100 security and system activity records.
+        </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>System Activity</CardTitle>
+          <CardDescription>
+            Review who performed important actions and when they happened.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          {logs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No audit logs yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Action</TableHead>
+                  <TableHead>Entity</TableHead>
+                  <TableHead>Entity ID</TableHead>
+                  <TableHead>Description</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {logs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell>
+                      {new Date(log.createdAt).toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      {log.user?.name ?? log.user?.email ?? "System"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getActionVariant(log.action)}>
+                        {log.action}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{log.entity}</TableCell>
+                    <TableCell className="max-w-[180px] truncate">
+                      {log.entityId ?? "-"}
+                    </TableCell>
+                    <TableCell>{log.description ?? "-"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
