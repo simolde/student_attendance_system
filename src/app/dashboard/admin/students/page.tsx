@@ -18,8 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 
-export default async function AdminStudentsPage() {
+export default async function AdminStudentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; sectionId?: string }>;
+}) {
   const session = await auth();
 
   if (!session?.user) {
@@ -30,11 +35,29 @@ export default async function AdminStudentsPage() {
     redirect("/unauthorized");
   }
 
+  const params = await searchParams;
+  const q = params.q?.trim() ?? "";
+  const sectionId = params.sectionId?.trim() ?? "";
+
   const sections = await prisma.section.findMany({
     orderBy: { name: "asc" },
   });
 
   const students = await prisma.student.findMany({
+    where: {
+      AND: [
+        sectionId ? { sectionId } : {},
+        q
+          ? {
+              OR: [
+                { studentNo: { contains: q, mode: "insensitive" } },
+                { user: { name: { contains: q, mode: "insensitive" } } },
+                { user: { email: { contains: q, mode: "insensitive" } } },
+              ],
+            }
+          : {},
+      ],
+    },
     include: {
       user: true,
       section: true,
@@ -67,6 +90,59 @@ export default async function AdminStudentsPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Search and Filter</CardTitle>
+          <CardDescription>
+            Search students by name, email, or student number.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form method="GET" className="grid gap-4 md:grid-cols-3">
+            <div>
+              <label className="mb-2 block text-sm font-medium">Search</label>
+              <Input
+                name="q"
+                defaultValue={q}
+                placeholder="Name, email, or student number"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium">Section</label>
+              <select
+                name="sectionId"
+                defaultValue={sectionId}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              >
+                <option value="">All sections</option>
+                {sections.map((section) => (
+                  <option key={section.id} value={section.id}>
+                    {section.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-end gap-2">
+              <button
+                type="submit"
+                className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
+              >
+                Apply
+              </button>
+
+              <a
+                href="/dashboard/admin/students"
+                className="rounded-md border px-4 py-2 text-sm"
+              >
+                Reset
+              </a>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Sections</CardTitle>
         </CardHeader>
         <CardContent>
@@ -90,7 +166,7 @@ export default async function AdminStudentsPage() {
         </CardHeader>
         <CardContent>
           {students.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No students yet.</p>
+            <p className="text-sm text-muted-foreground">No students found.</p>
           ) : (
             <Table>
               <TableHeader>
