@@ -144,6 +144,17 @@ export default async function DashboardPage() {
               </CardHeader>
             </Card>
           </Link>
+
+          <Link href="/dashboard/change-password">
+            <Card className="transition hover:shadow-md">
+              <CardHeader>
+                <CardTitle>Change My Password</CardTitle>
+                <CardDescription>
+                  Update your own password securely.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
         </div>
       </div>
     </div>
