@@ -58,19 +58,16 @@ export default async function StudentDashboardPage() {
           </Card>
         </Link>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>My Profile</CardTitle>
-            <CardDescription>
-              View your student details and section assignment.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              This feature can be added next.
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/dashboard/student/profile">
+          <Card className="transition hover:shadow-md">
+            <CardHeader>
+              <CardTitle>My Profile</CardTitle>
+              <CardDescription>
+                View your student details and section assignment.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
       </div>
 
       <div>
