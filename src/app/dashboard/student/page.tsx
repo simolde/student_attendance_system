@@ -42,25 +42,21 @@ export default async function StudentDashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          You can use this page to view your information and future attendance
-          features.
+          You can view your own attendance and student information here.
         </CardContent>
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>My Attendance</CardTitle>
-            <CardDescription>
-              View your attendance history and summaries.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              This feature can be added next.
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/dashboard/student/attendance">
+          <Card className="transition hover:shadow-md">
+            <CardHeader>
+              <CardTitle>My Attendance</CardTitle>
+              <CardDescription>
+                View your attendance history and records.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
 
         <Card>
           <CardHeader>
