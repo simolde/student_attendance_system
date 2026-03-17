@@ -52,3 +52,8 @@ export type Student = Prisma.StudentModel
  * 
  */
 export type Attendance = Prisma.AttendanceModel
+/**
+ * Model AuditLog
+ * 
+ */
+export type AuditLog = Prisma.AuditLogModel

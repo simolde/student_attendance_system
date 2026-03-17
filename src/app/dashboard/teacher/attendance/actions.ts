@@ -6,6 +6,7 @@ import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { logAudit } from "@/lib/audit";
 
 export type AttendanceFormState = {
   error?: string;
@@ -42,7 +43,7 @@ export async function saveAttendance(
   prevState: AttendanceFormState,
   formData: FormData
 ): Promise<AttendanceFormState> {
-  await requireAttendanceAccess();
+  const session = await requireAttendanceAccess();
 
   const parsed = attendanceSchema.safeParse({
     sectionId: formData.get("sectionId"),
@@ -89,6 +90,14 @@ export async function saveAttendance(
         },
       });
     }
+    
+    await logAudit({
+      userId: session.user.id,
+      action: "SAVE_ATTENDANCE",
+      entity: "Attendance",
+      entityId: null,
+      description: `Saved attendance for section ${sectionId} on ${date}`,
+    });
 
     revalidatePath("/dashboard/teacher/attendance");
 

@@ -6,6 +6,7 @@ import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { logAudit } from "@/lib/audit";
 
 export type FormState = {
   error?: string;
@@ -41,7 +42,7 @@ export async function createSection(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   const parsed = createSectionSchema.safeParse({
     name: formData.get("name"),
@@ -54,10 +55,18 @@ export async function createSection(
   }
 
   try {
-    await prisma.section.create({
+    const section = await prisma.section.create({
       data: {
         name: parsed.data.name,
       },
+    });
+
+    await logAudit({
+      userId: session.user.id,
+      action: "CREATE_SECTION",
+      entity: "Section",
+      entityId: section.id,
+      description: `Created section ${section.name}`,
     });
 
     revalidatePath("/dashboard/admin/students");
@@ -72,7 +81,7 @@ export async function createStudent(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   const parsed = createStudentSchema.safeParse({
     name: formData.get("name"),
@@ -104,7 +113,7 @@ export async function createStudent(
       return { error: "Student number already exists" };
     }
 
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         name: parsed.data.name,
         email: parsed.data.email,
@@ -117,6 +126,17 @@ export async function createStudent(
           },
         },
       },
+      include: {
+        student: true,
+      },
+    });
+
+    await logAudit({
+      userId: session.user.id,
+      action: "CREATE_STUDENT",
+      entity: "Student",
+      entityId: user.student?.id ?? null,
+      description: `Created student ${user.name} (${user.email})`,
     });
 
     revalidatePath("/dashboard/admin/students");

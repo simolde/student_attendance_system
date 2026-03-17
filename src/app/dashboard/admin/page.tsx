@@ -34,6 +34,13 @@ export default async function AdminDashboardPage() {
         >
           Go to User Management
         </Link>
+
+        <Link
+          href="/dashboard/admin/audit-logs"
+          className="inline-block rounded border px-4 py-2"
+        >
+          Go to Audit Logs
+        </Link>
       </div>
     </div>
   );

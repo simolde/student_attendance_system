@@ -37,6 +37,7 @@ model User {
   student       Student?
   accounts      Account[]
   sessions      Session[]
+  auditLogs     AuditLog[]
 }
 
 model Account {
@@ -110,4 +111,16 @@ model Attendance {
   student    Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, date])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  entity      String
+  entityId    String?
+  description String?
+  createdAt   DateTime @default(now())
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
