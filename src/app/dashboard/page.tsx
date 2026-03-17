@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import LogoutButton from "@/components/logout-button";
 import { getDashboardStats } from "@/lib/dashboard";
+import DashboardCharts from "@/components/dashboard-charts";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -63,6 +64,11 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <DashboardCharts
+        attendanceStatusData={stats.attendanceStatusData}
+        sectionAttendanceData={stats.sectionAttendanceData}
+      />
 
       <div className="mt-8 flex flex-col gap-3">
         <Link href="/dashboard/admin" className="rounded border px-4 py-2">

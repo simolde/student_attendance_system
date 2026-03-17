@@ -13,6 +13,7 @@ export async function getDashboardStats() {
     lateToday,
     absentToday,
     excusedToday,
+    sectionAttendanceRaw,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.student.count(),
@@ -53,7 +54,51 @@ export async function getDashboardStats() {
         status: "EXCUSED",
       },
     }),
+    prisma.attendance.groupBy({
+      by: ["studentId"],
+      where: {
+        date: {
+          gte: startOfDay,
+          lt: endOfDay,
+        },
+      },
+      _count: {
+        studentId: true,
+      },
+    }),
   ]);
+
+  const studentsToday = await prisma.student.findMany({
+    where: {
+      id: {
+        in: sectionAttendanceRaw.map((item) => item.studentId),
+      },
+    },
+    include: {
+      section: true,
+    },
+  });
+
+  const sectionMap = new Map<string, number>();
+
+  for (const student of studentsToday) {
+    const sectionName = student.section?.name ?? "No Section";
+    sectionMap.set(sectionName, (sectionMap.get(sectionName) ?? 0) + 1);
+  }
+
+  const attendanceStatusData = [
+    { name: "Present", value: presentToday },
+    { name: "Late", value: lateToday },
+    { name: "Absent", value: absentToday },
+    { name: "Excused", value: excusedToday },
+  ];
+
+  const sectionAttendanceData = Array.from(sectionMap.entries()).map(
+    ([name, total]) => ({
+      name,
+      total,
+    })
+  );
 
   return {
     totalUsers,
@@ -64,5 +109,7 @@ export async function getDashboardStats() {
     absentToday,
     excusedToday,
     today: startOfDay.toISOString().slice(0, 10),
+    attendanceStatusData,
+    sectionAttendanceData,
   };
 }
