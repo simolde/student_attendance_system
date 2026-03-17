@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function AttendanceHistoryPage({
@@ -101,6 +102,17 @@ export default async function AttendanceHistoryPage({
           </button>
         </div>
       </form>
+
+      {selectedSectionId && selectedDate && (
+        <div className="mt-4">
+          <Link
+            href={`/api/attendance/export?sectionId=${selectedSectionId}&date=${selectedDate}`}
+            className="inline-block rounded bg-green-600 px-4 py-2 text-white"
+          >
+            Export CSV
+          </Link>
+        </div>
+      )}
 
       <div className="mt-6 overflow-x-auto rounded-lg border bg-white">
         <table className="min-w-full text-sm">

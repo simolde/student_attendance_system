@@ -90,7 +90,7 @@ export async function saveAttendance(
         },
       });
     }
-    
+
     await logAudit({
       userId: session.user.id,
       action: "SAVE_ATTENDANCE",
@@ -100,6 +100,7 @@ export async function saveAttendance(
     });
 
     revalidatePath("/dashboard/teacher/attendance");
+    revalidatePath("/dashboard/teacher/attendance/history");
 
     return { success: "Attendance saved successfully" };
   } catch {
