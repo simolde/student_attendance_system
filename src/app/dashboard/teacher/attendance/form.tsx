@@ -2,6 +2,16 @@
 
 import { useActionState } from "react";
 import { saveAttendance, type AttendanceFormState } from "./actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const initialState: AttendanceFormState = {};
 
@@ -37,14 +47,13 @@ export default function AttendanceForm({
 
   return (
     <div className="space-y-6">
-      {/* Filter form */}
-      <form method="GET" className="grid gap-4 rounded-lg border bg-white p-4 md:grid-cols-3">
+      <form method="GET" className="grid gap-4 md:grid-cols-3">
         <div>
-          <label className="mb-1 block text-sm font-medium">Section</label>
+          <label className="mb-2 block text-sm font-medium">Section</label>
           <select
             name="sectionId"
             defaultValue={selectedSectionId}
-            className="w-full rounded border px-3 py-2"
+            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
           >
             <option value="">Select section</option>
             {sections.map((section) => (
@@ -56,99 +65,92 @@ export default function AttendanceForm({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium">Date</label>
-          <input
-            type="date"
-            name="date"
-            defaultValue={selectedDate}
-            className="w-full rounded border px-3 py-2"
-          />
+          <label className="mb-2 block text-sm font-medium">Date</label>
+          <Input type="date" name="date" defaultValue={selectedDate} />
         </div>
 
         <div className="flex items-end">
-          <button
-            type="submit"
-            className="w-full rounded bg-blue-600 px-4 py-2 text-white"
-          >
+          <Button type="submit" className="w-full">
             Load Students
-          </button>
+          </Button>
         </div>
       </form>
 
-      {/* Save attendance form */}
       <form action={formAction} className="space-y-6">
         <input type="hidden" name="sectionId" value={selectedSectionId} />
         <input type="hidden" name="date" value={selectedDate} />
 
-        {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-        {state?.success && (
-          <p className="text-sm text-green-600">{state.success}</p>
-        )}
+        {state?.error ? (
+          <p className="text-sm text-destructive">{state.error}</p>
+        ) : null}
 
-        <div className="overflow-x-auto rounded-lg border bg-white">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border px-3 py-2 text-left">Student No</th>
-                <th className="border px-3 py-2 text-left">Name</th>
-                <th className="border px-3 py-2 text-left">Status</th>
-                <th className="border px-3 py-2 text-left">Remarks</th>
-              </tr>
-            </thead>
-            <tbody>
+        {state?.success ? (
+          <p className="text-sm text-green-600">{state.success}</p>
+        ) : null}
+
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Student No</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Remarks</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
               {!selectedSectionId ? (
-                <tr>
-                  <td colSpan={4} className="border px-3 py-4 text-center">
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">
                     Please select a section and click Load Students.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : students.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="border px-3 py-4 text-center">
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">
                     No students in this section.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 students.map((student) => (
-                  <tr key={student.id}>
-                    <td className="border px-3 py-2">{student.studentNo}</td>
-                    <td className="border px-3 py-2">
+                  <TableRow key={student.id}>
+                    <TableCell>{student.studentNo}</TableCell>
+                    <TableCell>
                       {student.user.name ?? student.user.email}
-                    </td>
-                    <td className="border px-3 py-2">
+                    </TableCell>
+                    <TableCell>
                       <select
                         name={`status_${student.id}`}
                         defaultValue="PRESENT"
-                        className="rounded border px-2 py-1"
+                        className="rounded-md border bg-background px-2 py-1 text-sm"
                       >
                         <option value="PRESENT">PRESENT</option>
                         <option value="LATE">LATE</option>
                         <option value="ABSENT">ABSENT</option>
                         <option value="EXCUSED">EXCUSED</option>
                       </select>
-                    </td>
-                    <td className="border px-3 py-2">
-                      <input
+                    </TableCell>
+                    <TableCell>
+                      <Input
                         name={`remarks_${student.id}`}
                         type="text"
                         placeholder="Optional remarks"
-                        className="w-full rounded border px-2 py-1"
                       />
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
-        <button
+        <Button
           type="submit"
           disabled={pending || !selectedSectionId || students.length === 0}
-          className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
         >
           {pending ? "Saving..." : "Save Attendance"}
-        </button>
+        </Button>
       </form>
     </div>
   );

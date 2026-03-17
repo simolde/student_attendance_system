@@ -4,6 +4,13 @@ import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import AttendanceForm from "./form";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 
 export default async function TeacherAttendancePage({
   searchParams,
@@ -44,29 +51,39 @@ export default async function TeacherAttendancePage({
     : [];
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Attendance Recording</h1>
-      <p className="mt-2 text-sm text-gray-600">
-        Available to SUPER_ADMIN, ADMIN, TEACHER, and STAFF.
-      </p>
+    <div className="p-6 space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold">Attendance Recording</h1>
+        <p className="mt-2 text-muted-foreground">
+          Record attendance by section and date.
+        </p>
+      </div>
 
-      <div className="mt-4">
+      <div>
         <Link
           href="/dashboard/teacher/attendance/history"
-          className="inline-block rounded border px-4 py-2"
+          className="inline-block rounded-md border px-4 py-2 text-sm hover:bg-accent"
         >
           View Attendance History
         </Link>
       </div>
 
-      <div className="mt-6">
-        <AttendanceForm
-          sections={sections}
-          selectedSectionId={selectedSectionId}
-          selectedDate={selectedDate}
-          students={students}
-        />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Record Attendance</CardTitle>
+          <CardDescription>
+            Select a section, load students, then save attendance.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AttendanceForm
+            sections={sections}
+            selectedSectionId={selectedSectionId}
+            selectedDate={selectedDate}
+            students={students}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

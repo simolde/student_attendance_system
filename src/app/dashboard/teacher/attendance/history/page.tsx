@@ -1,8 +1,23 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default async function AttendanceHistoryPage({
   searchParams,
@@ -60,106 +75,122 @@ export default async function AttendanceHistoryPage({
       : [];
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Attendance History</h1>
-      <p className="mt-2 text-sm text-gray-600">
-        View attendance by section and date.
-      </p>
-
-      <form method="GET" className="mt-6 grid gap-4 rounded-lg border bg-white p-4 md:grid-cols-3">
-        <div>
-          <label className="mb-1 block text-sm font-medium">Section</label>
-          <select
-            name="sectionId"
-            defaultValue={selectedSectionId}
-            className="w-full rounded border px-3 py-2"
-          >
-            <option value="">Select section</option>
-            {sections.map((section) => (
-              <option key={section.id} value={section.id}>
-                {section.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium">Date</label>
-          <input
-            type="date"
-            name="date"
-            defaultValue={selectedDate}
-            className="w-full rounded border px-3 py-2"
-          />
-        </div>
-
-        <div className="flex items-end">
-          <button
-            type="submit"
-            className="w-full rounded bg-blue-600 px-4 py-2 text-white"
-          >
-            Load History
-          </button>
-        </div>
-      </form>
-
-      {selectedSectionId && selectedDate && (
-        <div className="mt-4">
-          <Link
-            href={`/api/attendance/export?sectionId=${selectedSectionId}&date=${selectedDate}`}
-            className="inline-block rounded bg-green-600 px-4 py-2 text-white"
-          >
-            Export CSV
-          </Link>
-        </div>
-      )}
-
-      <div className="mt-6 overflow-x-auto rounded-lg border bg-white">
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border px-3 py-2 text-left">Student No</th>
-              <th className="border px-3 py-2 text-left">Name</th>
-              <th className="border px-3 py-2 text-left">Section</th>
-              <th className="border px-3 py-2 text-left">Date</th>
-              <th className="border px-3 py-2 text-left">Status</th>
-              <th className="border px-3 py-2 text-left">Remarks</th>
-            </tr>
-          </thead>
-          <tbody>
-            {!selectedSectionId ? (
-              <tr>
-                <td colSpan={6} className="border px-3 py-4 text-center">
-                  Please select a section and load history.
-                </td>
-              </tr>
-            ) : records.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="border px-3 py-4 text-center">
-                  No attendance records found.
-                </td>
-              </tr>
-            ) : (
-              records.map((record) => (
-                <tr key={record.id}>
-                  <td className="border px-3 py-2">{record.student.studentNo}</td>
-                  <td className="border px-3 py-2">
-                    {record.student.user.name ?? record.student.user.email}
-                  </td>
-                  <td className="border px-3 py-2">
-                    {record.student.section?.name ?? "-"}
-                  </td>
-                  <td className="border px-3 py-2">
-                    {new Date(record.date).toLocaleDateString()}
-                  </td>
-                  <td className="border px-3 py-2">{record.status}</td>
-                  <td className="border px-3 py-2">{record.remarks ?? "-"}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+    <div className="p-6 space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold">Attendance History</h1>
+        <p className="mt-2 text-muted-foreground">
+          View attendance by section and date.
+        </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Filters</CardTitle>
+          <CardDescription>
+            Select a section and date to load saved attendance.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form method="GET" className="grid gap-4 md:grid-cols-3">
+            <div>
+              <label className="mb-2 block text-sm font-medium">Section</label>
+              <select
+                name="sectionId"
+                defaultValue={selectedSectionId}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Select section</option>
+                {sections.map((section) => (
+                  <option key={section.id} value={section.id}>
+                    {section.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium">Date</label>
+              <input
+                type="date"
+                name="date"
+                defaultValue={selectedDate}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              />
+            </div>
+
+            <div className="flex items-end">
+              <button
+                type="submit"
+                className="w-full rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
+              >
+                Load History
+              </button>
+            </div>
+          </form>
+
+          {selectedSectionId && selectedDate && (
+            <div className="mt-4">
+              <Link
+                href={`/api/attendance/export?sectionId=${selectedSectionId}&date=${selectedDate}`}
+                className="inline-block rounded-md bg-green-600 px-4 py-2 text-sm text-white"
+              >
+                Export CSV
+              </Link>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Attendance Records</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Student No</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Section</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Remarks</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {!selectedSectionId ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center">
+                    Please select a section and load history.
+                  </TableCell>
+                </TableRow>
+              ) : records.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center">
+                    No attendance records found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                records.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell>{record.student.studentNo}</TableCell>
+                    <TableCell>
+                      {record.student.user.name ?? record.student.user.email}
+                    </TableCell>
+                    <TableCell>{record.student.section?.name ?? "-"}</TableCell>
+                    <TableCell>
+                      {new Date(record.date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>{record.status}</TableCell>
+                    <TableCell>{record.remarks ?? "-"}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
