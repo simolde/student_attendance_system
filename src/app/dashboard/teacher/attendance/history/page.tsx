@@ -10,14 +10,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import AttendanceHistoryTable from "./history-table";
 
 export default async function AttendanceHistoryPage({
   searchParams,
@@ -79,7 +72,7 @@ export default async function AttendanceHistoryPage({
       <div>
         <h1 className="text-3xl font-bold">Attendance History</h1>
         <p className="mt-2 text-muted-foreground">
-          View attendance by section and date.
+          View and edit attendance by section and date.
         </p>
       </div>
 
@@ -146,49 +139,22 @@ export default async function AttendanceHistoryPage({
           <CardTitle>Attendance Records</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student No</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Section</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Remarks</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {!selectedSectionId ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center">
-                    Please select a section and load history.
-                  </TableCell>
-                </TableRow>
-              ) : records.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center">
-                    No attendance records found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                records.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell>{record.student.studentNo}</TableCell>
-                    <TableCell>
-                      {record.student.user.name ?? record.student.user.email}
-                    </TableCell>
-                    <TableCell>{record.student.section?.name ?? "-"}</TableCell>
-                    <TableCell>
-                      {new Date(record.date).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>{record.status}</TableCell>
-                    <TableCell>{record.remarks ?? "-"}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          {!selectedSectionId ? (
+            <p className="text-sm text-muted-foreground">
+              Please select a section and load history.
+            </p>
+          ) : records.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No attendance records found.
+            </p>
+          ) : (
+            <AttendanceHistoryTable
+              records={records.map((record) => ({
+                ...record,
+                date: record.date.toISOString(),
+              }))}
+            />
+          )}
         </CardContent>
       </Card>
     </div>
