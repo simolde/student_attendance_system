@@ -3,6 +3,21 @@ import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import StudentManagementForms from "./forms";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default async function AdminStudentsPage() {
   const session = await auth();
@@ -30,62 +45,76 @@ export default async function AdminStudentsPage() {
   });
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Student Management</h1>
-      <p className="mt-2 text-sm text-gray-600">
-        Only ADMIN and SUPER_ADMIN can access this page.
-      </p>
-
-      <StudentManagementForms sections={sections} />
-
-      <div className="mt-10 rounded-lg border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Sections</h2>
-
-        {sections.length === 0 ? (
-          <p className="mt-4 text-sm text-gray-600">No sections yet.</p>
-        ) : (
-          <ul className="mt-4 space-y-2">
-            {sections.map((section) => (
-              <li key={section.id} className="rounded border px-3 py-2">
-                {section.name}
-              </li>
-            ))}
-          </ul>
-        )}
+    <div className="p-6 space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold">Student Management</h1>
+        <p className="mt-2 text-muted-foreground">
+          Only ADMIN and SUPER_ADMIN can access this page.
+        </p>
       </div>
 
-      <div className="mt-10 rounded-lg border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Students</h2>
+      <Card>
+        <CardHeader>
+          <CardTitle>Manage Students and Sections</CardTitle>
+          <CardDescription>
+            Create sections and add students to those sections.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <StudentManagementForms sections={sections} />
+        </CardContent>
+      </Card>
 
-        {students.length === 0 ? (
-          <p className="mt-4 text-sm text-gray-600">No students yet.</p>
-        ) : (
-          <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full border text-sm">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border px-3 py-2 text-left">Student No</th>
-                  <th className="border px-3 py-2 text-left">Name</th>
-                  <th className="border px-3 py-2 text-left">Email</th>
-                  <th className="border px-3 py-2 text-left">Section</th>
-                </tr>
-              </thead>
-              <tbody>
+      <Card>
+        <CardHeader>
+          <CardTitle>Sections</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {sections.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No sections yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {sections.map((section) => (
+                <li key={section.id} className="rounded-md border px-3 py-2">
+                  {section.name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Students</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {students.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No students yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student No</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Section</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {students.map((student) => (
-                  <tr key={student.id}>
-                    <td className="border px-3 py-2">{student.studentNo}</td>
-                    <td className="border px-3 py-2">{student.user.name}</td>
-                    <td className="border px-3 py-2">{student.user.email}</td>
-                    <td className="border px-3 py-2">
-                      {student.section?.name ?? "-"}
-                    </td>
-                  </tr>
+                  <TableRow key={student.id}>
+                    <TableCell>{student.studentNo}</TableCell>
+                    <TableCell>{student.user.name}</TableCell>
+                    <TableCell>{student.user.email}</TableCell>
+                    <TableCell>{student.section?.name ?? "-"}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

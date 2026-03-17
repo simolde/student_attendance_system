@@ -4,6 +4,22 @@ import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import UserManagementForms from "./forms";
 import UserTableActions from "./user-table-actions";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default async function AdminUsersPage() {
   const session = await auth();
@@ -29,47 +45,68 @@ export default async function AdminUsersPage() {
   });
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">User Management</h1>
-      <p className="mt-2 text-sm text-gray-600">
-        Create admin, teacher, staff, and student accounts.
-      </p>
-
-      <div className="mt-8">
-        <UserManagementForms />
+    <div className="p-6 space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold">User Management</h1>
+        <p className="mt-2 text-muted-foreground">
+          Create admin, teacher, staff, and student accounts.
+        </p>
       </div>
 
-      <div className="mt-10 rounded-lg border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Users</h2>
+      <Card>
+        <CardHeader>
+          <CardTitle>Create User</CardTitle>
+          <CardDescription>
+            Add new users and assign their roles.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <UserManagementForms />
+        </CardContent>
+      </Card>
 
-        {users.length === 0 ? (
-          <p className="mt-4 text-sm text-gray-600">No users yet.</p>
-        ) : (
-          <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full border text-sm">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border px-3 py-2 text-left">Name</th>
-                  <th className="border px-3 py-2 text-left">Email</th>
-                  <th className="border px-3 py-2 text-left">Role</th>
-                  <th className="border px-3 py-2 text-left">Active</th>
-                  <th className="border px-3 py-2 text-left">Created</th>
-                  <th className="border px-3 py-2 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+      <Card>
+        <CardHeader>
+          <CardTitle>Users</CardTitle>
+          <CardDescription>
+            Manage roles, active status, and passwords.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {users.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No users yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Active</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
                 {users.map((user) => (
-                  <tr key={user.id}>
-                    <td className="border px-3 py-2">{user.name ?? "-"}</td>
-                    <td className="border px-3 py-2">{user.email}</td>
-                    <td className="border px-3 py-2">{user.role}</td>
-                    <td className="border px-3 py-2">
-                      {user.isActive ? "Yes" : "No"}
-                    </td>
-                    <td className="border px-3 py-2">
+                  <TableRow key={user.id}>
+                    <TableCell>{user.name ?? "-"}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{user.role}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.isActive ? (
+                        <Badge>Active</Badge>
+                      ) : (
+                        <Badge variant="destructive">Inactive</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       {new Date(user.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="border px-3 py-2">
+                    </TableCell>
+                    <TableCell>
                       <UserTableActions
                         user={{
                           id: user.id,
@@ -77,14 +114,14 @@ export default async function AdminUsersPage() {
                           isActive: user.isActive,
                         }}
                       />
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
