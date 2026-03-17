@@ -19,6 +19,10 @@ const updateAttendanceSchema = z.object({
   remarks: z.string().optional(),
 });
 
+const deleteAttendanceSchema = z.object({
+  attendanceId: z.string().min(1, "Attendance ID is required"),
+});
+
 async function requireAttendanceAccess() {
   const session = await auth();
 
@@ -89,5 +93,57 @@ export async function updateAttendanceRecord(
     return { success: "Attendance updated successfully" };
   } catch {
     return { error: "Failed to update attendance" };
+  }
+}
+
+export async function deleteAttendanceRecord(
+  prevState: AttendanceUpdateState,
+  formData: FormData
+): Promise<AttendanceUpdateState> {
+  const session = await requireAttendanceAccess();
+
+  const parsed = deleteAttendanceSchema.safeParse({
+    attendanceId: formData.get("attendanceId"),
+  });
+
+  if (!parsed.success) {
+    return { error: "Invalid attendance record" };
+  }
+
+  const { attendanceId } = parsed.data;
+
+  try {
+    const record = await prisma.attendance.findUnique({
+      where: { id: attendanceId },
+      include: {
+        student: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (!record) {
+      return { error: "Attendance record not found" };
+    }
+
+    await prisma.attendance.delete({
+      where: { id: attendanceId },
+    });
+
+    await logAudit({
+      userId: session.user.id,
+      action: "DELETE_ATTENDANCE",
+      entity: "Attendance",
+      entityId: attendanceId,
+      description: `Deleted attendance for ${record.student.user.email} on ${record.date.toISOString().slice(0, 10)}`,
+    });
+
+    revalidatePath("/dashboard/teacher/attendance/history");
+
+    return { success: "Attendance deleted successfully" };
+  } catch {
+    return { error: "Failed to delete attendance" };
   }
 }

@@ -99,7 +99,7 @@ export default async function AuditLogsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>{log.entity}</TableCell>
-                    <TableCell className="max-w-[180px] truncate">
+                    <TableCell className="max-w-45 truncate">
                       {log.entityId ?? "-"}
                     </TableCell>
                     <TableCell>{log.description ?? "-"}</TableCell>

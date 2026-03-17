@@ -1,10 +1,11 @@
 "use client";
 
-import { useTransition } from "react";
+import { useActionState } from "react";
 import {
   toggleUserActive,
   updateUserRole,
   resetUserPassword,
+  type UserFormState,
 } from "./actions";
 
 type UserRow = {
@@ -13,23 +14,31 @@ type UserRow = {
   isActive: boolean;
 };
 
+const initialState: UserFormState = {};
+
 export default function UserTableActions({
   user,
 }: {
   user: UserRow;
 }) {
-  const [isPending, startTransition] = useTransition();
+  const [roleState, roleAction, rolePending] = useActionState(
+    updateUserRole,
+    initialState
+  );
+
+  const [activeState, activeAction, activePending] = useActionState(
+    toggleUserActive,
+    initialState
+  );
+
+  const [passwordState, passwordAction, passwordPending] = useActionState(
+    resetUserPassword,
+    initialState
+  );
 
   return (
     <div className="flex flex-col gap-3">
-      <form
-        action={(formData) => {
-          startTransition(async () => {
-            await updateUserRole(formData);
-          });
-        }}
-        className="flex gap-2"
-      >
+      <form action={roleAction} className="flex gap-2">
         <input type="hidden" name="userId" value={user.id} />
         <select
           name="role"
@@ -45,38 +54,43 @@ export default function UserTableActions({
 
         <button
           type="submit"
-          disabled={isPending}
+          disabled={rolePending}
           className="rounded border px-3 py-1 text-sm"
         >
-          Save Role
+          {rolePending ? "Saving..." : "Save Role"}
         </button>
       </form>
 
-      <form
-        action={(formData) => {
-          startTransition(async () => {
-            await toggleUserActive(formData);
-          });
-        }}
-      >
+      {roleState?.error ? (
+        <p className="text-xs text-destructive">{roleState.error}</p>
+      ) : null}
+      {roleState?.success ? (
+        <p className="text-xs text-green-600">{roleState.success}</p>
+      ) : null}
+
+      <form action={activeAction}>
         <input type="hidden" name="userId" value={user.id} />
         <button
           type="submit"
-          disabled={isPending}
+          disabled={activePending}
           className="rounded border px-3 py-1 text-sm"
         >
-          {user.isActive ? "Deactivate" : "Activate"}
+          {activePending
+            ? "Saving..."
+            : user.isActive
+            ? "Deactivate"
+            : "Activate"}
         </button>
       </form>
 
-      <form
-        action={(formData) => {
-          startTransition(async () => {
-            await resetUserPassword(formData);
-          });
-        }}
-        className="flex gap-2"
-      >
+      {activeState?.error ? (
+        <p className="text-xs text-destructive">{activeState.error}</p>
+      ) : null}
+      {activeState?.success ? (
+        <p className="text-xs text-green-600">{activeState.success}</p>
+      ) : null}
+
+      <form action={passwordAction} className="flex gap-2">
         <input type="hidden" name="userId" value={user.id} />
         <input
           type="password"
@@ -86,12 +100,19 @@ export default function UserTableActions({
         />
         <button
           type="submit"
-          disabled={isPending}
+          disabled={passwordPending}
           className="rounded border px-3 py-1 text-sm"
         >
-          Reset Password
+          {passwordPending ? "Saving..." : "Reset Password"}
         </button>
       </form>
+
+      {passwordState?.error ? (
+        <p className="text-xs text-destructive">{passwordState.error}</p>
+      ) : null}
+      {passwordState?.success ? (
+        <p className="text-xs text-green-600">{passwordState.success}</p>
+      ) : null}
     </div>
   );
 }

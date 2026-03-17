@@ -105,7 +105,10 @@ export async function createUser(
   }
 }
 
-export async function updateUserRole(formData: FormData) {
+export async function updateUserRole(
+  prevState: UserFormState,
+  formData: FormData
+): Promise<UserFormState> {
   const session = await requireAdmin();
 
   const parsed = updateRoleSchema.safeParse({
@@ -114,7 +117,7 @@ export async function updateUserRole(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message || "Invalid role update");
+    return { error: parsed.error.issues[0]?.message || "Invalid role update" };
   }
 
   const { userId, role } = parsed.data;
@@ -124,26 +127,35 @@ export async function updateUserRole(formData: FormData) {
     role !== ROLES.SUPER_ADMIN &&
     role !== ROLES.ADMIN
   ) {
-    throw new Error("You cannot remove your own admin access");
+    return { error: "You cannot remove your own admin access" };
   }
 
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: { role },
-  });
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { role },
+    });
 
-  await logAudit({
-    userId: session.user.id,
-    action: "UPDATE_ROLE",
-    entity: "User",
-    entityId: updatedUser.id,
-    description: `Changed role of ${updatedUser.email} to ${updatedUser.role}`,
-  });
+    await logAudit({
+      userId: session.user.id,
+      action: "UPDATE_ROLE",
+      entity: "User",
+      entityId: updatedUser.id,
+      description: `Changed role of ${updatedUser.email} to ${updatedUser.role}`,
+    });
 
-  revalidatePath("/dashboard/admin/users");
+    revalidatePath("/dashboard/admin/users");
+
+    return { success: "Role updated successfully" };
+  } catch {
+    return { error: "Failed to update role" };
+  }
 }
 
-export async function resetUserPassword(formData: FormData) {
+export async function resetUserPassword(
+  prevState: UserFormState,
+  formData: FormData
+): Promise<UserFormState> {
   const session = await requireAdmin();
 
   const parsed = resetPasswordSchema.safeParse({
@@ -152,32 +164,41 @@ export async function resetUserPassword(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error(
-      parsed.error.issues[0]?.message || "Invalid password reset"
-    );
+    return {
+      error: parsed.error.issues[0]?.message || "Invalid password reset",
+    };
   }
 
   const { userId, password } = parsed.data;
 
-  const hashedPassword = await bcrypt.hash(password, 12);
+  try {
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: { password: hashedPassword },
-  });
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
 
-  await logAudit({
-    userId: session.user.id,
-    action: "RESET_PASSWORD",
-    entity: "User",
-    entityId: updatedUser.id,
-    description: `Reset password for ${updatedUser.email}`,
-  });
+    await logAudit({
+      userId: session.user.id,
+      action: "RESET_PASSWORD",
+      entity: "User",
+      entityId: updatedUser.id,
+      description: `Reset password for ${updatedUser.email}`,
+    });
 
-  revalidatePath("/dashboard/admin/users");
+    revalidatePath("/dashboard/admin/users");
+
+    return { success: "Password reset successfully" };
+  } catch {
+    return { error: "Failed to reset password" };
+  }
 }
 
-export async function toggleUserActive(formData: FormData) {
+export async function toggleUserActive(
+  prevState: UserFormState,
+  formData: FormData
+): Promise<UserFormState> {
   const session = await requireAdmin();
 
   const parsed = toggleActiveSchema.safeParse({
@@ -185,36 +206,46 @@ export async function toggleUserActive(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error("Invalid user");
+    return { error: "Invalid user" };
   }
 
   const { userId } = parsed.data;
 
   if (session.user.id === userId) {
-    throw new Error("You cannot deactivate your own account");
+    return { error: "You cannot deactivate your own account" };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { isActive: true, email: true },
-  });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isActive: true, email: true },
+    });
 
-  if (!user) {
-    throw new Error("User not found");
+    if (!user) {
+      return { error: "User not found" };
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { isActive: !user.isActive },
+    });
+
+    await logAudit({
+      userId: session.user.id,
+      action: updatedUser.isActive ? "ACTIVATE_USER" : "DEACTIVATE_USER",
+      entity: "User",
+      entityId: updatedUser.id,
+      description: `${updatedUser.isActive ? "Activated" : "Deactivated"} user ${updatedUser.email}`,
+    });
+
+    revalidatePath("/dashboard/admin/users");
+
+    return {
+      success: updatedUser.isActive
+        ? "User activated successfully"
+        : "User deactivated successfully",
+    };
+  } catch {
+    return { error: "Failed to update user status" };
   }
-
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: { isActive: !user.isActive },
-  });
-
-  await logAudit({
-    userId: session.user.id,
-    action: updatedUser.isActive ? "ACTIVATE_USER" : "DEACTIVATE_USER",
-    entity: "User",
-    entityId: updatedUser.id,
-    description: `${updatedUser.isActive ? "Activated" : "Deactivated"} user ${updatedUser.email}`,
-  });
-
-  revalidatePath("/dashboard/admin/users");
 }
