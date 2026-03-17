@@ -4,6 +4,14 @@ import Link from "next/link";
 import LogoutButton from "@/components/logout-button";
 import { getDashboardStats } from "@/lib/dashboard";
 import DashboardCharts from "@/components/dashboard-charts";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -15,53 +23,83 @@ export default async function DashboardPage() {
   const stats = await getDashboardStats();
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-      <p className="mt-2">Welcome, {session.user.name ?? session.user.email}</p>
-      <p className="mt-1">Role: {session.user.role}</p>
-
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <div className="rounded-lg border bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Total Users</p>
-          <h2 className="mt-2 text-3xl font-bold">{stats.totalUsers}</h2>
+    <div className="p-6 space-y-8">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="mt-1 text-muted-foreground">
+            Welcome, {session.user.name ?? session.user.email}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Role: {session.user.role}
+          </p>
         </div>
 
-        <div className="rounded-lg border bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Total Students</p>
-          <h2 className="mt-2 text-3xl font-bold">{stats.totalStudents}</h2>
-        </div>
+        <LogoutButton />
+      </div>
 
-        <div className="rounded-lg border bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-600">Total Sections</p>
-          <h2 className="mt-2 text-3xl font-bold">{stats.totalSections}</h2>
+      <Separator />
+
+      <div>
+        <h2 className="text-xl font-semibold">System Overview</h2>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardDescription>Total Users</CardDescription>
+              <CardTitle className="text-3xl">{stats.totalUsers}</CardTitle>
+            </CardHeader>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardDescription>Total Students</CardDescription>
+              <CardTitle className="text-3xl">{stats.totalStudents}</CardTitle>
+            </CardHeader>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardDescription>Total Sections</CardDescription>
+              <CardTitle className="text-3xl">{stats.totalSections}</CardTitle>
+            </CardHeader>
+          </Card>
         </div>
       </div>
 
-      <div className="mt-8">
+      <div>
         <h2 className="text-xl font-semibold">
           Attendance Today ({stats.today})
         </h2>
 
         <div className="mt-4 grid gap-4 md:grid-cols-4">
-          <div className="rounded-lg border bg-white p-4 shadow-sm">
-            <p className="text-sm text-gray-600">Present</p>
-            <h3 className="mt-2 text-2xl font-bold">{stats.presentToday}</h3>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardDescription>Present</CardDescription>
+              <CardTitle className="text-2xl">{stats.presentToday}</CardTitle>
+            </CardHeader>
+          </Card>
 
-          <div className="rounded-lg border bg-white p-4 shadow-sm">
-            <p className="text-sm text-gray-600">Late</p>
-            <h3 className="mt-2 text-2xl font-bold">{stats.lateToday}</h3>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardDescription>Late</CardDescription>
+              <CardTitle className="text-2xl">{stats.lateToday}</CardTitle>
+            </CardHeader>
+          </Card>
 
-          <div className="rounded-lg border bg-white p-4 shadow-sm">
-            <p className="text-sm text-gray-600">Absent</p>
-            <h3 className="mt-2 text-2xl font-bold">{stats.absentToday}</h3>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardDescription>Absent</CardDescription>
+              <CardTitle className="text-2xl">{stats.absentToday}</CardTitle>
+            </CardHeader>
+          </Card>
 
-          <div className="rounded-lg border bg-white p-4 shadow-sm">
-            <p className="text-sm text-gray-600">Excused</p>
-            <h3 className="mt-2 text-2xl font-bold">{stats.excusedToday}</h3>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardDescription>Excused</CardDescription>
+              <CardTitle className="text-2xl">{stats.excusedToday}</CardTitle>
+            </CardHeader>
+          </Card>
         </div>
       </div>
 
@@ -70,21 +108,44 @@ export default async function DashboardPage() {
         sectionAttendanceData={stats.sectionAttendanceData}
       />
 
-      <div className="mt-8 flex flex-col gap-3">
-        <Link href="/dashboard/admin" className="rounded border px-4 py-2">
-          Go to Admin Dashboard
-        </Link>
+      <div>
+        <h2 className="text-xl font-semibold">Quick Links</h2>
 
-        <Link href="/dashboard/teacher" className="rounded border px-4 py-2">
-          Go to Teacher Dashboard
-        </Link>
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <Link href="/dashboard/admin">
+            <Card className="transition hover:shadow-md">
+              <CardHeader>
+                <CardTitle>Admin Dashboard</CardTitle>
+                <CardDescription>
+                  Manage students, users, and audit logs
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
 
-        <Link href="/dashboard/student" className="rounded border px-4 py-2">
-          Go to Student Dashboard
-        </Link>
+          <Link href="/dashboard/teacher">
+            <Card className="transition hover:shadow-md">
+              <CardHeader>
+                <CardTitle>Teacher Dashboard</CardTitle>
+                <CardDescription>
+                  Record attendance and view attendance history
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/dashboard/student">
+            <Card className="transition hover:shadow-md">
+              <CardHeader>
+                <CardTitle>Student Dashboard</CardTitle>
+                <CardDescription>
+                  View student-only information
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+        </div>
       </div>
-
-      <LogoutButton />
     </div>
   );
 }
