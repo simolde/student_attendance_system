@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import StudentManagementForms from "./forms";
 import {
   Card,
@@ -20,10 +21,12 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 
+const PAGE_SIZE = 10;
+
 export default async function AdminStudentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; sectionId?: string }>;
+  searchParams: Promise<{ q?: string; sectionId?: string; page?: string }>;
 }) {
   const session = await auth();
 
@@ -38,34 +41,52 @@ export default async function AdminStudentsPage({
   const params = await searchParams;
   const q = params.q?.trim() ?? "";
   const sectionId = params.sectionId?.trim() ?? "";
+  const page = Math.max(Number(params.page || "1"), 1);
 
   const sections = await prisma.section.findMany({
     orderBy: { name: "asc" },
   });
 
-  const students = await prisma.student.findMany({
-    where: {
-      AND: [
-        sectionId ? { sectionId } : {},
-        q
-          ? {
-              OR: [
-                { studentNo: { contains: q, mode: "insensitive" } },
-                { user: { name: { contains: q, mode: "insensitive" } } },
-                { user: { email: { contains: q, mode: "insensitive" } } },
-              ],
-            }
-          : {},
-      ],
-    },
-    include: {
-      user: true,
-      section: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  const where = {
+    AND: [
+      sectionId ? { sectionId } : {},
+      q
+        ? {
+            OR: [
+              { studentNo: { contains: q, mode: "insensitive" as const } },
+              { user: { name: { contains: q, mode: "insensitive" as const } } },
+              { user: { email: { contains: q, mode: "insensitive" as const } } },
+            ],
+          }
+        : {},
+    ],
+  };
+
+  const [students, totalStudents] = await Promise.all([
+    prisma.student.findMany({
+      where,
+      include: {
+        user: true,
+        section: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.student.count({ where }),
+  ]);
+
+  const totalPages = Math.max(Math.ceil(totalStudents / PAGE_SIZE), 1);
+
+  function buildUrl(nextPage: number) {
+    const sp = new URLSearchParams();
+    if (q) sp.set("q", q);
+    if (sectionId) sp.set("sectionId", sectionId);
+    sp.set("page", String(nextPage));
+    return `/dashboard/admin/students?${sp.toString()}`;
+  }
 
   return (
     <div className="p-6 space-y-8">
@@ -96,7 +117,7 @@ export default async function AdminStudentsPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form method="GET" className="grid gap-4 md:grid-cols-3">
+          <form method="GET" className="grid gap-4 md:grid-cols-4">
             <div>
               <label className="mb-2 block text-sm font-medium">Search</label>
               <Input
@@ -121,6 +142,8 @@ export default async function AdminStudentsPage({
                 ))}
               </select>
             </div>
+
+            <input type="hidden" name="page" value="1" />
 
             <div className="flex items-end gap-2">
               <button
@@ -163,31 +186,60 @@ export default async function AdminStudentsPage({
       <Card>
         <CardHeader>
           <CardTitle>Students</CardTitle>
+          <CardDescription>
+            Page {page} of {totalPages} • {totalStudents} total students
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {students.length === 0 ? (
             <p className="text-sm text-muted-foreground">No students found.</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student No</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Section</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {students.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell>{student.studentNo}</TableCell>
-                    <TableCell>{student.user.name}</TableCell>
-                    <TableCell>{student.user.email}</TableCell>
-                    <TableCell>{student.section?.name ?? "-"}</TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Student No</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Section</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {students.map((student) => (
+                    <TableRow key={student.id}>
+                      <TableCell>{student.studentNo}</TableCell>
+                      <TableCell>{student.user.name}</TableCell>
+                      <TableCell>{student.user.email}</TableCell>
+                      <TableCell>{student.section?.name ?? "-"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <div className="mt-4 flex items-center justify-between">
+                <Link
+                  href={buildUrl(page - 1)}
+                  className={`rounded-md border px-4 py-2 text-sm ${
+                    page <= 1 ? "pointer-events-none opacity-50" : ""
+                  }`}
+                >
+                  Previous
+                </Link>
+
+                <span className="text-sm text-muted-foreground">
+                  Page {page} of {totalPages}
+                </span>
+
+                <Link
+                  href={buildUrl(page + 1)}
+                  className={`rounded-md border px-4 py-2 text-sm ${
+                    page >= totalPages ? "pointer-events-none opacity-50" : ""
+                  }`}
+                >
+                  Next
+                </Link>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
