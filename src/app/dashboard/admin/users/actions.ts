@@ -25,6 +25,11 @@ const updateRoleSchema = z.object({
   role: z.enum(["SUPER_ADMIN", "ADMIN", "TEACHER", "STAFF", "STUDENT"]),
 });
 
+const resetPasswordSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
 const toggleActiveSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
 });
@@ -112,6 +117,32 @@ export async function updateUserRole(formData: FormData) {
   await prisma.user.update({
     where: { id: userId },
     data: { role },
+  });
+
+  revalidatePath("/dashboard/admin/users");
+}
+
+export async function resetUserPassword(formData: FormData) {
+  await requireAdmin();
+
+  const parsed = resetPasswordSchema.safeParse({
+    userId: formData.get("userId"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    throw new Error(
+      parsed.error.issues[0]?.message || "Invalid password reset"
+    );
+  }
+
+  const { userId, password } = parsed.data;
+
+  const hashedPassword = await bcrypt.hash(password, 12);
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword },
   });
 
   revalidatePath("/dashboard/admin/users");
