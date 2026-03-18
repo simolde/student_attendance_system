@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import {
   resetUserPassword,
   type UserFormState,
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import PasswordField from "@/components/password-field";
+import { toast } from "sonner";
 
 const initialState: UserFormState = {};
 
@@ -30,6 +31,17 @@ export default function ResetPasswordDialog({
     resetUserPassword,
     initialState
   );
+
+  useEffect(() => {
+    if (state?.error) {
+      toast.error(state.error);
+    }
+
+    if (state?.success) {
+      toast.success(state.success);
+      setOpen(false);
+    }
+  }, [state]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -55,14 +67,6 @@ export default function ResetPasswordDialog({
             label="New Password"
             placeholder="Enter new password"
           />
-
-          {state?.error ? (
-            <p className="text-sm text-destructive">{state.error}</p>
-          ) : null}
-
-          {state?.success ? (
-            <p className="text-sm text-green-600">{state.success}</p>
-          ) : null}
 
           <div className="flex justify-end">
             <Button type="submit" disabled={pending}>

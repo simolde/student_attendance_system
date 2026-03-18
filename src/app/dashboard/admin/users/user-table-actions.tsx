@@ -1,14 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import {
   toggleUserActive,
   updateUserRole,
   type UserFormState,
 } from "./actions";
 import ResetPasswordDialog from "./reset-password-dialog";
-import ConfirmActionDialog from "@/components/confirm-action-dialog";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import ConfirmActionDialog from "@/components/confirm-action-dialog";
 
 type UserRow = {
   id: string;
@@ -34,6 +35,16 @@ export default function UserTableActions({
     initialState
   );
 
+  useEffect(() => {
+    if (roleState?.error) toast.error(roleState.error);
+    if (roleState?.success) toast.success(roleState.success);
+  }, [roleState]);
+
+  useEffect(() => {
+    if (activeState?.error) toast.error(activeState.error);
+    if (activeState?.success) toast.success(activeState.success);
+  }, [activeState]);
+
   return (
     <div className="flex flex-col gap-3">
       <form action={roleAction} className="flex gap-2">
@@ -50,21 +61,10 @@ export default function UserTableActions({
           <option value="STUDENT">STUDENT</option>
         </select>
 
-        <button
-          type="submit"
-          disabled={rolePending}
-          className="rounded border px-3 py-1 text-sm"
-        >
+        <Button type="submit" variant="outline" size="sm" disabled={rolePending}>
           {rolePending ? "Saving..." : "Save Role"}
-        </button>
+        </Button>
       </form>
-
-      {roleState?.error ? (
-        <p className="text-xs text-destructive">{roleState.error}</p>
-      ) : null}
-      {roleState?.success ? (
-        <p className="text-xs text-green-600">{roleState.success}</p>
-      ) : null}
 
       <form action={activeAction} id={`toggle-user-${user.id}`}>
         <input type="hidden" name="userId" value={user.id} />
@@ -90,13 +90,6 @@ export default function UserTableActions({
           </Button>
         }
       />
-
-      {activeState?.error ? (
-        <p className="text-xs text-destructive">{activeState.error}</p>
-      ) : null}
-      {activeState?.success ? (
-        <p className="text-xs text-green-600">{activeState.success}</p>
-      ) : null}
 
       <ResetPasswordDialog userId={user.id} userEmail={user.email} />
     </div>
