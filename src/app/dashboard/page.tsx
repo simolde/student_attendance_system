@@ -155,6 +155,16 @@ export default async function DashboardPage() {
               </CardHeader>
             </Card>
           </Link>
+          <Link href="/dashboard/account">
+            <Card className="transition hover:shadow-md">
+              <CardHeader>
+                <CardTitle>My Account</CardTitle>
+                <CardDescription>
+                  Update your profile information.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
         </div>
       </div>
     </div>
