@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { changeMyPassword, type ChangePasswordState } from "./actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import PasswordField from "@/components/password-field";
 
 const initialState: ChangePasswordState = {};
 
@@ -20,18 +21,17 @@ export default function ChangePasswordForm() {
         <Input name="currentPassword" type="password" placeholder="Enter current password" />
       </div>
 
-      <div>
-        <label className="mb-2 block text-sm font-medium">New Password</label>
-        <Input name="newPassword" type="password" placeholder="Enter new password" />
-        <p className="mt-2 text-xs text-muted-foreground">
-          Use 12–64 characters with uppercase, lowercase, number, and special character.
-        </p>
-      </div>
+      <PasswordField
+        name="newPassword"
+        label="New Password"
+        placeholder="Enter new password"
+      />
 
-      <div>
-        <label className="mb-2 block text-sm font-medium">Confirm New Password</label>
-        <Input name="confirmPassword" type="password" placeholder="Confirm new password" />
-      </div>
+      <PasswordField
+        name="confirmPassword"
+        label="Confirm New Password"
+        placeholder="Confirm new password"
+      />
 
       {state?.error ? (
         <p className="text-sm text-destructive">{state.error}</p>

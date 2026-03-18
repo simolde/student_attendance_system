@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { createUser, type UserFormState } from "./actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import PasswordField from "@/components/password-field";
 
 const initialState: UserFormState = {};
 
@@ -25,13 +26,11 @@ export default function UserManagementForms() {
         <Input name="email" type="email" placeholder="user@email.com" />
       </div>
 
-      <div>
-        <label className="mb-2 block text-sm font-medium">Password</label>
-        <Input name="password" type="password" placeholder="Enter password" />
-        <p className="mt-2 text-xs text-muted-foreground">
-          Use 12–64 characters with uppercase, lowercase, number, and special character.
-        </p>
-      </div>
+      <PasswordField
+        name="password"
+        label="Password"
+        placeholder="Enter password"
+      />
 
       <div>
         <label className="mb-2 block text-sm font-medium">Role</label>
