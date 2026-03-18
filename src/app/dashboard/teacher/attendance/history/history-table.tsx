@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import ConfirmActionDialog from "@/components/confirm-action-dialog";
 
 const initialState: AttendanceUpdateState = {};
 
@@ -99,17 +100,27 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
           <p className="mt-2 text-xs text-green-600">{updateState.success}</p>
         ) : null}
 
-        <form action={deleteAction} className="mt-2">
+        <form action={deleteAction} id={`delete-attendance-${record.id}`} className="mt-2">
           <input type="hidden" name="attendanceId" value={record.id} />
-          <Button
-            type="submit"
-            size="sm"
-            variant="destructive"
-            disabled={deletePending}
-          >
-            {deletePending ? "Deleting..." : "Delete"}
-          </Button>
         </form>
+
+        <ConfirmActionDialog
+          formId={`delete-attendance-${record.id}`}
+          title="Delete attendance record?"
+          description="This action will permanently remove this attendance record."
+          actionLabel={deletePending ? "Deleting..." : "Delete"}
+          trigger={
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              disabled={deletePending}
+              className="mt-2"
+            >
+              Delete
+            </Button>
+          }
+        />
 
         {deleteState?.error ? (
           <p className="mt-2 text-xs text-destructive">{deleteState.error}</p>

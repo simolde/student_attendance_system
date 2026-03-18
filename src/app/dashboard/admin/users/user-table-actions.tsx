@@ -7,6 +7,8 @@ import {
   type UserFormState,
 } from "./actions";
 import ResetPasswordDialog from "./reset-password-dialog";
+import ConfirmActionDialog from "@/components/confirm-action-dialog";
+import { Button } from "@/components/ui/button";
 
 type UserRow = {
   id: string;
@@ -64,20 +66,30 @@ export default function UserTableActions({
         <p className="text-xs text-green-600">{roleState.success}</p>
       ) : null}
 
-      <form action={activeAction}>
+      <form action={activeAction} id={`toggle-user-${user.id}`}>
         <input type="hidden" name="userId" value={user.id} />
-        <button
-          type="submit"
-          disabled={activePending}
-          className="rounded border px-3 py-1 text-sm"
-        >
-          {activePending
-            ? "Saving..."
-            : user.isActive
-            ? "Deactivate"
-            : "Activate"}
-        </button>
       </form>
+
+      <ConfirmActionDialog
+        formId={`toggle-user-${user.id}`}
+        title={user.isActive ? "Deactivate user?" : "Activate user?"}
+        description={
+          user.isActive
+            ? "This will prevent the user from logging in until reactivated."
+            : "This will allow the user to log in again."
+        }
+        actionLabel={activePending ? "Saving..." : user.isActive ? "Deactivate" : "Activate"}
+        trigger={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={activePending}
+          >
+            {user.isActive ? "Deactivate" : "Activate"}
+          </Button>
+        }
+      />
 
       {activeState?.error ? (
         <p className="text-xs text-destructive">{activeState.error}</p>
