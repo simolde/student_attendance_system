@@ -8,6 +8,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { logAudit } from "@/lib/audit";
 import { rateLimit } from "@/lib/rate-limit";
+import { passwordSchema } from "@/lib/password-policy";
 
 export type ChangePasswordState = {
   error?: string;
@@ -17,8 +18,8 @@ export type ChangePasswordState = {
 const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: z.string().min(6, "New password must be at least 6 characters"),
-    confirmPassword: z.string().min(6, "Confirm password must be at least 6 characters"),
+    newPassword: passwordSchema,
+    confirmPassword: passwordSchema,
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "New password and confirm password do not match",

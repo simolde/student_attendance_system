@@ -23,6 +23,9 @@ export default function ChangePasswordForm() {
       <div>
         <label className="mb-2 block text-sm font-medium">New Password</label>
         <Input name="newPassword" type="password" placeholder="Enter new password" />
+        <p className="mt-2 text-xs text-muted-foreground">
+          Use 12–64 characters with uppercase, lowercase, number, and special character.
+        </p>
       </div>
 
       <div>

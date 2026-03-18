@@ -9,6 +9,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { logAudit } from "@/lib/audit";
 import { rateLimit } from "@/lib/rate-limit";
+import { passwordSchema } from "@/lib/password-policy";
 
 export type UserFormState = {
   error?: string;
@@ -18,7 +19,7 @@ export type UserFormState = {
 const createUserSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Valid email is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: passwordSchema,
   role: z.enum(["SUPER_ADMIN", "ADMIN", "TEACHER", "STAFF", "STUDENT"]),
 });
 
@@ -29,7 +30,7 @@ const updateRoleSchema = z.object({
 
 const resetPasswordSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: passwordSchema,
 });
 
 const toggleActiveSchema = z.object({

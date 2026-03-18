@@ -28,6 +28,9 @@ export default function UserManagementForms() {
       <div>
         <label className="mb-2 block text-sm font-medium">Password</label>
         <Input name="password" type="password" placeholder="Enter password" />
+        <p className="mt-2 text-xs text-muted-foreground">
+          Use 12–64 characters with uppercase, lowercase, number, and special character.
+        </p>
       </div>
 
       <div>

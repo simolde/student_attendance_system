@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAudit } from "@/lib/audit";
+import { rateLimit } from "@/lib/rate-limit";
 
 export type AttendanceFormState = {
   error?: string;
@@ -44,6 +45,15 @@ export async function saveAttendance(
   formData: FormData
 ): Promise<AttendanceFormState> {
   const session = await requireAttendanceAccess();
+
+  const rl = rateLimit(`save-attendance:${session.user.id}`, {
+    limit: 30,
+    windowMs: 5 * 60 * 1000,
+  });
+
+  if (!rl.success) {
+    return { error: "Too many attendance save attempts. Please try again later." };
+  }
 
   const parsed = attendanceSchema.safeParse({
     sectionId: formData.get("sectionId"),

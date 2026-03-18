@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../src/lib/prisma";
 
 async function main() {
-  const hashedPassword = await bcrypt.hash("sample", 12);
+  const hashedPassword = await bcrypt.hash("SchoolAdmin#2026", 12);
 
   await prisma.user.upsert({
     where: { email: "sample@starland.edu.ph" },
