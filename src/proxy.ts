@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
-
   const { pathname } = req.nextUrl;
 
   const publicRoutes = ["/login", "/unauthorized"];
@@ -23,13 +22,11 @@ export default auth((req) => {
     return NextResponse.redirect(dashboardUrl);
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  response.headers.set("x-current-path", pathname);
+  return response;
 });
 
 export const config = {
-  matcher: [
-    "/dashboard/:path*",
-    "/api/attendance/:path*",
-    "/login",
-  ],
+  matcher: ["/dashboard/:path*", "/api/attendance/:path*", "/login"],
 };
