@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { saveAttendance, type AttendanceFormState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -45,6 +46,11 @@ export default function AttendanceForm({
     initialState
   );
 
+  useEffect(() => {
+    if (state?.error) toast.error(state.error);
+    if (state?.success) toast.success(state.success);
+  }, [state]);
+
   return (
     <div className="space-y-6">
       <form method="GET" className="grid gap-4 md:grid-cols-3">
@@ -79,14 +85,6 @@ export default function AttendanceForm({
       <form action={formAction} className="space-y-6">
         <input type="hidden" name="sectionId" value={selectedSectionId} />
         <input type="hidden" name="date" value={selectedDate} />
-
-        {state?.error ? (
-          <p className="text-sm text-destructive">{state.error}</p>
-        ) : null}
-
-        {state?.success ? (
-          <p className="text-sm text-green-600">{state.success}</p>
-        ) : null}
 
         <div className="rounded-md border">
           <Table>

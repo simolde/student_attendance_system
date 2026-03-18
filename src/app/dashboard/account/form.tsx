@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { updateMyAccount, type AccountFormState } from "./actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const initialState: AccountFormState = {};
 
@@ -19,6 +20,11 @@ export default function AccountForm({
     initialState
   );
 
+  useEffect(() => {
+    if (state?.error) toast.error(state.error);
+    if (state?.success) toast.success(state.success);
+  }, [state]);
+
   return (
     <form action={formAction} className="space-y-4">
       <div>
@@ -28,16 +34,13 @@ export default function AccountForm({
 
       <div>
         <label className="mb-2 block text-sm font-medium">Email</label>
-        <Input name="email" type="email" defaultValue={email} placeholder="Your email" />
+        <Input
+          name="email"
+          type="email"
+          defaultValue={email}
+          placeholder="Your email"
+        />
       </div>
-
-      {state?.error ? (
-        <p className="text-sm text-destructive">{state.error}</p>
-      ) : null}
-
-      {state?.success ? (
-        <p className="text-sm text-green-600">{state.success}</p>
-      ) : null}
 
       <Button type="submit" disabled={pending}>
         {pending ? "Saving..." : "Save Changes"}

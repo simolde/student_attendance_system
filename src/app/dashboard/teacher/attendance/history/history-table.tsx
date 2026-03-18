@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import {
   updateAttendanceRecord,
   deleteAttendanceRecord,
@@ -8,6 +8,8 @@ import {
 } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import ConfirmActionDialog from "@/components/confirm-action-dialog";
 import {
   Table,
   TableBody,
@@ -16,7 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import ConfirmActionDialog from "@/components/confirm-action-dialog";
 
 const initialState: AttendanceUpdateState = {};
 
@@ -50,6 +51,16 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
     deleteAttendanceRecord,
     initialState
   );
+
+  useEffect(() => {
+    if (updateState?.error) toast.error(updateState.error);
+    if (updateState?.success) toast.success(updateState.success);
+  }, [updateState]);
+
+  useEffect(() => {
+    if (deleteState?.error) toast.error(deleteState.error);
+    if (deleteState?.success) toast.success(deleteState.success);
+  }, [deleteState]);
 
   return (
     <TableRow>
@@ -92,14 +103,6 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
           </Button>
         </form>
 
-        {updateState?.error ? (
-          <p className="mt-2 text-xs text-destructive">{updateState.error}</p>
-        ) : null}
-
-        {updateState?.success ? (
-          <p className="mt-2 text-xs text-green-600">{updateState.success}</p>
-        ) : null}
-
         <form action={deleteAction} id={`delete-attendance-${record.id}`} className="mt-2">
           <input type="hidden" name="attendanceId" value={record.id} />
         </form>
@@ -121,14 +124,6 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
             </Button>
           }
         />
-
-        {deleteState?.error ? (
-          <p className="mt-2 text-xs text-destructive">{deleteState.error}</p>
-        ) : null}
-
-        {deleteState?.success ? (
-          <p className="mt-2 text-xs text-green-600">{deleteState.success}</p>
-        ) : null}
       </TableCell>
     </TableRow>
   );

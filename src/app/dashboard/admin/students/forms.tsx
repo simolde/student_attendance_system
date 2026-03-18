@@ -1,7 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { createSection, createStudent, type FormState } from "./actions";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const initialState: FormState = {};
 
@@ -20,39 +23,36 @@ export default function StudentManagementForms({
     initialState
   );
 
+  useEffect(() => {
+    if (sectionState?.error) toast.error(sectionState.error);
+    if (sectionState?.success) toast.success(sectionState.success);
+  }, [sectionState]);
+
+  useEffect(() => {
+    if (studentState?.error) toast.error(studentState.error);
+    if (studentState?.success) toast.success(studentState.success);
+  }, [studentState]);
+
   return (
-    <div className="mt-8 grid gap-6 md:grid-cols-2">
+    <div className="grid gap-6 md:grid-cols-2">
       <div className="rounded-lg border bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold">Create Section</h2>
 
         <form action={sectionAction} className="mt-4 space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label className="mb-2 block text-sm font-medium">
               Section Name
             </label>
-            <input
+            <Input
               name="name"
               type="text"
               placeholder="e.g. Grade 7 - A"
-              className="w-full rounded border px-3 py-2"
             />
           </div>
 
-          {sectionState?.error && (
-            <p className="text-sm text-red-600">{sectionState.error}</p>
-          )}
-
-          {sectionState?.success && (
-            <p className="text-sm text-green-600">{sectionState.success}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={sectionPending}
-            className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
-          >
+          <Button type="submit" disabled={sectionPending}>
             {sectionPending ? "Saving..." : "Add Section"}
-          </button>
+          </Button>
         </form>
       </div>
 
@@ -61,42 +61,39 @@ export default function StudentManagementForms({
 
         <form action={studentAction} className="mt-4 space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium">Full Name</label>
-            <input
+            <label className="mb-2 block text-sm font-medium">Full Name</label>
+            <Input
               name="name"
               type="text"
               placeholder="Student full name"
-              className="w-full rounded border px-3 py-2"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">Email</label>
-            <input
+            <label className="mb-2 block text-sm font-medium">Email</label>
+            <Input
               name="email"
               type="email"
               placeholder="student@email.com"
-              className="w-full rounded border px-3 py-2"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label className="mb-2 block text-sm font-medium">
               Student Number
             </label>
-            <input
+            <Input
               name="studentNo"
               type="text"
               placeholder="2026-0001"
-              className="w-full rounded border px-3 py-2"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">Section</label>
+            <label className="mb-2 block text-sm font-medium">Section</label>
             <select
               name="sectionId"
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               defaultValue=""
             >
               <option value="" disabled>
@@ -110,21 +107,9 @@ export default function StudentManagementForms({
             </select>
           </div>
 
-          {studentState?.error && (
-            <p className="text-sm text-red-600">{studentState.error}</p>
-          )}
-
-          {studentState?.success && (
-            <p className="text-sm text-green-600">{studentState.success}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={studentPending}
-            className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
-          >
+          <Button type="submit" disabled={studentPending}>
             {studentPending ? "Saving..." : "Add Student"}
-          </button>
+          </Button>
         </form>
       </div>
     </div>
