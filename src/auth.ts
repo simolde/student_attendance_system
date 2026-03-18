@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "./lib/rate-limit";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -27,6 +28,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
+
+        const rl = rateLimit(`login:${email.toLowerCase()}`, {
+          limit: 5,
+          windowMs: 10 * 60 * 1000,
+        });
+
+        if (!rl.success) {
+          return null;
+        }
 
         const user = await prisma.user.findUnique({
           where: { email },

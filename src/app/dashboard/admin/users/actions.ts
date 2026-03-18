@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { logAudit } from "@/lib/audit";
+import { rateLimit } from "@/lib/rate-limit";
 
 export type UserFormState = {
   error?: string;
@@ -157,6 +158,15 @@ export async function resetUserPassword(
   formData: FormData
 ): Promise<UserFormState> {
   const session = await requireAdmin();
+
+  const rl = rateLimit(`admin-reset-password:${session.user.id}`, {
+    limit: 10,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (!rl.success) {
+    return { error: "Too many password reset attempts. Please try again later." };
+  }
 
   const parsed = resetPasswordSchema.safeParse({
     userId: formData.get("userId"),

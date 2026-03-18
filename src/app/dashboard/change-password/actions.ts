@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { logAudit } from "@/lib/audit";
+import { rateLimit } from "@/lib/rate-limit";
 
 export type ChangePasswordState = {
   error?: string;
@@ -32,6 +33,15 @@ export async function changeMyPassword(
 
   if (!session?.user) {
     redirect("/login");
+  }
+
+  const rl = rateLimit(`change-password:${session.user.id}`, {
+    limit: 5,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (!rl.success) {
+    return { error: "Too many password change attempts. Please try again later." };
   }
 
   const parsed = changePasswordSchema.safeParse({
