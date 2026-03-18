@@ -218,6 +218,7 @@ export default async function AdminUsersPage({
                         <UserTableActions
                           user={{
                             id: user.id,
+                            email: user.email,
                             role: user.role,
                             isActive: user.isActive,
                           }}

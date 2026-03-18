@@ -4,12 +4,13 @@ import { useActionState } from "react";
 import {
   toggleUserActive,
   updateUserRole,
-  resetUserPassword,
   type UserFormState,
 } from "./actions";
+import ResetPasswordDialog from "./reset-password-dialog";
 
 type UserRow = {
   id: string;
+  email: string;
   role: string;
   isActive: boolean;
 };
@@ -28,11 +29,6 @@ export default function UserTableActions({
 
   const [activeState, activeAction, activePending] = useActionState(
     toggleUserActive,
-    initialState
-  );
-
-  const [passwordState, passwordAction, passwordPending] = useActionState(
-    resetUserPassword,
     initialState
   );
 
@@ -90,29 +86,7 @@ export default function UserTableActions({
         <p className="text-xs text-green-600">{activeState.success}</p>
       ) : null}
 
-      <form action={passwordAction} className="flex gap-2">
-        <input type="hidden" name="userId" value={user.id} />
-        <input
-          type="password"
-          name="password"
-          placeholder="New password"
-          className="rounded border px-2 py-1 text-sm"
-        />
-        <button
-          type="submit"
-          disabled={passwordPending}
-          className="rounded border px-3 py-1 text-sm"
-        >
-          {passwordPending ? "Saving..." : "Reset Password"}
-        </button>
-      </form>
-
-      {passwordState?.error ? (
-        <p className="text-xs text-destructive">{passwordState.error}</p>
-      ) : null}
-      {passwordState?.success ? (
-        <p className="text-xs text-green-600">{passwordState.success}</p>
-      ) : null}
+      <ResetPasswordDialog userId={user.id} userEmail={user.email} />
     </div>
   );
 }
