@@ -1,13 +1,12 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { hasRole, ROLES } from "@/lib/rbac";
-import Link from "next/link";
 import {
   Card,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -23,61 +22,51 @@ export default async function AdminDashboardPage() {
   }
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <p className="mt-2 text-muted-foreground">
-          Welcome, {session.user.name ?? session.user.email}
+          Manage users, students, attendance records, and audit logs.
         </p>
-        <div className="mt-3">
-          <Badge variant="secondary">{session.user.role}</Badge>
-        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Link href="/dashboard/admin/students">
-          <Card className="h-full transition hover:shadow-md">
-            <CardHeader>
-              <CardTitle>Student Management</CardTitle>
-              <CardDescription>
-                Create sections, add students, and manage student records.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
+        <Card>
+          <CardHeader>
+            <CardDescription>Logged in as</CardDescription>
+            <CardTitle className="text-xl">
+              {session.user.name ?? session.user.email}
+            </CardTitle>
+          </CardHeader>
+        </Card>
 
-        <Link href="/dashboard/admin/users">
-          <Card className="h-full transition hover:shadow-md">
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>
-                Create admin, teacher, staff, and student accounts.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
+        <Card>
+          <CardHeader>
+            <CardDescription>Role</CardDescription>
+            <CardTitle>
+              <Badge variant="secondary">{session.user.role}</Badge>
+            </CardTitle>
+          </CardHeader>
+        </Card>
 
-        <Link href="/dashboard/admin/audit-logs">
-          <Card className="h-full transition hover:shadow-md">
-            <CardHeader>
-              <CardTitle>Audit Logs</CardTitle>
-              <CardDescription>
-                Review security and system activity records.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
+        <Card>
+          <CardHeader>
+            <CardDescription>Access</CardDescription>
+            <CardTitle className="text-xl">Full Admin Access</CardTitle>
+          </CardHeader>
+        </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Admin Access</CardTitle>
+          <CardTitle>Admin Overview</CardTitle>
           <CardDescription>
-            Only ADMIN and SUPER_ADMIN roles can access this area.
+            Use the sidebar to manage users, students, and system activity.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Use the links above to manage the system safely.
+          This area is intended for administrators who manage records, review
+          audit logs, and maintain the system.
         </CardContent>
       </Card>
     </div>

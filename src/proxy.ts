@@ -13,18 +13,14 @@ export default auth((req) => {
     pathname.startsWith("/api/attendance");
 
   if (isProtectedRoute && !isLoggedIn) {
-    const loginUrl = new URL("/login", req.nextUrl.origin);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL("/login", req.nextUrl.origin));
   }
 
   if (isPublicRoute && isLoggedIn && pathname === "/login") {
-    const dashboardUrl = new URL("/dashboard", req.nextUrl.origin);
-    return NextResponse.redirect(dashboardUrl);
+    return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
   }
 
-  const response = NextResponse.next();
-  response.headers.set("x-current-path", pathname);
-  return response;
+  return NextResponse.next();
 });
 
 export const config = {

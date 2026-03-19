@@ -1,13 +1,12 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { hasRole, ROLES } from "@/lib/rbac";
-import Link from "next/link";
 import {
   Card,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -30,50 +29,51 @@ export default async function TeacherDashboardPage() {
   }
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold">Teacher Dashboard</h1>
         <p className="mt-2 text-muted-foreground">
-          Welcome, {session.user.name ?? session.user.email}
+          Record attendance and review attendance history.
         </p>
-        <div className="mt-3">
-          <Badge variant="secondary">{session.user.role}</Badge>
-        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Link href="/dashboard/teacher/attendance">
-          <Card className="h-full transition hover:shadow-md">
-            <CardHeader>
-              <CardTitle>Attendance Recording</CardTitle>
-              <CardDescription>
-                Record daily attendance for students by section and date.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardDescription>Logged in as</CardDescription>
+            <CardTitle className="text-xl">
+              {session.user.name ?? session.user.email}
+            </CardTitle>
+          </CardHeader>
+        </Card>
 
-        <Link href="/dashboard/teacher/attendance/history">
-          <Card className="h-full transition hover:shadow-md">
-            <CardHeader>
-              <CardTitle>Attendance History</CardTitle>
-              <CardDescription>
-                Review saved attendance and export reports.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
+        <Card>
+          <CardHeader>
+            <CardDescription>Role</CardDescription>
+            <CardTitle>
+              <Badge variant="secondary">{session.user.role}</Badge>
+            </CardTitle>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardDescription>Access</CardDescription>
+            <CardTitle className="text-xl">Attendance Tools</CardTitle>
+          </CardHeader>
+        </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Teacher Access</CardTitle>
+          <CardTitle>Teacher Overview</CardTitle>
           <CardDescription>
-            TEACHER, STAFF, ADMIN, and SUPER_ADMIN can access this area.
+            Use the sidebar to record attendance and review saved records.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Use the cards above to record and review attendance.
+          This area is for teachers and staff who manage daily attendance and
+          attendance history.
         </CardContent>
       </Card>
     </div>
