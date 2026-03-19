@@ -12,6 +12,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import StatCard from "@/components/ui/stat-card";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -34,48 +35,15 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-6 space-y-8">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="mt-1 text-muted-foreground">
-            Welcome, {session.user.name ?? session.user.email}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Role: {session.user.role}
-          </p>
-        </div>
-
-        <LogoutButton />
-      </div>
-
-      <Separator />
-
       {!canAccessStudent && (
         <>
           <div>
             <h2 className="text-xl font-semibold">System Overview</h2>
 
             <div className="mt-4 grid gap-4 md:grid-cols-3">
-              <Card>
-                <CardHeader>
-                  <CardDescription>Total Users</CardDescription>
-                  <CardTitle className="text-3xl">{stats.totalUsers}</CardTitle>
-                </CardHeader>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardDescription>Total Students</CardDescription>
-                  <CardTitle className="text-3xl">{stats.totalStudents}</CardTitle>
-                </CardHeader>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardDescription>Total Sections</CardDescription>
-                  <CardTitle className="text-3xl">{stats.totalSections}</CardTitle>
-                </CardHeader>
-              </Card>
+              <StatCard label="Total Users" value={stats.totalUsers} />
+              <StatCard label="Total Students" value={stats.totalStudents} />
+              <StatCard label="Total Sections" value={stats.totalSections} />
             </div>
           </div>
 
@@ -85,33 +53,10 @@ export default async function DashboardPage() {
             </h2>
 
             <div className="mt-4 grid gap-4 md:grid-cols-4">
-              <Card>
-                <CardHeader>
-                  <CardDescription>Present</CardDescription>
-                  <CardTitle className="text-2xl">{stats.presentToday}</CardTitle>
-                </CardHeader>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardDescription>Late</CardDescription>
-                  <CardTitle className="text-2xl">{stats.lateToday}</CardTitle>
-                </CardHeader>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardDescription>Absent</CardDescription>
-                  <CardTitle className="text-2xl">{stats.absentToday}</CardTitle>
-                </CardHeader>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardDescription>Excused</CardDescription>
-                  <CardTitle className="text-2xl">{stats.excusedToday}</CardTitle>
-                </CardHeader>
-              </Card>
+              <StatCard label="Present" value={stats.presentToday} />
+              <StatCard label="Late" value={stats.lateToday} />
+              <StatCard label="Absent" value={stats.absentToday} />
+              <StatCard label="Excused" value={stats.excusedToday} />
             </div>
           </div>
 
