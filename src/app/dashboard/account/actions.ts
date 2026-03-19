@@ -52,8 +52,6 @@ export async function updateMyAccount(
       select: {
         id: true,
         email: true,
-        name: true,
-        image: true,
       },
     });
 
@@ -91,13 +89,16 @@ export async function updateMyAccount(
       action: "UPDATE_OWN_ACCOUNT",
       entity: "User",
       entityId: updatedUser.id,
-      description: `Updated own account details`,
+      description: "Updated own account details",
     });
 
     revalidatePath("/dashboard/account");
     revalidatePath("/dashboard");
 
-    return { success: "Account updated successfully. Sign out and sign in again if your sidebar image does not update immediately." };
+    return {
+      success:
+        "Account updated successfully. Sign out and sign in again if the sidebar image does not update immediately.",
+    };
   } catch {
     return { error: "Failed to update account" };
   }

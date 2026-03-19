@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { upload } from "@vercel/blob/client";
 import { updateMyAccount, type AccountFormState } from "./actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,8 @@ export default function AccountForm({
 
   const [previewName, setPreviewName] = useState(name);
   const [previewImage, setPreviewImage] = useState(image ?? "");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const initials = useMemo(
     () => getInitials(previewName || email || "U"),
@@ -45,6 +48,30 @@ export default function AccountForm({
     if (state?.success) toast.success(state.success);
   }, [state]);
 
+  async function handleFileChange(file: File | undefined) {
+    if (!file) return;
+
+    try {
+      setUploading(true);
+
+      const blob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/avatar/upload",
+      });
+
+      setPreviewImage(blob.url);
+      toast.success("Photo uploaded successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to upload photo");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }
+
   return (
     <form action={formAction} className="space-y-5">
       <div className="flex items-center gap-4 rounded-xl border p-4">
@@ -53,11 +80,30 @@ export default function AccountForm({
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
 
-        <div>
+        <div className="flex-1">
           <p className="text-sm font-medium">Profile Preview</p>
           <p className="text-xs text-muted-foreground">
-            Your image will appear in the sidebar profile menu.
+            Upload a photo or use an image URL.
           </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => handleFileChange(e.target.files?.[0])}
+          />
+
+          <Button
+            type="button"
+            variant="outline"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploading ? "Uploading..." : "Upload Photo"}
+          </Button>
         </div>
       </div>
 
@@ -82,19 +128,21 @@ export default function AccountForm({
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium">Profile Image URL</label>
+        <label className="mb-2 block text-sm font-medium">
+          Profile Image URL
+        </label>
         <Input
           name="image"
-          defaultValue={image ?? ""}
-          placeholder="https://example.com/profile.jpg"
+          value={previewImage}
           onChange={(e) => setPreviewImage(e.target.value)}
+          placeholder="https://example.com/profile.jpg"
         />
         <p className="mt-2 text-xs text-muted-foreground">
-          Use a direct image URL, or leave it empty to use initials.
+          Upload is recommended. You can still paste a direct image URL here.
         </p>
       </div>
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" disabled={pending || uploading}>
         {pending ? "Saving..." : "Save Changes"}
       </Button>
     </form>
