@@ -4,6 +4,8 @@ import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import StudentManagementForms from "./forms";
+import PageHeader from "@/components/layout/page-header";
+import TableToolbar from "@/components/layout/table-toolbar";
 import {
   Card,
   CardContent,
@@ -20,7 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import PageHeader from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
 
 const PAGE_SIZE = 10;
 
@@ -90,7 +92,7 @@ export default async function AdminStudentsPage({
   }
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-8">
       <PageHeader
         title="Student Management"
         description="Create sections and add students to those sections."
@@ -115,62 +117,8 @@ export default async function AdminStudentsPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>Search and Filter</CardTitle>
-          <CardDescription>
-            Search students by name, email, or student number.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form method="GET" className="grid gap-4 md:grid-cols-4">
-            <div>
-              <label className="mb-2 block text-sm font-medium">Search</label>
-              <Input
-                name="q"
-                defaultValue={q}
-                placeholder="Name, email, or student number"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium">Section</label>
-              <select
-                name="sectionId"
-                defaultValue={sectionId}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              >
-                <option value="">All sections</option>
-                {sections.map((section) => (
-                  <option key={section.id} value={section.id}>
-                    {section.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <input type="hidden" name="page" value="1" />
-
-            <div className="flex items-end gap-2">
-              <button
-                type="submit"
-                className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
-              >
-                Apply
-              </button>
-
-              <a
-                href="/dashboard/admin/students"
-                className="rounded-md border px-4 py-2 text-sm"
-              >
-                Reset
-              </a>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Sections</CardTitle>
+          <CardDescription>Available class/section list.</CardDescription>
         </CardHeader>
         <CardContent>
           {sections.length === 0 ? (
@@ -194,7 +142,46 @@ export default async function AdminStudentsPage({
             Page {page} of {totalPages} • {totalStudents} total students
           </CardDescription>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="space-y-6">
+          <TableToolbar>
+            <form method="GET" className="grid flex-1 gap-4 md:grid-cols-3">
+              <div>
+                <label className="mb-2 block text-sm font-medium">Search</label>
+                <Input
+                  name="q"
+                  defaultValue={q}
+                  placeholder="Name, email, or student number"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">Section</label>
+                <select
+                  name="sectionId"
+                  defaultValue={sectionId}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">All sections</option>
+                  {sections.map((section) => (
+                    <option key={section.id} value={section.id}>
+                      {section.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <input type="hidden" name="page" value="1" />
+
+              <div className="flex items-end gap-2">
+                <Button type="submit">Apply</Button>
+                <Button type="button" variant="outline" asChild>
+                  <Link href="/dashboard/admin/students">Reset</Link>
+                </Button>
+              </div>
+            </form>
+          </TableToolbar>
+
           {students.length === 0 ? (
             <p className="text-sm text-muted-foreground">No students found.</p>
           ) : (
@@ -212,7 +199,7 @@ export default async function AdminStudentsPage({
                   {students.map((student) => (
                     <TableRow key={student.id}>
                       <TableCell>{student.studentNo}</TableCell>
-                      <TableCell>{student.user.name}</TableCell>
+                      <TableCell>{student.user.name ?? "-"}</TableCell>
                       <TableCell>{student.user.email}</TableCell>
                       <TableCell>{student.section?.name ?? "-"}</TableCell>
                     </TableRow>
@@ -220,28 +207,18 @@ export default async function AdminStudentsPage({
                 </TableBody>
               </Table>
 
-              <div className="mt-4 flex items-center justify-between">
-                <Link
-                  href={buildUrl(page - 1)}
-                  className={`rounded-md border px-4 py-2 text-sm ${
-                    page <= 1 ? "pointer-events-none opacity-50" : ""
-                  }`}
-                >
-                  Previous
-                </Link>
+              <div className="flex items-center justify-between">
+                <Button variant="outline" asChild disabled={page <= 1}>
+                  <Link href={buildUrl(page - 1)}>Previous</Link>
+                </Button>
 
                 <span className="text-sm text-muted-foreground">
                   Page {page} of {totalPages}
                 </span>
 
-                <Link
-                  href={buildUrl(page + 1)}
-                  className={`rounded-md border px-4 py-2 text-sm ${
-                    page >= totalPages ? "pointer-events-none opacity-50" : ""
-                  }`}
-                >
-                  Next
-                </Link>
+                <Button variant="outline" asChild disabled={page >= totalPages}>
+                  <Link href={buildUrl(page + 1)}>Next</Link>
+                </Button>
               </div>
             </>
           )}

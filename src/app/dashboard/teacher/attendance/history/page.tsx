@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import PageHeader from "@/components/layout/page-header";
+import TableToolbar from "@/components/layout/table-toolbar";
 import {
   Card,
   CardContent,
@@ -10,8 +12,8 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import AttendanceHistoryTable from "./history-table";
-import PageHeader from "@/components/layout/page-header";
 
 export default async function AttendanceHistoryPage({
   searchParams,
@@ -69,7 +71,7 @@ export default async function AttendanceHistoryPage({
       : [];
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-8">
       <PageHeader
         title="Attendance History"
         description="View and edit attendance by section and date."
@@ -82,67 +84,57 @@ export default async function AttendanceHistoryPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle>Attendance Records</CardTitle>
           <CardDescription>
-            Select a section and date to load saved attendance.
+            Load saved attendance, edit records, or export CSV.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form method="GET" className="grid gap-4 md:grid-cols-3">
-            <div>
-              <label className="mb-2 block text-sm font-medium">Section</label>
-              <select
-                name="sectionId"
-                defaultValue={selectedSectionId}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              >
-                <option value="">Select section</option>
-                {sections.map((section) => (
-                  <option key={section.id} value={section.id}>
-                    {section.name}
-                  </option>
-                ))}
-              </select>
-            </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">Date</label>
-              <input
-                type="date"
-                name="date"
-                defaultValue={selectedDate}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              />
-            </div>
+        <CardContent className="space-y-6">
+          <TableToolbar>
+            <form method="GET" className="grid flex-1 gap-4 md:grid-cols-3">
+              <div>
+                <label className="mb-2 block text-sm font-medium">Section</label>
+                <select
+                  name="sectionId"
+                  defaultValue={selectedSectionId}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">Select section</option>
+                  {sections.map((section) => (
+                    <option key={section.id} value={section.id}>
+                      {section.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="flex items-end">
-              <button
-                type="submit"
-                className="w-full rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
-              >
-                Load History
-              </button>
-            </div>
-          </form>
+              <div>
+                <label className="mb-2 block text-sm font-medium">Date</label>
+                <input
+                  type="date"
+                  name="date"
+                  defaultValue={selectedDate}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                />
+              </div>
 
-          {selectedSectionId && selectedDate && (
-            <div className="mt-4">
-              <Link
-                href={`/api/attendance/export?sectionId=${selectedSectionId}&date=${selectedDate}`}
-                className="inline-block rounded-md bg-green-600 px-4 py-2 text-sm text-white"
-              >
-                Export CSV
-              </Link>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              <div className="flex items-end gap-2">
+                <Button type="submit">Load History</Button>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Attendance Records</CardTitle>
-        </CardHeader>
-        <CardContent>
+                {selectedSectionId && selectedDate ? (
+                  <Button type="button" variant="outline" asChild>
+                    <Link
+                      href={`/api/attendance/export?sectionId=${selectedSectionId}&date=${selectedDate}`}
+                    >
+                      Export CSV
+                    </Link>
+                  </Button>
+                ) : null}
+              </div>
+            </form>
+          </TableToolbar>
+
           {!selectedSectionId ? (
             <p className="text-sm text-muted-foreground">
               Please select a section and load history.
@@ -155,6 +147,11 @@ export default async function AttendanceHistoryPage({
             <AttendanceHistoryTable
               records={records.map((record) => ({
                 ...record,
+                status: record.status as
+                  | "PRESENT"
+                  | "LATE"
+                  | "ABSENT"
+                  | "EXCUSED",
                 date: record.date.toISOString(),
               }))}
             />
