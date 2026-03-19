@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import PageHeader from "@/components/layout/page-header";
 
 export default async function AdminDashboardPage() {
   const session = await auth();
@@ -23,12 +24,14 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <p className="mt-2 text-muted-foreground">
-          Manage users, students, attendance records, and audit logs.
-        </p>
-      </div>
+      <PageHeader
+        title="Admin Dashboard"
+        description="Manage users, students, attendance records, and audit logs."
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Admin" },
+        ]}
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>

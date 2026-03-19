@@ -11,6 +11,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import PageHeader from "@/components/layout/page-header";
 
 export default async function TeacherAttendancePage({
   searchParams,
@@ -52,12 +53,15 @@ export default async function TeacherAttendancePage({
 
   return (
     <div className="p-6 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Attendance Recording</h1>
-        <p className="mt-2 text-muted-foreground">
-          Record attendance by section and date.
-        </p>
-      </div>
+      <PageHeader
+        title="Attendance Recording"
+        description="Record attendance by section and date."
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Teacher", href: "/dashboard/teacher" },
+          { label: "Attendance" },
+        ]}
+      />
 
       <div>
         <Link

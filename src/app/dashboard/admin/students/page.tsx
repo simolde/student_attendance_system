@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import PageHeader from "@/components/layout/page-header";
 
 const PAGE_SIZE = 10;
 
@@ -90,12 +91,15 @@ export default async function AdminStudentsPage({
 
   return (
     <div className="p-6 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Student Management</h1>
-        <p className="mt-2 text-muted-foreground">
-          Only ADMIN and SUPER_ADMIN can access this page.
-        </p>
-      </div>
+      <PageHeader
+        title="Student Management"
+        description="Create sections and add students to those sections."
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Admin", href: "/dashboard/admin" },
+          { label: "Student Management" },
+        ]}
+      />
 
       <Card>
         <CardHeader>

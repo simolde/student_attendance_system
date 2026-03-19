@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import PageHeader from "@/components/layout/page-header";
 
 export default async function TeacherDashboardPage() {
   const session = await auth();
@@ -30,12 +31,14 @@ export default async function TeacherDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Teacher Dashboard</h1>
-        <p className="mt-2 text-muted-foreground">
-          Record attendance and review attendance history.
-        </p>
-      </div>
+      <PageHeader
+        title="Teacher Dashboard"
+        description="Record attendance and review attendance history."
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Teacher" },
+        ]}
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>

@@ -11,6 +11,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import AttendanceHistoryTable from "./history-table";
+import PageHeader from "@/components/layout/page-header";
 
 export default async function AttendanceHistoryPage({
   searchParams,
@@ -69,12 +70,15 @@ export default async function AttendanceHistoryPage({
 
   return (
     <div className="p-6 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Attendance History</h1>
-        <p className="mt-2 text-muted-foreground">
-          View and edit attendance by section and date.
-        </p>
-      </div>
+      <PageHeader
+        title="Attendance History"
+        description="View and edit attendance by section and date."
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Teacher", href: "/dashboard/teacher" },
+          { label: "Attendance History" },
+        ]}
+      />
 
       <Card>
         <CardHeader>
