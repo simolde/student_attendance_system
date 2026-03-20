@@ -24,18 +24,12 @@ export async function POST(request: Request): Promise<NextResponse> {
           },
         };
       },
-      onUploadCompleted: async () => {
-        // We only return the uploaded blob URL to the client.
-        // Saving it to Prisma will happen in the account form action.
-      },
+      onUploadCompleted: async () => {},
     });
 
     return NextResponse.json(jsonResponse);
   } catch (error) {
     console.error("Avatar upload error:", error);
-    return NextResponse.json(
-      { error: "Upload failed" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Upload failed" }, { status: 400 });
   }
 }

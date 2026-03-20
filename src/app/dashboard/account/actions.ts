@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAudit } from "@/lib/audit";
+import { del } from "@vercel/blob";
 
 export type AccountFormState = {
   error?: string;
@@ -21,6 +22,17 @@ const updateAccountSchema = z.object({
     .optional()
     .transform((value) => value || ""),
 });
+
+function isVercelBlobUrl(url: string | null | undefined) {
+  if (!url) return false;
+
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.includes("blob.vercel-storage.com");
+  } catch {
+    return false;
+  }
+}
 
 export async function updateMyAccount(
   prevState: AccountFormState,
@@ -52,6 +64,7 @@ export async function updateMyAccount(
       select: {
         id: true,
         email: true,
+        image: true,
       },
     });
 
@@ -62,9 +75,7 @@ export async function updateMyAccount(
     const emailOwner = await prisma.user.findFirst({
       where: {
         email,
-        NOT: {
-          id: session.user.id,
-        },
+        NOT: { id: session.user.id },
       },
       select: { id: true },
     });
@@ -74,6 +85,7 @@ export async function updateMyAccount(
     }
 
     const normalizedImage = image.length > 0 ? image : null;
+    const oldImage = currentUser.image;
 
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
@@ -83,6 +95,16 @@ export async function updateMyAccount(
         image: normalizedImage,
       },
     });
+
+    const imageChanged = oldImage && oldImage !== normalizedImage;
+
+    if (imageChanged && isVercelBlobUrl(oldImage)) {
+      try {
+        await del(oldImage);
+      } catch (deleteError) {
+        console.error("Failed to delete old avatar:", deleteError);
+      }
+    }
 
     await logAudit({
       userId: session.user.id,
