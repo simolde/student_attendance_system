@@ -63,11 +63,13 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
   }, [deleteState]);
 
   return (
-    <TableRow>
-      <TableCell>{record.student.studentNo}</TableCell>
+    <TableRow className="align-top">
+      <TableCell className="font-medium text-slate-900">
+        {record.student.studentNo}
+      </TableCell>
       <TableCell>{record.student.user.name ?? record.student.user.email}</TableCell>
       <TableCell>{record.student.section?.name ?? "-"}</TableCell>
-      <TableCell>{new Date(record.date + "T00:00:00").toLocaleDateString()}</TableCell>
+      <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
 
       <TableCell>
         <select
@@ -75,7 +77,7 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
           onChange={(e) =>
             setStatus(e.target.value as "PRESENT" | "LATE" | "ABSENT" | "EXCUSED")
           }
-          className="rounded-md border bg-background px-2 py-1 text-sm"
+          className="h-10 rounded-md border bg-background px-3 text-sm"
         >
           <option value="PRESENT">PRESENT</option>
           <option value="LATE">LATE</option>
@@ -89,41 +91,44 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
           value={remarks}
           onChange={(e) => setRemarks(e.target.value)}
           placeholder="Optional remarks"
+          className="h-10"
         />
       </TableCell>
 
       <TableCell>
-        <form action={updateAction} className="space-y-2">
-          <input type="hidden" name="attendanceId" value={record.id} />
-          <input type="hidden" name="status" value={status} />
-          <input type="hidden" name="remarks" value={remarks} />
+        <div className="flex flex-col gap-2">
+          <form action={updateAction}>
+            <input type="hidden" name="attendanceId" value={record.id} />
+            <input type="hidden" name="status" value={status} />
+            <input type="hidden" name="remarks" value={remarks} />
 
-          <Button type="submit" size="sm" disabled={updatePending}>
-            {updatePending ? "Saving..." : "Save"}
-          </Button>
-        </form>
-
-        <form action={deleteAction} id={`delete-attendance-${record.id}`} className="mt-2">
-          <input type="hidden" name="attendanceId" value={record.id} />
-        </form>
-
-        <ConfirmActionDialog
-          formId={`delete-attendance-${record.id}`}
-          title="Delete attendance record?"
-          description="This action will permanently remove this attendance record."
-          actionLabel={deletePending ? "Deleting..." : "Delete"}
-          trigger={
-            <Button
-              type="button"
-              size="sm"
-              variant="destructive"
-              disabled={deletePending}
-              className="mt-2"
-            >
-              Delete
+            <Button type="submit" size="sm" disabled={updatePending} className="w-full">
+              {updatePending ? "Saving..." : "Save"}
             </Button>
-          }
-        />
+          </form>
+
+          <form action={deleteAction} id={`delete-attendance-${record.id}`}>
+            <input type="hidden" name="attendanceId" value={record.id} />
+          </form>
+
+          <ConfirmActionDialog
+            formId={`delete-attendance-${record.id}`}
+            title="Delete attendance record?"
+            description="This action will permanently remove this attendance record."
+            actionLabel={deletePending ? "Deleting..." : "Delete"}
+            trigger={
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                disabled={deletePending}
+                className="w-full"
+              >
+                Delete
+              </Button>
+            }
+          />
+        </div>
       </TableCell>
     </TableRow>
   );
@@ -135,24 +140,26 @@ export default function AttendanceHistoryTable({
   records: AttendanceRow[];
 }) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Student No</TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead>Section</TableHead>
-          <TableHead>Date</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Remarks</TableHead>
-          <TableHead>Action</TableHead>
-        </TableRow>
-      </TableHeader>
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-slate-50/80">
+            <TableHead>Student No</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Section</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Remarks</TableHead>
+            <TableHead className="w-[140px]">Action</TableHead>
+          </TableRow>
+        </TableHeader>
 
-      <TableBody>
-        {records.map((record) => (
-          <AttendanceEditRow key={record.id} record={record} />
-        ))}
-      </TableBody>
-    </Table>
+        <TableBody>
+          {records.map((record) => (
+            <AttendanceEditRow key={record.id} record={record} />
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

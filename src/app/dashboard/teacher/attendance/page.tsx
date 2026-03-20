@@ -2,18 +2,17 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import AttendanceForm from "./form";
+import PageHeader from "@/components/layout/page-header";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
-import PageHeader from "@/components/layout/page-header";
+import AttendanceForm from "./form";
 
-export default async function TeacherAttendancePage({
+export default async function AttendancePage({
   searchParams,
 }: {
   searchParams: Promise<{ sectionId?: string; date?: string }>;
@@ -46,16 +45,20 @@ export default async function TeacherAttendancePage({
   const students = selectedSectionId
     ? await prisma.student.findMany({
         where: { sectionId: selectedSectionId },
-        include: { user: true },
-        orderBy: { studentNo: "asc" },
+        include: {
+          user: true,
+        },
+        orderBy: {
+          studentNo: "asc",
+        },
       })
     : [];
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-8">
       <PageHeader
         title="Attendance Recording"
-        description="Record attendance by section and date."
+        description="Load a section and date, then record attendance for each student."
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Teacher", href: "/dashboard/teacher" },
@@ -63,22 +66,14 @@ export default async function TeacherAttendancePage({
         ]}
       />
 
-      <div>
-        <Link
-          href="/dashboard/teacher/attendance/history"
-          className="inline-block rounded-md border px-4 py-2 text-sm hover:bg-accent"
-        >
-          View Attendance History
-        </Link>
-      </div>
-
-      <Card>
+      <Card className="border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle>Record Attendance</CardTitle>
           <CardDescription>
-            Select a section, load students, then save attendance.
+            Choose a section and date, then save attendance entries.
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           <AttendanceForm
             sections={sections}

@@ -74,7 +74,7 @@ export default async function AttendanceHistoryPage({
     <div className="space-y-8">
       <PageHeader
         title="Attendance History"
-        description="View and edit attendance by section and date."
+        description="Review, update, or export saved attendance records."
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Teacher", href: "/dashboard/teacher" },
@@ -82,23 +82,23 @@ export default async function AttendanceHistoryPage({
         ]}
       />
 
-      <Card>
+      <Card className="border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle>Attendance Records</CardTitle>
           <CardDescription>
-            Load saved attendance, edit records, or export CSV.
+            Load saved attendance by section and date.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
           <TableToolbar>
-            <form method="GET" className="grid flex-1 gap-4 md:grid-cols-3">
+            <form method="GET" className="grid flex-1 gap-4 lg:grid-cols-[1fr_220px_auto]">
               <div>
                 <label className="mb-2 block text-sm font-medium">Section</label>
                 <select
                   name="sectionId"
                   defaultValue={selectedSectionId}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                  className="h-11 w-full rounded-md border bg-background px-3 text-sm"
                 >
                   <option value="">Select section</option>
                   {sections.map((section) => (
@@ -115,7 +115,7 @@ export default async function AttendanceHistoryPage({
                   type="date"
                   name="date"
                   defaultValue={selectedDate}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                  className="h-11 w-full rounded-md border bg-background px-3 text-sm"
                 />
               </div>
 
@@ -136,13 +136,13 @@ export default async function AttendanceHistoryPage({
           </TableToolbar>
 
           {!selectedSectionId ? (
-            <p className="text-sm text-muted-foreground">
+            <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
               Please select a section and load history.
-            </p>
+            </div>
           ) : records.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
               No attendance records found.
-            </p>
+            </div>
           ) : (
             <AttendanceHistoryTable
               records={records.map((record) => ({
