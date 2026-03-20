@@ -20,6 +20,17 @@ export const Role = {
 export type Role = (typeof Role)[keyof typeof Role]
 
 
+export const EnrollmentStatus = {
+  ENROLLED: 'ENROLLED',
+  DROPPED: 'DROPPED',
+  GRADUATED: 'GRADUATED',
+  TRANSFERRED: 'TRANSFERRED',
+  INACTIVE: 'INACTIVE'
+} as const
+
+export type EnrollmentStatus = (typeof EnrollmentStatus)[keyof typeof EnrollmentStatus]
+
+
 export const AttendanceStatus = {
   PRESENT: 'PRESENT',
   LATE: 'LATE',
@@ -28,3 +39,22 @@ export const AttendanceStatus = {
 } as const
 
 export type AttendanceStatus = (typeof AttendanceStatus)[keyof typeof AttendanceStatus]
+
+
+export const AttendanceSource = {
+  MANUAL: 'MANUAL',
+  RFID: 'RFID',
+  IMPORT: 'IMPORT'
+} as const
+
+export type AttendanceSource = (typeof AttendanceSource)[keyof typeof AttendanceSource]
+
+
+export const RfidScanStatus = {
+  MATCHED: 'MATCHED',
+  UNKNOWN_CARD: 'UNKNOWN_CARD',
+  DUPLICATE_SCAN: 'DUPLICATE_SCAN',
+  DENIED: 'DENIED'
+} as const
+
+export type RfidScanStatus = (typeof RfidScanStatus)[keyof typeof RfidScanStatus]

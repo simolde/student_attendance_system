@@ -56,8 +56,12 @@ export const ModelName = {
   Session: 'Session',
   VerificationToken: 'VerificationToken',
   Section: 'Section',
+  SchoolYear: 'SchoolYear',
   Student: 'Student',
+  Enrollment: 'Enrollment',
   Attendance: 'Attendance',
+  RfidDevice: 'RfidDevice',
+  RfidLog: 'RfidLog',
   AuditLog: 'AuditLog'
 } as const
 
@@ -139,10 +143,24 @@ export const SectionScalarFieldEnum = {
 export type SectionScalarFieldEnum = (typeof SectionScalarFieldEnum)[keyof typeof SectionScalarFieldEnum]
 
 
+export const SchoolYearScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  isActive: 'isActive',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SchoolYearScalarFieldEnum = (typeof SchoolYearScalarFieldEnum)[keyof typeof SchoolYearScalarFieldEnum]
+
+
 export const StudentScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   studentNo: 'studentNo',
+  rfidUid: 'rfidUid',
   sectionId: 'sectionId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -151,17 +169,61 @@ export const StudentScalarFieldEnum = {
 export type StudentScalarFieldEnum = (typeof StudentScalarFieldEnum)[keyof typeof StudentScalarFieldEnum]
 
 
+export const EnrollmentScalarFieldEnum = {
+  id: 'id',
+  studentId: 'studentId',
+  schoolYearId: 'schoolYearId',
+  sectionId: 'sectionId',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EnrollmentScalarFieldEnum = (typeof EnrollmentScalarFieldEnum)[keyof typeof EnrollmentScalarFieldEnum]
+
+
 export const AttendanceScalarFieldEnum = {
   id: 'id',
   studentId: 'studentId',
+  enrollmentId: 'enrollmentId',
   date: 'date',
   status: 'status',
+  source: 'source',
   remarks: 'remarks',
+  timeIn: 'timeIn',
+  timeOut: 'timeOut',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type AttendanceScalarFieldEnum = (typeof AttendanceScalarFieldEnum)[keyof typeof AttendanceScalarFieldEnum]
+
+
+export const RfidDeviceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  location: 'location',
+  deviceCode: 'deviceCode',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RfidDeviceScalarFieldEnum = (typeof RfidDeviceScalarFieldEnum)[keyof typeof RfidDeviceScalarFieldEnum]
+
+
+export const RfidLogScalarFieldEnum = {
+  id: 'id',
+  rfidUid: 'rfidUid',
+  studentId: 'studentId',
+  deviceId: 'deviceId',
+  scanTime: 'scanTime',
+  status: 'status',
+  message: 'message',
+  createdAt: 'createdAt'
+} as const
+
+export type RfidLogScalarFieldEnum = (typeof RfidLogScalarFieldEnum)[keyof typeof RfidLogScalarFieldEnum]
 
 
 export const AuditLogScalarFieldEnum = {

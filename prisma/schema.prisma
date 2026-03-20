@@ -15,11 +15,32 @@ enum Role {
   STUDENT
 }
 
+enum EnrollmentStatus {
+  ENROLLED
+  DROPPED
+  GRADUATED
+  TRANSFERRED
+  INACTIVE
+}
+
 enum AttendanceStatus {
   PRESENT
   LATE
   ABSENT
   EXCUSED
+}
+
+enum AttendanceSource {
+  MANUAL
+  RFID
+  IMPORT
+}
+
+enum RfidScanStatus {
+  MATCHED
+  UNKNOWN_CARD
+  DUPLICATE_SCAN
+  DENIED
 }
 
 model User {
@@ -34,10 +55,10 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  student       Student?
-  accounts      Account[]
-  sessions      Session[]
-  auditLogs     AuditLog[]
+  student   Student?
+  accounts  Account[]
+  sessions  Session[]
+  auditLogs AuditLog[]
 }
 
 model Account {
@@ -78,39 +99,108 @@ model VerificationToken {
 }
 
 model Section {
-  id         String    @id @default(cuid())
-  name       String    @unique
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  students   Student[]
+  students    Student[]
+  enrollments Enrollment[]
+}
+
+model SchoolYear {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  isActive  Boolean   @default(false)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  enrollments Enrollment[]
 }
 
 model Student {
-  id          String        @id @default(cuid())
-  userId      String        @unique
-  studentNo   String        @unique
-  sectionId   String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  studentNo String   @unique
+  rfidUid   String?  @unique
+  sectionId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  section     Section?      @relation(fields: [sectionId], references: [id])
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  section     Section?     @relation(fields: [sectionId], references: [id])
+  enrollments Enrollment[]
   attendances Attendance[]
+  rfidLogs    RfidLog[]
+}
+
+model Enrollment {
+  id           String           @id @default(cuid())
+  studentId    String
+  schoolYearId String
+  sectionId    String
+  status       EnrollmentStatus @default(ENROLLED)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  student     Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  schoolYear  SchoolYear   @relation(fields: [schoolYearId], references: [id], onDelete: Restrict)
+  section     Section      @relation(fields: [sectionId], references: [id], onDelete: Restrict)
+  attendances Attendance[]
+
+  @@unique([studentId, schoolYearId])
+  @@index([schoolYearId, sectionId])
 }
 
 model Attendance {
-  id         String            @id @default(cuid())
-  studentId  String
-  date       DateTime
-  status     AttendanceStatus
-  remarks    String?
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
+  id           String           @id @default(cuid())
+  studentId    String
+  enrollmentId String?
+  date         DateTime
+  status       AttendanceStatus
+  source       AttendanceSource @default(MANUAL)
+  remarks      String?
+  timeIn       DateTime?
+  timeOut      DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
-  student    Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student    Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
 
   @@unique([studentId, date])
+  @@index([enrollmentId, date])
+}
+
+model RfidDevice {
+  id         String   @id @default(cuid())
+  name       String
+  location   String?
+  deviceCode String?  @unique
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  rfidLogs RfidLog[]
+}
+
+model RfidLog {
+  id        String         @id @default(cuid())
+  rfidUid   String
+  studentId String?
+  deviceId  String?
+  scanTime  DateTime       @default(now())
+  status    RfidScanStatus
+  message   String?
+  createdAt DateTime       @default(now())
+
+  student Student?    @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  device  RfidDevice? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+
+  @@index([rfidUid])
+  @@index([studentId, scanTime])
 }
 
 model AuditLog {
@@ -122,5 +212,5 @@ model AuditLog {
   description String?
   createdAt   DateTime @default(now())
 
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 }

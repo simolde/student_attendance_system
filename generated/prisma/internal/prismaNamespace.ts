@@ -389,8 +389,12 @@ export const ModelName = {
   Session: 'Session',
   VerificationToken: 'VerificationToken',
   Section: 'Section',
+  SchoolYear: 'SchoolYear',
   Student: 'Student',
+  Enrollment: 'Enrollment',
   Attendance: 'Attendance',
+  RfidDevice: 'RfidDevice',
+  RfidLog: 'RfidLog',
   AuditLog: 'AuditLog'
 } as const
 
@@ -407,7 +411,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "session" | "verificationToken" | "section" | "student" | "attendance" | "auditLog"
+    modelProps: "user" | "account" | "session" | "verificationToken" | "section" | "schoolYear" | "student" | "enrollment" | "attendance" | "rfidDevice" | "rfidLog" | "auditLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -781,6 +785,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    SchoolYear: {
+      payload: Prisma.$SchoolYearPayload<ExtArgs>
+      fields: Prisma.SchoolYearFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SchoolYearFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SchoolYearPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SchoolYearFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SchoolYearPayload>
+        }
+        findFirst: {
+          args: Prisma.SchoolYearFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SchoolYearPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SchoolYearFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SchoolYearPayload>
+        }
+        findMany: {
+          args: Prisma.SchoolYearFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SchoolYearPayload>[]
+        }
+        create: {
+          args: Prisma.SchoolYearCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SchoolYearPayload>
+        }
+        createMany: {
+          args: Prisma.SchoolYearCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SchoolYearCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SchoolYearPayload>[]
+        }
+        delete: {
+          args: Prisma.SchoolYearDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SchoolYearPayload>
+        }
+        update: {
+          args: Prisma.SchoolYearUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SchoolYearPayload>
+        }
+        deleteMany: {
+          args: Prisma.SchoolYearDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SchoolYearUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SchoolYearUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SchoolYearPayload>[]
+        }
+        upsert: {
+          args: Prisma.SchoolYearUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SchoolYearPayload>
+        }
+        aggregate: {
+          args: Prisma.SchoolYearAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSchoolYear>
+        }
+        groupBy: {
+          args: Prisma.SchoolYearGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SchoolYearGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SchoolYearCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SchoolYearCountAggregateOutputType> | number
+        }
+      }
+    }
     Student: {
       payload: Prisma.$StudentPayload<ExtArgs>
       fields: Prisma.StudentFieldRefs
@@ -855,6 +933,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Enrollment: {
+      payload: Prisma.$EnrollmentPayload<ExtArgs>
+      fields: Prisma.EnrollmentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EnrollmentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnrollmentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EnrollmentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnrollmentPayload>
+        }
+        findFirst: {
+          args: Prisma.EnrollmentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnrollmentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EnrollmentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnrollmentPayload>
+        }
+        findMany: {
+          args: Prisma.EnrollmentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnrollmentPayload>[]
+        }
+        create: {
+          args: Prisma.EnrollmentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnrollmentPayload>
+        }
+        createMany: {
+          args: Prisma.EnrollmentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EnrollmentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnrollmentPayload>[]
+        }
+        delete: {
+          args: Prisma.EnrollmentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnrollmentPayload>
+        }
+        update: {
+          args: Prisma.EnrollmentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnrollmentPayload>
+        }
+        deleteMany: {
+          args: Prisma.EnrollmentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EnrollmentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EnrollmentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnrollmentPayload>[]
+        }
+        upsert: {
+          args: Prisma.EnrollmentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnrollmentPayload>
+        }
+        aggregate: {
+          args: Prisma.EnrollmentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEnrollment>
+        }
+        groupBy: {
+          args: Prisma.EnrollmentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EnrollmentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EnrollmentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EnrollmentCountAggregateOutputType> | number
+        }
+      }
+    }
     Attendance: {
       payload: Prisma.$AttendancePayload<ExtArgs>
       fields: Prisma.AttendanceFieldRefs
@@ -926,6 +1078,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AttendanceCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AttendanceCountAggregateOutputType> | number
+        }
+      }
+    }
+    RfidDevice: {
+      payload: Prisma.$RfidDevicePayload<ExtArgs>
+      fields: Prisma.RfidDeviceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RfidDeviceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidDevicePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RfidDeviceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidDevicePayload>
+        }
+        findFirst: {
+          args: Prisma.RfidDeviceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidDevicePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RfidDeviceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidDevicePayload>
+        }
+        findMany: {
+          args: Prisma.RfidDeviceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidDevicePayload>[]
+        }
+        create: {
+          args: Prisma.RfidDeviceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidDevicePayload>
+        }
+        createMany: {
+          args: Prisma.RfidDeviceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RfidDeviceCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidDevicePayload>[]
+        }
+        delete: {
+          args: Prisma.RfidDeviceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidDevicePayload>
+        }
+        update: {
+          args: Prisma.RfidDeviceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidDevicePayload>
+        }
+        deleteMany: {
+          args: Prisma.RfidDeviceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RfidDeviceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RfidDeviceUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidDevicePayload>[]
+        }
+        upsert: {
+          args: Prisma.RfidDeviceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidDevicePayload>
+        }
+        aggregate: {
+          args: Prisma.RfidDeviceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRfidDevice>
+        }
+        groupBy: {
+          args: Prisma.RfidDeviceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RfidDeviceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RfidDeviceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RfidDeviceCountAggregateOutputType> | number
+        }
+      }
+    }
+    RfidLog: {
+      payload: Prisma.$RfidLogPayload<ExtArgs>
+      fields: Prisma.RfidLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RfidLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RfidLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidLogPayload>
+        }
+        findFirst: {
+          args: Prisma.RfidLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RfidLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidLogPayload>
+        }
+        findMany: {
+          args: Prisma.RfidLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidLogPayload>[]
+        }
+        create: {
+          args: Prisma.RfidLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidLogPayload>
+        }
+        createMany: {
+          args: Prisma.RfidLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RfidLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidLogPayload>[]
+        }
+        delete: {
+          args: Prisma.RfidLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidLogPayload>
+        }
+        update: {
+          args: Prisma.RfidLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.RfidLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RfidLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RfidLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.RfidLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RfidLogPayload>
+        }
+        aggregate: {
+          args: Prisma.RfidLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRfidLog>
+        }
+        groupBy: {
+          args: Prisma.RfidLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RfidLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RfidLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RfidLogCountAggregateOutputType> | number
         }
       }
     }
@@ -1104,10 +1404,24 @@ export const SectionScalarFieldEnum = {
 export type SectionScalarFieldEnum = (typeof SectionScalarFieldEnum)[keyof typeof SectionScalarFieldEnum]
 
 
+export const SchoolYearScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  isActive: 'isActive',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SchoolYearScalarFieldEnum = (typeof SchoolYearScalarFieldEnum)[keyof typeof SchoolYearScalarFieldEnum]
+
+
 export const StudentScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   studentNo: 'studentNo',
+  rfidUid: 'rfidUid',
   sectionId: 'sectionId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1116,17 +1430,61 @@ export const StudentScalarFieldEnum = {
 export type StudentScalarFieldEnum = (typeof StudentScalarFieldEnum)[keyof typeof StudentScalarFieldEnum]
 
 
+export const EnrollmentScalarFieldEnum = {
+  id: 'id',
+  studentId: 'studentId',
+  schoolYearId: 'schoolYearId',
+  sectionId: 'sectionId',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EnrollmentScalarFieldEnum = (typeof EnrollmentScalarFieldEnum)[keyof typeof EnrollmentScalarFieldEnum]
+
+
 export const AttendanceScalarFieldEnum = {
   id: 'id',
   studentId: 'studentId',
+  enrollmentId: 'enrollmentId',
   date: 'date',
   status: 'status',
+  source: 'source',
   remarks: 'remarks',
+  timeIn: 'timeIn',
+  timeOut: 'timeOut',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type AttendanceScalarFieldEnum = (typeof AttendanceScalarFieldEnum)[keyof typeof AttendanceScalarFieldEnum]
+
+
+export const RfidDeviceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  location: 'location',
+  deviceCode: 'deviceCode',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RfidDeviceScalarFieldEnum = (typeof RfidDeviceScalarFieldEnum)[keyof typeof RfidDeviceScalarFieldEnum]
+
+
+export const RfidLogScalarFieldEnum = {
+  id: 'id',
+  rfidUid: 'rfidUid',
+  studentId: 'studentId',
+  deviceId: 'deviceId',
+  scanTime: 'scanTime',
+  status: 'status',
+  message: 'message',
+  createdAt: 'createdAt'
+} as const
+
+export type RfidLogScalarFieldEnum = (typeof RfidLogScalarFieldEnum)[keyof typeof RfidLogScalarFieldEnum]
 
 
 export const AuditLogScalarFieldEnum = {
@@ -1236,6 +1594,20 @@ export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'EnrollmentStatus'
+ */
+export type EnumEnrollmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EnrollmentStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'EnrollmentStatus[]'
+ */
+export type ListEnumEnrollmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EnrollmentStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'AttendanceStatus'
  */
 export type EnumAttendanceStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AttendanceStatus'>
@@ -1246,6 +1618,34 @@ export type EnumAttendanceStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
  * Reference to a field of type 'AttendanceStatus[]'
  */
 export type ListEnumAttendanceStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AttendanceStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'AttendanceSource'
+ */
+export type EnumAttendanceSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AttendanceSource'>
+    
+
+
+/**
+ * Reference to a field of type 'AttendanceSource[]'
+ */
+export type ListEnumAttendanceSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AttendanceSource[]'>
+    
+
+
+/**
+ * Reference to a field of type 'RfidScanStatus'
+ */
+export type EnumRfidScanStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RfidScanStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'RfidScanStatus[]'
+ */
+export type ListEnumRfidScanStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RfidScanStatus[]'>
     
 
 
@@ -1362,8 +1762,12 @@ export type GlobalOmitConfig = {
   session?: Prisma.SessionOmit
   verificationToken?: Prisma.VerificationTokenOmit
   section?: Prisma.SectionOmit
+  schoolYear?: Prisma.SchoolYearOmit
   student?: Prisma.StudentOmit
+  enrollment?: Prisma.EnrollmentOmit
   attendance?: Prisma.AttendanceOmit
+  rfidDevice?: Prisma.RfidDeviceOmit
+  rfidLog?: Prisma.RfidLogOmit
   auditLog?: Prisma.AuditLogOmit
 }
 

@@ -43,15 +43,35 @@ export type VerificationToken = Prisma.VerificationTokenModel
  */
 export type Section = Prisma.SectionModel
 /**
+ * Model SchoolYear
+ * 
+ */
+export type SchoolYear = Prisma.SchoolYearModel
+/**
  * Model Student
  * 
  */
 export type Student = Prisma.StudentModel
 /**
+ * Model Enrollment
+ * 
+ */
+export type Enrollment = Prisma.EnrollmentModel
+/**
  * Model Attendance
  * 
  */
 export type Attendance = Prisma.AttendanceModel
+/**
+ * Model RfidDevice
+ * 
+ */
+export type RfidDevice = Prisma.RfidDeviceModel
+/**
+ * Model RfidLog
+ * 
+ */
+export type RfidLog = Prisma.RfidLogModel
 /**
  * Model AuditLog
  * 
