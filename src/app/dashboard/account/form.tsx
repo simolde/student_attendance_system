@@ -1,3 +1,4 @@
+"use client";
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
@@ -85,6 +86,14 @@ export default function AccountForm({
     }
   }
 
+  function handleRemovePhoto() {
+    setPreviewImage("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    toast.success("Photo removed from preview. Click Save Changes to apply.");
+  }
+
   return (
     <form action={formAction} className="space-y-5">
       <div className="flex items-center gap-4 rounded-xl border p-4">
@@ -96,7 +105,7 @@ export default function AccountForm({
         <div className="flex-1">
           <p className="text-sm font-medium">Profile Preview</p>
           <p className="text-xs text-muted-foreground">
-            Upload a photo or use an image URL.
+            Upload a photo, remove it, or use an image URL.
           </p>
         </div>
 
@@ -116,6 +125,15 @@ export default function AccountForm({
             onClick={() => fileInputRef.current?.click()}
           >
             {uploading ? "Uploading..." : "Upload Photo"}
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            disabled={uploading || !previewImage}
+            onClick={handleRemovePhoto}
+          >
+            Remove Photo
           </Button>
         </div>
       </div>
