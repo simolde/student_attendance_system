@@ -95,7 +95,7 @@ export default async function AdminStudentsPage({
     <div className="space-y-8">
       <PageHeader
         title="Student Management"
-        description="Create sections and add students to those sections."
+        description="Manage sections and student records from one place."
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Admin", href: "/dashboard/admin" },
@@ -103,11 +103,11 @@ export default async function AdminStudentsPage({
         ]}
       />
 
-      <Card>
-        <CardHeader>
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader className="pb-4">
           <CardTitle>Manage Students and Sections</CardTitle>
           <CardDescription>
-            Create sections and add students to those sections.
+            Create sections and add students to their assigned class.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -115,29 +115,34 @@ export default async function AdminStudentsPage({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader className="pb-4">
           <CardTitle>Sections</CardTitle>
-          <CardDescription>Available class/section list.</CardDescription>
+          <CardDescription>Available class and section list.</CardDescription>
         </CardHeader>
         <CardContent>
           {sections.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No sections yet.</p>
+            <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
+              No sections yet.
+            </div>
           ) : (
-            <ul className="space-y-2">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {sections.map((section) => (
-                <li key={section.id} className="rounded-md border px-3 py-2">
-                  {section.name}
-                </li>
+                <div
+                  key={section.id}
+                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                >
+                  <p className="font-medium text-slate-900">{section.name}</p>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Students</CardTitle>
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle>Students Directory</CardTitle>
           <CardDescription>
             Page {page} of {totalPages} • {totalStudents} total students
           </CardDescription>
@@ -183,36 +188,45 @@ export default async function AdminStudentsPage({
           </TableToolbar>
 
           {students.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No students found.</p>
+            <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
+              No students found.
+            </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Student No</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Section</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {students.map((student) => (
-                    <TableRow key={student.id}>
-                      <TableCell>{student.studentNo}</TableCell>
-                      <TableCell>{student.user.name ?? "-"}</TableCell>
-                      <TableCell>{student.user.email}</TableCell>
-                      <TableCell>{student.section?.name ?? "-"}</TableCell>
+              <div className="overflow-hidden rounded-xl border border-slate-200">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50/80">
+                      <TableHead>Student No</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Section</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+
+                  <TableBody>
+                    {students.map((student) => (
+                      <TableRow key={student.id}>
+                        <TableCell className="font-medium text-slate-900">
+                          {student.studentNo}
+                        </TableCell>
+                        <TableCell>{student.user.name ?? "-"}</TableCell>
+                        <TableCell className="text-slate-600">
+                          {student.user.email}
+                        </TableCell>
+                        <TableCell>{student.section?.name ?? "-"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
 
               <div className="flex items-center justify-between">
                 <Button variant="outline" asChild disabled={page <= 1}>
                   <Link href={buildUrl(page - 1)}>Previous</Link>
                 </Button>
 
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-slate-500">
                   Page {page} of {totalPages}
                 </span>
 

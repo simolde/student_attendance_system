@@ -81,6 +81,7 @@ export default async function AdminUsersPage({
         id: true,
         name: true,
         email: true,
+        image: true,
         role: true,
         isActive: true,
         createdAt: true,
@@ -103,7 +104,7 @@ export default async function AdminUsersPage({
     <div className="space-y-8">
       <PageHeader
         title="User Management"
-        description="Create admin, teacher, staff, and student accounts."
+        description="Create, manage, and control access for system users."
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Admin", href: "/dashboard/admin" },
@@ -111,19 +112,21 @@ export default async function AdminUsersPage({
         ]}
       />
 
-      <Card>
-        <CardHeader>
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader className="pb-4">
           <CardTitle>Create User</CardTitle>
-          <CardDescription>Add new users and assign their roles.</CardDescription>
+          <CardDescription>
+            Add new admin, teacher, staff, or student accounts.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <UserManagementForms />
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Users</CardTitle>
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle>Users Directory</CardTitle>
           <CardDescription>
             Page {page} of {totalPages} • {totalUsers} total users
           </CardDescription>
@@ -169,72 +172,77 @@ export default async function AdminUsersPage({
           </TableToolbar>
 
           {users.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No users found.</p>
+            <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
+              No users found.
+            </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Active</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-
-                <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>{user.name ?? "-"}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{user.role}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.isActive ? (
-                          <Badge>Active</Badge>
-                        ) : (
-                          <Badge variant="destructive">Inactive</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {new Date(user.createdAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <UserTableActions
-                          user={{
-                            id: user.id,
-                            email: user.email,
-                            role: user.role,
-                            isActive: user.isActive,
-                          }}
-                        />
-                      </TableCell>
+              <div className="overflow-hidden rounded-xl border border-slate-200">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50/80">
+                      <TableHead>User</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="w-[260px]">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+
+                  <TableBody>
+                    {users.map((user) => (
+                      <TableRow key={user.id} className="align-top">
+                        <TableCell>
+                          <div className="space-y-1">
+                            <p className="font-medium text-slate-900">
+                              {user.name ?? "-"}
+                            </p>
+                            <p className="text-sm text-slate-500">{user.email}</p>
+                          </div>
+                        </TableCell>
+
+                        <TableCell>
+                          <Badge variant="secondary">{user.role}</Badge>
+                        </TableCell>
+
+                        <TableCell>
+                          {user.isActive ? (
+                            <Badge>Active</Badge>
+                          ) : (
+                            <Badge variant="destructive">Inactive</Badge>
+                          )}
+                        </TableCell>
+
+                        <TableCell className="text-sm text-slate-600">
+                          {new Date(user.createdAt).toLocaleDateString()}
+                        </TableCell>
+
+                        <TableCell>
+                          <UserTableActions
+                            user={{
+                              id: user.id,
+                              email: user.email,
+                              role: user.role,
+                              isActive: user.isActive,
+                            }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
 
               <div className="flex items-center justify-between">
-                <Button
-                  variant="outline"
-                  asChild
-                  disabled={page <= 1}
-                >
+                <Button variant="outline" asChild disabled={page <= 1}>
                   <Link href={buildUrl(page - 1)}>Previous</Link>
                 </Button>
 
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-slate-500">
                   Page {page} of {totalPages}
                 </span>
 
-                <Button
-                  variant="outline"
-                  asChild
-                  disabled={page >= totalPages}
-                >
+                <Button variant="outline" asChild disabled={page >= totalPages}>
                   <Link href={buildUrl(page + 1)}>Next</Link>
                 </Button>
               </div>
