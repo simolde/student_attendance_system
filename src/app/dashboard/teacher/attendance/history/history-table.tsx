@@ -67,7 +67,7 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
       <TableCell>{record.student.studentNo}</TableCell>
       <TableCell>{record.student.user.name ?? record.student.user.email}</TableCell>
       <TableCell>{record.student.section?.name ?? "-"}</TableCell>
-      <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
+      <TableCell>{new Date(record.date + "T00:00:00").toLocaleDateString()}</TableCell>
 
       <TableCell>
         <select

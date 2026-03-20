@@ -1,6 +1,16 @@
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { hasRole, ROLES } from "@/lib/rbac";
+import PageHeader from "@/components/layout/page-header";
+import StatCard from "@/components/ui/stat-card";
+import {
+  CheckCircle2,
+  Clock3,
+  XCircle,
+  FileCheck,
+  ClipboardCheck,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -8,8 +18,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import PageHeader from "@/components/layout/page-header";
+
+function getTodayRange() {
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(now);
+  end.setHours(23, 59, 59, 999);
+
+  return { start, end };
+}
 
 export default async function TeacherDashboardPage() {
   const session = await auth();
@@ -29,8 +48,38 @@ export default async function TeacherDashboardPage() {
     redirect("/unauthorized");
   }
 
+  const { start, end } = getTodayRange();
+
+  const [presentToday, lateToday, absentToday, excusedToday] =
+    await Promise.all([
+      prisma.attendance.count({
+        where: {
+          date: { gte: start, lte: end },
+          status: "PRESENT",
+        },
+      }),
+      prisma.attendance.count({
+        where: {
+          date: { gte: start, lte: end },
+          status: "LATE",
+        },
+      }),
+      prisma.attendance.count({
+        where: {
+          date: { gte: start, lte: end },
+          status: "ABSENT",
+        },
+      }),
+      prisma.attendance.count({
+        where: {
+          date: { gte: start, lte: end },
+          status: "EXCUSED",
+        },
+      }),
+    ]);
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <PageHeader
         title="Teacher Dashboard"
         description="Record attendance and review attendance history."
@@ -40,43 +89,61 @@ export default async function TeacherDashboardPage() {
         ]}
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardDescription>Logged in as</CardDescription>
-            <CardTitle className="text-xl">
-              {session.user.name ?? session.user.email}
-            </CardTitle>
-          </CardHeader>
-        </Card>
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+            Daily Attendance Summary
+          </h2>
+          <p className="text-sm text-slate-600">
+            Overview of attendance records for today.
+          </p>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardDescription>Role</CardDescription>
-            <CardTitle>
-              <Badge variant="secondary">{session.user.role}</Badge>
-            </CardTitle>
-          </CardHeader>
-        </Card>
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="Present"
+            value={presentToday}
+            description="Students marked present"
+            icon={<CheckCircle2 className="h-5 w-5 text-emerald-700" />}
+            tone="success"
+          />
+          <StatCard
+            label="Late"
+            value={lateToday}
+            description="Students marked late"
+            icon={<Clock3 className="h-5 w-5 text-amber-700" />}
+            tone="warning"
+          />
+          <StatCard
+            label="Absent"
+            value={absentToday}
+            description="Students marked absent"
+            icon={<XCircle className="h-5 w-5 text-rose-700" />}
+            tone="danger"
+          />
+          <StatCard
+            label="Excused"
+            value={excusedToday}
+            description="Students marked excused"
+            icon={<FileCheck className="h-5 w-5 text-sky-700" />}
+            tone="info"
+          />
+        </div>
+      </section>
 
-        <Card>
-          <CardHeader>
-            <CardDescription>Access</CardDescription>
-            <CardTitle className="text-xl">Attendance Tools</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-
-      <Card>
+      <Card className="border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle>Teacher Overview</CardTitle>
+          <CardTitle>Teacher Workflow</CardTitle>
           <CardDescription>
-            Use the sidebar to record attendance and review saved records.
+            Your main tasks are attendance recording and reviewing attendance history.
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          This area is for teachers and staff who manage daily attendance and
-          attendance history.
+        <CardContent className="flex items-start gap-3 text-sm text-slate-600">
+          <ClipboardCheck className="mt-0.5 h-5 w-5 shrink-0 text-slate-500" />
+          <p>
+            Use the sidebar to record attendance by section and date, then review or edit
+            saved records from the attendance history page.
+          </p>
         </CardContent>
       </Card>
     </div>
