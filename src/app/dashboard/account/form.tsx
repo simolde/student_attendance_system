@@ -1,4 +1,3 @@
-"use client";
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
@@ -9,6 +8,8 @@ import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const initialState: AccountFormState = {};
+const MAX_FILE_SIZE = 2 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 function getInitials(name: string) {
   return name
@@ -50,6 +51,18 @@ export default function AccountForm({
 
   async function handleFileChange(file: File | undefined) {
     if (!file) return;
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error("Only JPG, PNG, and WEBP images are allowed.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("Image must be 2MB or smaller.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
 
     try {
       setUploading(true);
@@ -138,7 +151,7 @@ export default function AccountForm({
           placeholder="https://example.com/profile.jpg"
         />
         <p className="mt-2 text-xs text-muted-foreground">
-          Upload is recommended. You can still paste a direct image URL here.
+          Upload is recommended. JPG, PNG, or WEBP only. Max 2MB.
         </p>
       </div>
 
