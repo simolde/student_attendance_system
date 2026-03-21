@@ -12,6 +12,19 @@ import {
 } from "@/components/ui/card";
 import AttendanceForm from "./form";
 
+function getManilaDateInputValue() {
+  const now = new Date();
+  const manilaNow = new Date(
+    now.toLocaleString("en-US", { timeZone: "Asia/Manila" })
+  );
+
+  const year = manilaNow.getFullYear();
+  const month = String(manilaNow.getMonth() + 1).padStart(2, "0");
+  const day = String(manilaNow.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 export default async function AttendancePage({
   searchParams,
 }: {
@@ -36,7 +49,7 @@ export default async function AttendancePage({
 
   const params = await searchParams;
   const selectedSectionId = params.sectionId ?? "";
-  const selectedDate = params.date ?? new Date().toISOString().slice(0, 10);
+  const selectedDate = params.date ?? getManilaDateInputValue();
 
   const sections = await prisma.section.findMany({
     orderBy: { name: "asc" },
@@ -44,7 +57,7 @@ export default async function AttendancePage({
 
   const activeSchoolYear = await prisma.schoolYear.findFirst({
     where: { isActive: true },
-    select: { id: true },
+    select: { id: true, name: true },
   });
 
   const students =
@@ -105,6 +118,7 @@ export default async function AttendancePage({
             selectedSectionId={selectedSectionId}
             selectedDate={selectedDate}
             students={students}
+            activeSchoolYearName={activeSchoolYear?.name ?? null}
           />
         </CardContent>
       </Card>

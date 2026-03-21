@@ -48,7 +48,7 @@ export default function DashboardCharts({
         </CardHeader>
 
         <CardContent>
-          <div className="w-full h-64 min-h-[250px]">
+          <div className="w-full h-64 min-h-62.5">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -76,7 +76,7 @@ export default function DashboardCharts({
         </CardHeader>
 
         <CardContent>
-          <div className="w-full h-64 min-h-[250px]">
+          <div className="w-full h-64 min-h-62.5">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={sectionAttendanceData}>
                 <CartesianGrid vertical={false} />

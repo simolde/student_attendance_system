@@ -50,11 +50,18 @@ export default async function AttendanceHistoryPage({
     select: { id: true },
   });
 
+  const start = new Date(selectedDate);
+  const end = new Date(selectedDate);
+  end.setDate(end.getDate() + 1);
+
   const records =
     selectedSectionId && selectedDate && activeSchoolYear
       ? await prisma.attendance.findMany({
           where: {
-            date: new Date(selectedDate),
+            date: {
+              gte: start,
+              lt: end,
+            },
             enrollment: {
               sectionId: selectedSectionId,
               schoolYearId: activeSchoolYear.id,
@@ -62,14 +69,10 @@ export default async function AttendanceHistoryPage({
           },
           include: {
             student: {
-              include: {
-                user: true,
-              },
+              include: { user: true },
             },
             enrollment: {
-              include: {
-                section: true,
-              },
+              include: { section: true },
             },
           },
           orderBy: {
@@ -78,7 +81,7 @@ export default async function AttendanceHistoryPage({
             },
           },
         })
-      : [];
+    : [];
 
   return (
     <div className="space-y-8">
@@ -157,7 +160,7 @@ export default async function AttendanceHistoryPage({
             <AttendanceHistoryTable
               records={records.map((record) => ({
                 id: record.id,
-                date: record.date.toISOString(),
+                date: record.date.toISOString().slice(0, 10),
                 status: record.status as
                   | "PRESENT"
                   | "LATE"

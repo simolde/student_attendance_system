@@ -69,7 +69,7 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
       </TableCell>
       <TableCell>{record.student.user.name ?? record.student.user.email}</TableCell>
       <TableCell>{record.student.section?.name ?? "-"}</TableCell>
-      <TableCell>{new Date(record.date).toISOString().slice(0, 10)}</TableCell>
+      <TableCell>{(record.date)}</TableCell>
 
       <TableCell>
         <select
@@ -150,7 +150,7 @@ export default function AttendanceHistoryTable({
             <TableHead>Date</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Remarks</TableHead>
-            <TableHead className="w-[140px]">Action</TableHead>
+            <TableHead className="w-35">Action</TableHead>
           </TableRow>
         </TableHeader>
 

@@ -35,11 +35,13 @@ export default function AttendanceForm({
   selectedSectionId,
   selectedDate,
   students,
+  activeSchoolYearName,
 }: {
   sections: Section[];
   selectedSectionId: string;
   selectedDate: string;
   students: Student[];
+  activeSchoolYearName: string | null;
 }) {
   const [state, formAction, pending] = useActionState(
     saveAttendance,
@@ -73,7 +75,12 @@ export default function AttendanceForm({
 
           <div>
             <label className="mb-2 block text-sm font-medium">Date</label>
-            <Input type="date" name="date" defaultValue={selectedDate} className="h-11" />
+            <Input
+              type="date"
+              name="date"
+              defaultValue={selectedDate}
+              className="h-11"
+            />
           </div>
 
           <div className="flex items-end">
@@ -82,6 +89,16 @@ export default function AttendanceForm({
             </Button>
           </div>
         </form>
+
+        {activeSchoolYearName ? (
+          <p className="mt-3 text-xs text-slate-600">
+            Active school year: <span className="font-medium">{activeSchoolYearName}</span>
+          </p>
+        ) : (
+          <p className="mt-3 text-xs text-rose-600">
+            No active school year found.
+          </p>
+        )}
       </div>
 
       <form action={formAction} className="space-y-6">
@@ -102,14 +119,20 @@ export default function AttendanceForm({
             <TableBody>
               {!selectedSectionId ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="py-10 text-center text-sm text-slate-500">
+                  <TableCell
+                    colSpan={4}
+                    className="py-10 text-center text-sm text-slate-500"
+                  >
                     Please select a section and click Load Students.
                   </TableCell>
                 </TableRow>
               ) : students.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="py-10 text-center text-sm text-slate-500">
-                    No students in this section.
+                  <TableCell
+                    colSpan={4}
+                    className="py-10 text-center text-sm text-slate-500"
+                  >
+                    No enrolled students found in this section.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -118,7 +141,9 @@ export default function AttendanceForm({
                     <TableCell className="font-medium text-slate-900">
                       {student.studentNo}
                     </TableCell>
-                    <TableCell>{student.user.name ?? student.user.email}</TableCell>
+                    <TableCell>
+                      {student.user.name ?? student.user.email}
+                    </TableCell>
                     <TableCell>
                       <select
                         name={`status_${student.id}`}
@@ -156,7 +181,12 @@ export default function AttendanceForm({
 
           <Button
             type="submit"
-            disabled={pending || !selectedSectionId || students.length === 0}
+            disabled={
+              pending ||
+              !selectedSectionId ||
+              students.length === 0 ||
+              !activeSchoolYearName
+            }
             className="min-w-40"
           >
             {pending ? "Saving..." : "Save Attendance"}

@@ -10,6 +10,8 @@ import {
   KeyRound,
   FileText,
   Shield,
+  School,
+  FileSpreadsheet,
 } from "lucide-react";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
@@ -41,6 +43,8 @@ function SidebarContent({
         { href: "/dashboard/admin/users", label: "User Management", icon: Users },
         { href: "/dashboard/admin/students", label: "Student Management", icon: GraduationCap },
         { href: "/dashboard/admin/audit-logs", label: "Audit Logs", icon: FileText },
+        { href: "/dashboard/admin/school-years", label: "School Years", icon: School },
+        { href: "/dashboard/admin/students/import", label: "Import Students", icon: FileSpreadsheet },
       ]
     : [];
 

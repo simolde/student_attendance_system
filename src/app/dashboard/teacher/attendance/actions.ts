@@ -84,10 +84,14 @@ export async function saveAttendance(
     });
 
     if (enrollments.length === 0) {
-      return { error: "No enrolled students found in this section for the active school year" };
+      return {
+        error:
+          "No enrolled students found in this section for the active school year",
+      };
     }
 
-    const attendanceDate = new Date(`${date}T00:00:00`);
+    // Store the attendance day explicitly as Asia/Manila midnight.
+    const attendanceDate = new Date(`${date}T00:00:00+08:00`);
 
     await prisma.$transaction(
       enrollments.map((enrollment) => {
