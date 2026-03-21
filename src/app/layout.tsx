@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Student Attendance System",
-  description: "Student Attendance System",
+  title: "StarDigiTech Solutions Inc.",
+  description: "AI Powered School Management Platform",
 };
 
 export default function RootLayout({

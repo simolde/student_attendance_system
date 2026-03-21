@@ -24,31 +24,16 @@ export async function saveAttendance(
 ): Promise<AttendanceFormState> {
   const session = await auth();
 
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  if (
-    !hasRole(session.user.role, [
-      ROLES.SUPER_ADMIN,
-      ROLES.ADMIN,
-      ROLES.TEACHER,
-      ROLES.STAFF,
-    ])
-  ) {
+  if (!session?.user) redirect("/login");
+  if (!hasRole(session.user.role, [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER, ROLES.STAFF]))
     redirect("/unauthorized");
-  }
 
   const parsed = attendanceSchema.safeParse({
     sectionId: formData.get("sectionId"),
     date: formData.get("date"),
   });
 
-  if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message || "Invalid attendance data",
-    };
-  }
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid data" };
 
   const { sectionId, date } = parsed.data;
 
@@ -57,77 +42,39 @@ export async function saveAttendance(
       where: { isActive: true },
       select: { id: true, name: true },
     });
-
-    if (!activeSchoolYear) {
-      return { error: "No active school year found" };
-    }
+    if (!activeSchoolYear) return { error: "No active school year found" };
 
     const enrollments = await prisma.enrollment.findMany({
-      where: {
-        sectionId,
-        schoolYearId: activeSchoolYear.id,
-        status: "ENROLLED",
-      },
-      include: {
-        student: {
-          select: {
-            id: true,
-            studentNo: true,
-          },
-        },
-      },
-      orderBy: {
-        student: {
-          studentNo: "asc",
-        },
-      },
+      where: { sectionId, schoolYearId: activeSchoolYear.id, status: "ENROLLED" },
+      include: { student: { select: { id: true, studentNo: true } } },
+      orderBy: { student: { studentNo: "asc" } },
     });
 
-    if (enrollments.length === 0) {
-      return { error: "No enrolled students found in this section for the active school year" };
-    }
+    if (enrollments.length === 0) return { error: "No enrolled students found" };
 
     const attendanceDate = new Date(`${date}T00:00:00`);
 
-    await prisma.$transaction(
-      enrollments.map((enrollment) => {
-        const status = (formData.get(`status_${enrollment.studentId}`) as
-          | "PRESENT"
-          | "LATE"
-          | "ABSENT"
-          | "EXCUSED"
-          | null) ?? "PRESENT";
+    const upserts = enrollments.map((enrollment) => {
+      const studentId = enrollment.student.id;
+      const status = (formData.get(`status_${studentId}`) as
+        | "PRESENT"
+        | "LATE"
+        | "ABSENT"
+        | "EXCUSED"
+        | null) ?? "PRESENT";
 
-        const remarksRaw = formData.get(`remarks_${enrollment.studentId}`);
-        const remarks =
-          typeof remarksRaw === "string" && remarksRaw.trim().length > 0
-            ? remarksRaw.trim()
-            : null;
+      const remarksRaw = formData.get(`remarks_${studentId}`);
+      const remarks =
+        typeof remarksRaw === "string" && remarksRaw.trim() ? remarksRaw.trim() : null;
 
-        return prisma.attendance.upsert({
-          where: {
-            studentId_date: {
-              studentId: enrollment.studentId,
-              date: attendanceDate,
-            },
-          },
-          update: {
-            enrollmentId: enrollment.id,
-            status,
-            source: "MANUAL",
-            remarks,
-          },
-          create: {
-            studentId: enrollment.studentId,
-            enrollmentId: enrollment.id,
-            date: attendanceDate,
-            status,
-            source: "MANUAL",
-            remarks,
-          },
-        });
-      })
-    );
+      return prisma.attendance.upsert({
+        where: { studentId_date: { studentId, date: attendanceDate } },
+        update: { enrollmentId: enrollment.id, status, source: "MANUAL", remarks },
+        create: { studentId, enrollmentId: enrollment.id, date: attendanceDate, status, source: "MANUAL", remarks },
+      });
+    });
+
+    await prisma.$transaction(upserts);
 
     await logAudit({
       userId: session.user.id,
@@ -143,7 +90,7 @@ export async function saveAttendance(
 
     return { success: "Attendance saved successfully" };
   } catch (error) {
-    console.error("Save attendance failed:", error);
+    console.error("Failed to save attendance:", error);
     return { error: "Failed to save attendance" };
   }
-}
+} 
