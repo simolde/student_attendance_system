@@ -12,6 +12,7 @@ import {
   Shield,
   School,
   FileSpreadsheet,
+  Radio,
 } from "lucide-react";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ function SidebarContent({
         { href: "/dashboard/admin/audit-logs", label: "Audit Logs", icon: FileText },
         { href: "/dashboard/admin/school-years", label: "School Years", icon: School },
         { href: "/dashboard/admin/students/import", label: "Import Students", icon: FileSpreadsheet },
+        { href: "/dashboard/admin/rfid-logs", label: "RFID Logs", icon: Radio },
       ]
     : [];
 
