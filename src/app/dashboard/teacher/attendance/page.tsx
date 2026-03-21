@@ -42,17 +42,42 @@ export default async function AttendancePage({
     orderBy: { name: "asc" },
   });
 
-  const students = selectedSectionId
-    ? await prisma.student.findMany({
-        where: { sectionId: selectedSectionId },
-        include: {
-          user: true,
-        },
-        orderBy: {
-          studentNo: "asc",
-        },
-      })
-    : [];
+  const activeSchoolYear = await prisma.schoolYear.findFirst({
+    where: { isActive: true },
+    select: { id: true },
+  });
+
+  const students =
+    selectedSectionId && activeSchoolYear
+      ? (
+          await prisma.enrollment.findMany({
+            where: {
+              sectionId: selectedSectionId,
+              schoolYearId: activeSchoolYear.id,
+              status: "ENROLLED",
+            },
+            include: {
+              student: {
+                include: {
+                  user: true,
+                },
+              },
+            },
+            orderBy: {
+              student: {
+                studentNo: "asc",
+              },
+            },
+          })
+        ).map((enrollment) => ({
+          id: enrollment.student.id,
+          studentNo: enrollment.student.studentNo,
+          user: {
+            name: enrollment.student.user.name,
+            email: enrollment.student.user.email,
+          },
+        }))
+      : [];
 
   return (
     <div className="space-y-8">

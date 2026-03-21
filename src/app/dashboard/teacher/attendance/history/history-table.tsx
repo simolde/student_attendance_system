@@ -38,12 +38,6 @@ type AttendanceRow = {
   };
 };
 
-function formatDate(dateString: string) {
-  const [year, month, day] = dateString.slice(0, 10).split("-");
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return `${monthNames[Number(month) - 1]} ${Number(day)}, ${year}`;
-}
-
 function AttendanceEditRow({ record }: { record: AttendanceRow }) {
   const [status, setStatus] = useState(record.status);
   const [remarks, setRemarks] = useState(record.remarks ?? "");
@@ -75,7 +69,7 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
       </TableCell>
       <TableCell>{record.student.user.name ?? record.student.user.email}</TableCell>
       <TableCell>{record.student.section?.name ?? "-"}</TableCell>
-      <TableCell>{formatDate(record.date)}</TableCell>
+      <TableCell>{new Date(record.date).toISOString().slice(0, 10)}</TableCell>
 
       <TableCell>
         <select

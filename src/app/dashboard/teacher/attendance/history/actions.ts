@@ -13,17 +13,17 @@ export type AttendanceUpdateState = {
   success?: string;
 };
 
-const updateAttendanceSchema = z.object({
-  attendanceId: z.string().min(1, "Attendance ID is required"),
+const updateSchema = z.object({
+  attendanceId: z.string().min(1),
   status: z.enum(["PRESENT", "LATE", "ABSENT", "EXCUSED"]),
   remarks: z.string().optional(),
 });
 
-const deleteAttendanceSchema = z.object({
-  attendanceId: z.string().min(1, "Attendance ID is required"),
+const deleteSchema = z.object({
+  attendanceId: z.string().min(1),
 });
 
-async function requireAttendanceAccess() {
+async function requireTeacherAccess() {
   const session = await auth();
 
   if (!session?.user) {
@@ -48,35 +48,27 @@ export async function updateAttendanceRecord(
   prevState: AttendanceUpdateState,
   formData: FormData
 ): Promise<AttendanceUpdateState> {
-  const session = await requireAttendanceAccess();
+  const session = await requireTeacherAccess();
 
-  const parsed = updateAttendanceSchema.safeParse({
+  const parsed = updateSchema.safeParse({
     attendanceId: formData.get("attendanceId"),
     status: formData.get("status"),
-    remarks: formData.get("remarks")?.toString() ?? "",
+    remarks: formData.get("remarks"),
   });
 
   if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message || "Invalid attendance update",
-    };
+    return { error: parsed.error.issues[0]?.message || "Invalid update data" };
   }
-
-  const { attendanceId, status, remarks } = parsed.data;
 
   try {
     const updated = await prisma.attendance.update({
-      where: { id: attendanceId },
+      where: { id: parsed.data.attendanceId },
       data: {
-        status,
-        remarks: remarks || null,
-      },
-      include: {
-        student: {
-          include: {
-            user: true,
-          },
-        },
+        status: parsed.data.status,
+        remarks:
+          parsed.data.remarks && parsed.data.remarks.trim().length > 0
+            ? parsed.data.remarks.trim()
+            : null,
       },
     });
 
@@ -85,13 +77,15 @@ export async function updateAttendanceRecord(
       action: "UPDATE_ATTENDANCE",
       entity: "Attendance",
       entityId: updated.id,
-      description: `Updated attendance for ${updated.student.user.email} to ${status}`,
+      description: `Updated attendance ${updated.id} to ${updated.status}`,
     });
 
     revalidatePath("/dashboard/teacher/attendance/history");
+    revalidatePath("/dashboard");
 
     return { success: "Attendance updated successfully" };
-  } catch {
+  } catch (error) {
+    console.error(error);
     return { error: "Failed to update attendance" };
   }
 }
@@ -100,9 +94,9 @@ export async function deleteAttendanceRecord(
   prevState: AttendanceUpdateState,
   formData: FormData
 ): Promise<AttendanceUpdateState> {
-  const session = await requireAttendanceAccess();
+  const session = await requireTeacherAccess();
 
-  const parsed = deleteAttendanceSchema.safeParse({
+  const parsed = deleteSchema.safeParse({
     attendanceId: formData.get("attendanceId"),
   });
 
@@ -110,40 +104,25 @@ export async function deleteAttendanceRecord(
     return { error: "Invalid attendance record" };
   }
 
-  const { attendanceId } = parsed.data;
-
   try {
-    const record = await prisma.attendance.findUnique({
-      where: { id: attendanceId },
-      include: {
-        student: {
-          include: {
-            user: true,
-          },
-        },
-      },
-    });
-
-    if (!record) {
-      return { error: "Attendance record not found" };
-    }
-
-    await prisma.attendance.delete({
-      where: { id: attendanceId },
+    const deleted = await prisma.attendance.delete({
+      where: { id: parsed.data.attendanceId },
     });
 
     await logAudit({
       userId: session.user.id,
       action: "DELETE_ATTENDANCE",
       entity: "Attendance",
-      entityId: attendanceId,
-      description: `Deleted attendance for ${record.student.user.email} on ${record.date.toISOString().slice(0, 10)}`,
+      entityId: deleted.id,
+      description: `Deleted attendance ${deleted.id}`,
     });
 
     revalidatePath("/dashboard/teacher/attendance/history");
+    revalidatePath("/dashboard");
 
     return { success: "Attendance deleted successfully" };
-  } catch {
+  } catch (error) {
+    console.error(error);
     return { error: "Failed to delete attendance" };
   }
 }

@@ -77,7 +77,7 @@ export default function DashboardCharts({
 
         <CardContent>
           <div className="w-full h-64 min-h-[250px]">
-            <ResponsiveContainer width="100%" height="100%" aspect={2}>
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={sectionAttendanceData}>
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="name" />
