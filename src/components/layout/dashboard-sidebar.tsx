@@ -13,6 +13,7 @@ import {
   School,
   FileSpreadsheet,
   Radio,
+  RadioTower,
 } from "lucide-react";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,7 @@ function SidebarContent({
         { href: "/dashboard/admin/school-years", label: "School Years", icon: School },
         { href: "/dashboard/admin/students/import", label: "Import Students", icon: FileSpreadsheet },
         { href: "/dashboard/admin/rfid-logs", label: "RFID Logs", icon: Radio },
+        { href: "/dashboard/admin/rfid-devices", label: "RFID Devices", icon: RadioTower },
       ]
     : [];
 
