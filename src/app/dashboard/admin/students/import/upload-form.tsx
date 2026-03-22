@@ -12,6 +12,7 @@ type ImportSummary = {
   createdStudents: number;
   createdEnrollments: number;
   updatedUsers: number;
+  updatedStudents: number;
   updatedEnrollments: number;
   skipped: number;
   errors: string[];
@@ -33,13 +34,12 @@ export default function ImportStudentsForm() {
       const workbook = XLSX.read(buffer, { type: "array" });
 
       const preferredSheetName =
-      workbook.SheetNames.find(
-        (name) => name.trim().toLowerCase() === "students"
-      ) ?? workbook.SheetNames[0];
+        workbook.SheetNames.find(
+          (name) => name.trim().toLowerCase() === "students"
+        ) ?? workbook.SheetNames[0];
 
       const sheet = workbook.Sheets[preferredSheetName];
 
-      // Read from row 4 where the real table headers begin.
       const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
         defval: "",
         range: 3,
@@ -68,16 +68,24 @@ export default function ImportStudentsForm() {
             row.rfid_uid
         );
 
-        setRows(mappedRows);
-        setFileName(file.name);
+      if (mappedRows.length === 0) {
+        toast.error("No valid student rows found in the Excel sheet.");
+        setRows([]);
+        setFileName("");
         setSummary(null);
+        return;
+      }
 
-        toast.success(
+      setRows(mappedRows);
+      setFileName(file.name);
+      setSummary(null);
+
+      toast.success(
         `Loaded ${mappedRows.length} row(s) from sheet "${preferredSheetName}"`
-        );
+      );
     } catch (error) {
-        console.error(error);
-        toast.error("Failed to read Excel file");
+      console.error(error);
+      toast.error("Failed to read Excel file");
     }
   }
 
@@ -110,6 +118,17 @@ export default function ImportStudentsForm() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <Button asChild type="button" variant="outline">
+          <a
+            href="/templates/student_import_template_v2.xlsx"
+            download="student_import_template_v2.xlsx"
+          >
+            Download Template
+          </a>
+        </Button>
+      </div>
+
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
         <label className="mb-2 block text-sm font-medium">Upload Excel File</label>
         <Input
@@ -118,7 +137,8 @@ export default function ImportStudentsForm() {
           onChange={(e) => handleFileChange(e.target.files?.[0])}
         />
         <p className="mt-2 text-xs text-slate-600">
-          Use columns: student_no, full_name, email, section, grade_level, school_year, status, rfid_uid
+          Use columns: student_no, full_name, email, section, grade_level,
+          school_year, status, rfid_uid
         </p>
       </div>
 
@@ -126,7 +146,9 @@ export default function ImportStudentsForm() {
         <div className="rounded-xl border border-slate-200 p-4">
           <p className="text-sm font-medium text-slate-900">Loaded File</p>
           <p className="mt-1 text-sm text-slate-600">{fileName}</p>
-          <p className="mt-1 text-xs text-slate-500">{rows.length} row(s) ready for import</p>
+          <p className="mt-1 text-xs text-slate-500">
+            {rows.length} row(s) ready for import
+          </p>
         </div>
       ) : null}
 
@@ -147,6 +169,7 @@ export default function ImportStudentsForm() {
                   <th className="px-4 py-3 text-left font-medium">Section</th>
                   <th className="px-4 py-3 text-left font-medium">Grade Level</th>
                   <th className="px-4 py-3 text-left font-medium">Status</th>
+                  <th className="px-4 py-3 text-left font-medium">RFID UID</th>
                 </tr>
               </thead>
               <tbody>
@@ -158,6 +181,7 @@ export default function ImportStudentsForm() {
                     <td className="px-4 py-3">{row.section}</td>
                     <td className="px-4 py-3">{row.grade_level}</td>
                     <td className="px-4 py-3">{row.status || "ENROLLED"}</td>
+                    <td className="px-4 py-3">{row.rfid_uid || "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -176,18 +200,30 @@ export default function ImportStudentsForm() {
         <div className="space-y-4 rounded-xl border border-slate-200 p-4">
           <p className="text-sm font-semibold text-slate-900">Import Summary</p>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <SummaryItem label="Created Users" value={summary.createdUsers} />
             <SummaryItem label="Created Students" value={summary.createdStudents} />
-            <SummaryItem label="Created Enrollments" value={summary.createdEnrollments} />
+            <SummaryItem
+              label="Created Enrollments"
+              value={summary.createdEnrollments}
+            />
             <SummaryItem label="Updated Users" value={summary.updatedUsers} />
-            <SummaryItem label="Updated Enrollments" value={summary.updatedEnrollments} />
+            <SummaryItem
+              label="Updated Students"
+              value={summary.updatedStudents}
+            />
+            <SummaryItem
+              label="Updated Enrollments"
+              value={summary.updatedEnrollments}
+            />
             <SummaryItem label="Skipped" value={summary.skipped} />
           </div>
 
           {summary.errors.length > 0 ? (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-              <p className="text-sm font-medium text-amber-900">Warnings / Errors</p>
+              <p className="text-sm font-medium text-amber-900">
+                Warnings / Errors
+              </p>
               <ul className="mt-2 space-y-1 text-xs text-amber-800">
                 {summary.errors.slice(0, 20).map((error, index) => (
                   <li key={index}>{error}</li>
