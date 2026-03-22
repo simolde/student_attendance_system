@@ -14,6 +14,7 @@ import {
   FileSpreadsheet,
   Radio,
   RadioTower,
+  CreditCard,
 } from "lucide-react";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
@@ -49,6 +50,7 @@ function SidebarContent({
         { href: "/dashboard/admin/students/import", label: "Import Students", icon: FileSpreadsheet },
         { href: "/dashboard/admin/rfid-logs", label: "RFID Logs", icon: Radio },
         { href: "/dashboard/admin/rfid-devices", label: "RFID Devices", icon: RadioTower },
+        { href: "/dashboard/admin/students/rfid", label: "Student RFID", icon: CreditCard },
       ]
     : [];
 
