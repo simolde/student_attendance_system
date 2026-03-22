@@ -36,7 +36,7 @@ export default function DashboardUserMenu({
   collapsed?: boolean;
 }) {
   const initials = getInitials(userName || userEmail || "U");
-  console.log(imageUrl);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

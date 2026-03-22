@@ -16,6 +16,7 @@ import {
   RadioTower,
   CreditCard,
   MonitorPlay,
+  AlarmClock,
 } from "lucide-react";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,7 @@ function SidebarContent({
         { href: "/dashboard/admin/rfid-devices", label: "RFID Devices", icon: RadioTower },
         { href: "/dashboard/admin/students/rfid", label: "Student RFID", icon: CreditCard },
         { href: "/dashboard/admin/rfid-monitor", label: "RFID Monitor", icon: MonitorPlay },
+        { href: "/dashboard/admin/attendance-rules", label: "Attendance Rules", icon: AlarmClock },
       ]
     : [];
 

@@ -48,6 +48,11 @@ export default async function AdminStudentsPage({
 
   const sections = await prisma.section.findMany({
     orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      gradeLevel: true,
+    },
   });
 
   const where = {
@@ -133,6 +138,7 @@ export default async function AdminStudentsPage({
                   className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
                 >
                   <p className="font-medium text-slate-900">{section.name}</p>
+                  <p className="mt-1 text-sm text-slate-500">{section.gradeLevel}</p>
                 </div>
               ))}
             </div>

@@ -77,3 +77,8 @@ export type RfidLog = Prisma.RfidLogModel
  * 
  */
 export type AuditLog = Prisma.AuditLogModel
+/**
+ * Model AttendanceRule
+ * 
+ */
+export type AttendanceRule = Prisma.AttendanceRuleModel

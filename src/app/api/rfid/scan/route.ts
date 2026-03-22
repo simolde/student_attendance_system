@@ -15,7 +15,7 @@ function manilaDateOnly(date: Date) {
     day: "2-digit",
   });
 
-  return formatter.format(date); // YYYY-MM-DD
+  return formatter.format(date);
 }
 
 function getManilaDateStart(date: Date) {
@@ -23,11 +23,65 @@ function getManilaDateStart(date: Date) {
   return new Date(`${day}T00:00:00+08:00`);
 }
 
+function getManilaTimeHHMM(date: Date) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Manila",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
+async function resolveAttendanceRule(sectionId: string, gradeLevel: string | null) {
+  const sectionRule = await prisma.attendanceRule.findFirst({
+    where: {
+      isActive: true,
+      sectionId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  if (sectionRule) {
+    return sectionRule;
+  }
+
+  if (gradeLevel) {
+    const gradeRule = await prisma.attendanceRule.findFirst({
+      where: {
+        isActive: true,
+        sectionId: null,
+        gradeLevel: gradeLevel as never,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    if (gradeRule) {
+      return gradeRule;
+    }
+  }
+
+  const defaultRule = await prisma.attendanceRule.findFirst({
+    where: {
+      isActive: true,
+      isDefault: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return defaultRule;
+}
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as ScanBody;
 
-    const rfidUid = body.rfidUid?.trim();
+    const rfidUid = body.rfidUid?.trim().toUpperCase();
     const deviceCode = body.deviceCode?.trim() || null;
 
     if (!rfidUid) {
@@ -37,9 +91,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const scanMoment = body.scanTime
-      ? new Date(body.scanTime)
-      : new Date();
+    const scanMoment = body.scanTime ? new Date(body.scanTime) : new Date();
 
     if (Number.isNaN(scanMoment.getTime())) {
       return NextResponse.json(
@@ -149,6 +201,33 @@ export async function POST(req: Request) {
       deviceId = device?.id ?? null;
     }
 
+    const rule = await resolveAttendanceRule(
+      enrollment.sectionId,
+      enrollment.section.gradeLevel ?? null
+    );
+
+    if (!rule) {
+      await prisma.rfidLog.create({
+        data: {
+          rfidUid,
+          studentId: student.id,
+          deviceId,
+          scanTime: scanMoment,
+          status: "DENIED",
+          message: "No active attendance rule matched this student's section or grade level",
+        },
+      });
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: "No active attendance rule found for this student",
+        },
+        { status: 400 }
+      );
+    }
+
+    const manilaTime = getManilaTimeHHMM(scanMoment);
     const attendanceDate = getManilaDateStart(scanMoment);
 
     const existingAttendance = await prisma.attendance.findUnique({
@@ -161,12 +240,56 @@ export async function POST(req: Request) {
     });
 
     if (!existingAttendance) {
+      if (manilaTime < rule.timeInStart) {
+        await prisma.rfidLog.create({
+          data: {
+            rfidUid,
+            studentId: student.id,
+            deviceId,
+            scanTime: scanMoment,
+            status: "DENIED",
+            message: `Scan too early. Allowed time in starts at ${rule.timeInStart}`,
+          },
+        });
+
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Scan too early. Allowed time in starts at ${rule.timeInStart}`,
+          },
+          { status: 403 }
+        );
+      }
+
+      if (manilaTime > rule.timeInEnd) {
+        await prisma.rfidLog.create({
+          data: {
+            rfidUid,
+            studentId: student.id,
+            deviceId,
+            scanTime: scanMoment,
+            status: "DENIED",
+            message: `Time in window already closed at ${rule.timeInEnd}`,
+          },
+        });
+
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Time in window already closed at ${rule.timeInEnd}`,
+          },
+          { status: 403 }
+        );
+      }
+
+      const attendanceStatus = manilaTime >= rule.lateAfter ? "LATE" : "PRESENT";
+
       const created = await prisma.attendance.create({
         data: {
           studentId: student.id,
           enrollmentId: enrollment.id,
           date: attendanceDate,
-          status: "PRESENT",
+          status: attendanceStatus,
           source: "RFID",
           timeIn: scanMoment,
         },
@@ -179,25 +302,94 @@ export async function POST(req: Request) {
           deviceId,
           scanTime: scanMoment,
           status: "MATCHED",
-          message: "Time in recorded",
+          message: `${attendanceStatus === "LATE" ? "Late" : "Present"} time in recorded using rule ${rule.name}`,
         },
       });
 
       return NextResponse.json({
         success: true,
-        message: "Time in recorded",
+        message:
+          attendanceStatus === "LATE"
+            ? "Late time in recorded"
+            : "Time in recorded",
         type: "TIME_IN",
         attendanceId: created.id,
+        attendanceStatus,
+        appliedRule: rule.name,
         student: {
           studentNo: student.studentNo,
           name: student.user.name,
           email: student.user.email,
           section: enrollment.section.name,
+          gradeLevel: enrollment.section.gradeLevel,
         },
       });
     }
 
     if (!existingAttendance.timeOut) {
+      if (!rule.timeOutStart || !rule.timeOutEnd) {
+        await prisma.rfidLog.create({
+          data: {
+            rfidUid,
+            studentId: student.id,
+            deviceId,
+            scanTime: scanMoment,
+            status: "DENIED",
+            message: "No time out window configured for the matched attendance rule",
+          },
+        });
+
+        return NextResponse.json(
+          {
+            success: false,
+            message: "No time out window configured for this rule",
+          },
+          { status: 403 }
+        );
+      }
+
+      if (manilaTime < rule.timeOutStart) {
+        await prisma.rfidLog.create({
+          data: {
+            rfidUid,
+            studentId: student.id,
+            deviceId,
+            scanTime: scanMoment,
+            status: "DENIED",
+            message: `Time out window has not started yet. Starts at ${rule.timeOutStart}`,
+          },
+        });
+
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Time out window has not started yet. Starts at ${rule.timeOutStart}`,
+          },
+          { status: 403 }
+        );
+      }
+
+      if (manilaTime > rule.timeOutEnd) {
+        await prisma.rfidLog.create({
+          data: {
+            rfidUid,
+            studentId: student.id,
+            deviceId,
+            scanTime: scanMoment,
+            status: "DENIED",
+            message: `Time out window already closed at ${rule.timeOutEnd}`,
+          },
+        });
+
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Time out window already closed at ${rule.timeOutEnd}`,
+          },
+          { status: 403 }
+        );
+      }
+
       const updated = await prisma.attendance.update({
         where: { id: existingAttendance.id },
         data: {
@@ -214,7 +406,7 @@ export async function POST(req: Request) {
           deviceId,
           scanTime: scanMoment,
           status: "MATCHED",
-          message: "Time out recorded",
+          message: `Time out recorded using rule ${rule.name}`,
         },
       });
 
@@ -223,11 +415,13 @@ export async function POST(req: Request) {
         message: "Time out recorded",
         type: "TIME_OUT",
         attendanceId: updated.id,
+        appliedRule: rule.name,
         student: {
           studentNo: student.studentNo,
           name: student.user.name,
           email: student.user.email,
           section: enrollment.section.name,
+          gradeLevel: enrollment.section.gradeLevel,
         },
       });
     }

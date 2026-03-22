@@ -27,6 +27,7 @@ export type AggregateSection = {
 export type SectionMinAggregateOutputType = {
   id: string | null
   name: string | null
+  gradeLevel: $Enums.GradeLevel | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -34,6 +35,7 @@ export type SectionMinAggregateOutputType = {
 export type SectionMaxAggregateOutputType = {
   id: string | null
   name: string | null
+  gradeLevel: $Enums.GradeLevel | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -41,6 +43,7 @@ export type SectionMaxAggregateOutputType = {
 export type SectionCountAggregateOutputType = {
   id: number
   name: number
+  gradeLevel: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -50,6 +53,7 @@ export type SectionCountAggregateOutputType = {
 export type SectionMinAggregateInputType = {
   id?: true
   name?: true
+  gradeLevel?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -57,6 +61,7 @@ export type SectionMinAggregateInputType = {
 export type SectionMaxAggregateInputType = {
   id?: true
   name?: true
+  gradeLevel?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -64,6 +69,7 @@ export type SectionMaxAggregateInputType = {
 export type SectionCountAggregateInputType = {
   id?: true
   name?: true
+  gradeLevel?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -144,6 +150,7 @@ export type SectionGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 export type SectionGroupByOutputType = {
   id: string
   name: string
+  gradeLevel: $Enums.GradeLevel
   createdAt: Date
   updatedAt: Date
   _count: SectionCountAggregateOutputType | null
@@ -172,19 +179,23 @@ export type SectionWhereInput = {
   NOT?: Prisma.SectionWhereInput | Prisma.SectionWhereInput[]
   id?: Prisma.StringFilter<"Section"> | string
   name?: Prisma.StringFilter<"Section"> | string
+  gradeLevel?: Prisma.EnumGradeLevelFilter<"Section"> | $Enums.GradeLevel
   createdAt?: Prisma.DateTimeFilter<"Section"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Section"> | Date | string
   students?: Prisma.StudentListRelationFilter
   enrollments?: Prisma.EnrollmentListRelationFilter
+  rules?: Prisma.AttendanceRuleListRelationFilter
 }
 
 export type SectionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  gradeLevel?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   students?: Prisma.StudentOrderByRelationAggregateInput
   enrollments?: Prisma.EnrollmentOrderByRelationAggregateInput
+  rules?: Prisma.AttendanceRuleOrderByRelationAggregateInput
 }
 
 export type SectionWhereUniqueInput = Prisma.AtLeast<{
@@ -193,15 +204,18 @@ export type SectionWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.SectionWhereInput | Prisma.SectionWhereInput[]
   OR?: Prisma.SectionWhereInput[]
   NOT?: Prisma.SectionWhereInput | Prisma.SectionWhereInput[]
+  gradeLevel?: Prisma.EnumGradeLevelFilter<"Section"> | $Enums.GradeLevel
   createdAt?: Prisma.DateTimeFilter<"Section"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Section"> | Date | string
   students?: Prisma.StudentListRelationFilter
   enrollments?: Prisma.EnrollmentListRelationFilter
+  rules?: Prisma.AttendanceRuleListRelationFilter
 }, "id" | "name">
 
 export type SectionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  gradeLevel?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SectionCountOrderByAggregateInput
@@ -215,6 +229,7 @@ export type SectionScalarWhereWithAggregatesInput = {
   NOT?: Prisma.SectionScalarWhereWithAggregatesInput | Prisma.SectionScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Section"> | string
   name?: Prisma.StringWithAggregatesFilter<"Section"> | string
+  gradeLevel?: Prisma.EnumGradeLevelWithAggregatesFilter<"Section"> | $Enums.GradeLevel
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Section"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Section"> | Date | string
 }
@@ -222,42 +237,51 @@ export type SectionScalarWhereWithAggregatesInput = {
 export type SectionCreateInput = {
   id?: string
   name: string
+  gradeLevel: $Enums.GradeLevel
   createdAt?: Date | string
   updatedAt?: Date | string
   students?: Prisma.StudentCreateNestedManyWithoutSectionInput
   enrollments?: Prisma.EnrollmentCreateNestedManyWithoutSectionInput
+  rules?: Prisma.AttendanceRuleCreateNestedManyWithoutSectionInput
 }
 
 export type SectionUncheckedCreateInput = {
   id?: string
   name: string
+  gradeLevel: $Enums.GradeLevel
   createdAt?: Date | string
   updatedAt?: Date | string
   students?: Prisma.StudentUncheckedCreateNestedManyWithoutSectionInput
   enrollments?: Prisma.EnrollmentUncheckedCreateNestedManyWithoutSectionInput
+  rules?: Prisma.AttendanceRuleUncheckedCreateNestedManyWithoutSectionInput
 }
 
 export type SectionUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  gradeLevel?: Prisma.EnumGradeLevelFieldUpdateOperationsInput | $Enums.GradeLevel
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.StudentUpdateManyWithoutSectionNestedInput
   enrollments?: Prisma.EnrollmentUpdateManyWithoutSectionNestedInput
+  rules?: Prisma.AttendanceRuleUpdateManyWithoutSectionNestedInput
 }
 
 export type SectionUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  gradeLevel?: Prisma.EnumGradeLevelFieldUpdateOperationsInput | $Enums.GradeLevel
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.StudentUncheckedUpdateManyWithoutSectionNestedInput
   enrollments?: Prisma.EnrollmentUncheckedUpdateManyWithoutSectionNestedInput
+  rules?: Prisma.AttendanceRuleUncheckedUpdateManyWithoutSectionNestedInput
 }
 
 export type SectionCreateManyInput = {
   id?: string
   name: string
+  gradeLevel: $Enums.GradeLevel
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -265,6 +289,7 @@ export type SectionCreateManyInput = {
 export type SectionUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  gradeLevel?: Prisma.EnumGradeLevelFieldUpdateOperationsInput | $Enums.GradeLevel
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -272,6 +297,7 @@ export type SectionUpdateManyMutationInput = {
 export type SectionUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  gradeLevel?: Prisma.EnumGradeLevelFieldUpdateOperationsInput | $Enums.GradeLevel
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -279,6 +305,7 @@ export type SectionUncheckedUpdateManyInput = {
 export type SectionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  gradeLevel?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -286,6 +313,7 @@ export type SectionCountOrderByAggregateInput = {
 export type SectionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  gradeLevel?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -293,6 +321,7 @@ export type SectionMaxOrderByAggregateInput = {
 export type SectionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  gradeLevel?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -305,6 +334,10 @@ export type SectionNullableScalarRelationFilter = {
 export type SectionScalarRelationFilter = {
   is?: Prisma.SectionWhereInput
   isNot?: Prisma.SectionWhereInput
+}
+
+export type EnumGradeLevelFieldUpdateOperationsInput = {
+  set?: $Enums.GradeLevel
 }
 
 export type SectionCreateNestedOneWithoutStudentsInput = {
@@ -337,20 +370,40 @@ export type SectionUpdateOneRequiredWithoutEnrollmentsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.SectionUpdateToOneWithWhereWithoutEnrollmentsInput, Prisma.SectionUpdateWithoutEnrollmentsInput>, Prisma.SectionUncheckedUpdateWithoutEnrollmentsInput>
 }
 
+export type SectionCreateNestedOneWithoutRulesInput = {
+  create?: Prisma.XOR<Prisma.SectionCreateWithoutRulesInput, Prisma.SectionUncheckedCreateWithoutRulesInput>
+  connectOrCreate?: Prisma.SectionCreateOrConnectWithoutRulesInput
+  connect?: Prisma.SectionWhereUniqueInput
+}
+
+export type SectionUpdateOneWithoutRulesNestedInput = {
+  create?: Prisma.XOR<Prisma.SectionCreateWithoutRulesInput, Prisma.SectionUncheckedCreateWithoutRulesInput>
+  connectOrCreate?: Prisma.SectionCreateOrConnectWithoutRulesInput
+  upsert?: Prisma.SectionUpsertWithoutRulesInput
+  disconnect?: Prisma.SectionWhereInput | boolean
+  delete?: Prisma.SectionWhereInput | boolean
+  connect?: Prisma.SectionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SectionUpdateToOneWithWhereWithoutRulesInput, Prisma.SectionUpdateWithoutRulesInput>, Prisma.SectionUncheckedUpdateWithoutRulesInput>
+}
+
 export type SectionCreateWithoutStudentsInput = {
   id?: string
   name: string
+  gradeLevel: $Enums.GradeLevel
   createdAt?: Date | string
   updatedAt?: Date | string
   enrollments?: Prisma.EnrollmentCreateNestedManyWithoutSectionInput
+  rules?: Prisma.AttendanceRuleCreateNestedManyWithoutSectionInput
 }
 
 export type SectionUncheckedCreateWithoutStudentsInput = {
   id?: string
   name: string
+  gradeLevel: $Enums.GradeLevel
   createdAt?: Date | string
   updatedAt?: Date | string
   enrollments?: Prisma.EnrollmentUncheckedCreateNestedManyWithoutSectionInput
+  rules?: Prisma.AttendanceRuleUncheckedCreateNestedManyWithoutSectionInput
 }
 
 export type SectionCreateOrConnectWithoutStudentsInput = {
@@ -372,33 +425,41 @@ export type SectionUpdateToOneWithWhereWithoutStudentsInput = {
 export type SectionUpdateWithoutStudentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  gradeLevel?: Prisma.EnumGradeLevelFieldUpdateOperationsInput | $Enums.GradeLevel
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   enrollments?: Prisma.EnrollmentUpdateManyWithoutSectionNestedInput
+  rules?: Prisma.AttendanceRuleUpdateManyWithoutSectionNestedInput
 }
 
 export type SectionUncheckedUpdateWithoutStudentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  gradeLevel?: Prisma.EnumGradeLevelFieldUpdateOperationsInput | $Enums.GradeLevel
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   enrollments?: Prisma.EnrollmentUncheckedUpdateManyWithoutSectionNestedInput
+  rules?: Prisma.AttendanceRuleUncheckedUpdateManyWithoutSectionNestedInput
 }
 
 export type SectionCreateWithoutEnrollmentsInput = {
   id?: string
   name: string
+  gradeLevel: $Enums.GradeLevel
   createdAt?: Date | string
   updatedAt?: Date | string
   students?: Prisma.StudentCreateNestedManyWithoutSectionInput
+  rules?: Prisma.AttendanceRuleCreateNestedManyWithoutSectionInput
 }
 
 export type SectionUncheckedCreateWithoutEnrollmentsInput = {
   id?: string
   name: string
+  gradeLevel: $Enums.GradeLevel
   createdAt?: Date | string
   updatedAt?: Date | string
   students?: Prisma.StudentUncheckedCreateNestedManyWithoutSectionInput
+  rules?: Prisma.AttendanceRuleUncheckedCreateNestedManyWithoutSectionInput
 }
 
 export type SectionCreateOrConnectWithoutEnrollmentsInput = {
@@ -420,17 +481,77 @@ export type SectionUpdateToOneWithWhereWithoutEnrollmentsInput = {
 export type SectionUpdateWithoutEnrollmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  gradeLevel?: Prisma.EnumGradeLevelFieldUpdateOperationsInput | $Enums.GradeLevel
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.StudentUpdateManyWithoutSectionNestedInput
+  rules?: Prisma.AttendanceRuleUpdateManyWithoutSectionNestedInput
 }
 
 export type SectionUncheckedUpdateWithoutEnrollmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  gradeLevel?: Prisma.EnumGradeLevelFieldUpdateOperationsInput | $Enums.GradeLevel
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.StudentUncheckedUpdateManyWithoutSectionNestedInput
+  rules?: Prisma.AttendanceRuleUncheckedUpdateManyWithoutSectionNestedInput
+}
+
+export type SectionCreateWithoutRulesInput = {
+  id?: string
+  name: string
+  gradeLevel: $Enums.GradeLevel
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  students?: Prisma.StudentCreateNestedManyWithoutSectionInput
+  enrollments?: Prisma.EnrollmentCreateNestedManyWithoutSectionInput
+}
+
+export type SectionUncheckedCreateWithoutRulesInput = {
+  id?: string
+  name: string
+  gradeLevel: $Enums.GradeLevel
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  students?: Prisma.StudentUncheckedCreateNestedManyWithoutSectionInput
+  enrollments?: Prisma.EnrollmentUncheckedCreateNestedManyWithoutSectionInput
+}
+
+export type SectionCreateOrConnectWithoutRulesInput = {
+  where: Prisma.SectionWhereUniqueInput
+  create: Prisma.XOR<Prisma.SectionCreateWithoutRulesInput, Prisma.SectionUncheckedCreateWithoutRulesInput>
+}
+
+export type SectionUpsertWithoutRulesInput = {
+  update: Prisma.XOR<Prisma.SectionUpdateWithoutRulesInput, Prisma.SectionUncheckedUpdateWithoutRulesInput>
+  create: Prisma.XOR<Prisma.SectionCreateWithoutRulesInput, Prisma.SectionUncheckedCreateWithoutRulesInput>
+  where?: Prisma.SectionWhereInput
+}
+
+export type SectionUpdateToOneWithWhereWithoutRulesInput = {
+  where?: Prisma.SectionWhereInput
+  data: Prisma.XOR<Prisma.SectionUpdateWithoutRulesInput, Prisma.SectionUncheckedUpdateWithoutRulesInput>
+}
+
+export type SectionUpdateWithoutRulesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  gradeLevel?: Prisma.EnumGradeLevelFieldUpdateOperationsInput | $Enums.GradeLevel
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  students?: Prisma.StudentUpdateManyWithoutSectionNestedInput
+  enrollments?: Prisma.EnrollmentUpdateManyWithoutSectionNestedInput
+}
+
+export type SectionUncheckedUpdateWithoutRulesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  gradeLevel?: Prisma.EnumGradeLevelFieldUpdateOperationsInput | $Enums.GradeLevel
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  students?: Prisma.StudentUncheckedUpdateManyWithoutSectionNestedInput
+  enrollments?: Prisma.EnrollmentUncheckedUpdateManyWithoutSectionNestedInput
 }
 
 
@@ -441,11 +562,13 @@ export type SectionUncheckedUpdateWithoutEnrollmentsInput = {
 export type SectionCountOutputType = {
   students: number
   enrollments: number
+  rules: number
 }
 
 export type SectionCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   students?: boolean | SectionCountOutputTypeCountStudentsArgs
   enrollments?: boolean | SectionCountOutputTypeCountEnrollmentsArgs
+  rules?: boolean | SectionCountOutputTypeCountRulesArgs
 }
 
 /**
@@ -472,20 +595,30 @@ export type SectionCountOutputTypeCountEnrollmentsArgs<ExtArgs extends runtime.T
   where?: Prisma.EnrollmentWhereInput
 }
 
+/**
+ * SectionCountOutputType without action
+ */
+export type SectionCountOutputTypeCountRulesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AttendanceRuleWhereInput
+}
+
 
 export type SectionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  gradeLevel?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   students?: boolean | Prisma.Section$studentsArgs<ExtArgs>
   enrollments?: boolean | Prisma.Section$enrollmentsArgs<ExtArgs>
+  rules?: boolean | Prisma.Section$rulesArgs<ExtArgs>
   _count?: boolean | Prisma.SectionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["section"]>
 
 export type SectionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  gradeLevel?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["section"]>
@@ -493,6 +626,7 @@ export type SectionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
 export type SectionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  gradeLevel?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["section"]>
@@ -500,14 +634,16 @@ export type SectionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
 export type SectionSelectScalar = {
   id?: boolean
   name?: boolean
+  gradeLevel?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type SectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "createdAt" | "updatedAt", ExtArgs["result"]["section"]>
+export type SectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "gradeLevel" | "createdAt" | "updatedAt", ExtArgs["result"]["section"]>
 export type SectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   students?: boolean | Prisma.Section$studentsArgs<ExtArgs>
   enrollments?: boolean | Prisma.Section$enrollmentsArgs<ExtArgs>
+  rules?: boolean | Prisma.Section$rulesArgs<ExtArgs>
   _count?: boolean | Prisma.SectionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type SectionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -518,10 +654,12 @@ export type $SectionPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   objects: {
     students: Prisma.$StudentPayload<ExtArgs>[]
     enrollments: Prisma.$EnrollmentPayload<ExtArgs>[]
+    rules: Prisma.$AttendanceRulePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
+    gradeLevel: $Enums.GradeLevel
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["section"]>
@@ -920,6 +1058,7 @@ export interface Prisma__SectionClient<T, Null = never, ExtArgs extends runtime.
   readonly [Symbol.toStringTag]: "PrismaPromise"
   students<T extends Prisma.Section$studentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Section$studentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StudentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   enrollments<T extends Prisma.Section$enrollmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Section$enrollmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EnrollmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  rules<T extends Prisma.Section$rulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Section$rulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttendanceRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -951,6 +1090,7 @@ export interface Prisma__SectionClient<T, Null = never, ExtArgs extends runtime.
 export interface SectionFieldRefs {
   readonly id: Prisma.FieldRef<"Section", 'String'>
   readonly name: Prisma.FieldRef<"Section", 'String'>
+  readonly gradeLevel: Prisma.FieldRef<"Section", 'GradeLevel'>
   readonly createdAt: Prisma.FieldRef<"Section", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Section", 'DateTime'>
 }
@@ -1391,6 +1531,30 @@ export type Section$enrollmentsArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.EnrollmentScalarFieldEnum | Prisma.EnrollmentScalarFieldEnum[]
+}
+
+/**
+ * Section.rules
+ */
+export type Section$rulesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AttendanceRule
+   */
+  select?: Prisma.AttendanceRuleSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AttendanceRule
+   */
+  omit?: Prisma.AttendanceRuleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AttendanceRuleInclude<ExtArgs> | null
+  where?: Prisma.AttendanceRuleWhereInput
+  orderBy?: Prisma.AttendanceRuleOrderByWithRelationInput | Prisma.AttendanceRuleOrderByWithRelationInput[]
+  cursor?: Prisma.AttendanceRuleWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AttendanceRuleScalarFieldEnum | Prisma.AttendanceRuleScalarFieldEnum[]
 }
 
 /**

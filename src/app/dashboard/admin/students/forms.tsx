@@ -8,10 +8,28 @@ import { toast } from "sonner";
 
 const initialState: FormState = {};
 
+const gradeLevels = [
+  "PRE_NURSERY",
+  "NURSERY",
+  "KINDER",
+  "GRADE_1",
+  "GRADE_2",
+  "GRADE_3",
+  "GRADE_4",
+  "GRADE_5",
+  "GRADE_6",
+  "GRADE_7",
+  "GRADE_8",
+  "GRADE_9",
+  "GRADE_10",
+  "GRADE_11",
+  "GRADE_12",
+] as const;
+
 export default function StudentManagementForms({
   sections,
 }: {
-  sections: { id: string; name: string }[];
+  sections: { id: string; name: string; gradeLevel: string }[];
 }) {
   const [sectionState, sectionAction, sectionPending] = useActionState(
     createSection,
@@ -41,7 +59,7 @@ export default function StudentManagementForms({
             Create Section
           </h3>
           <p className="mt-1 text-sm text-slate-600">
-            Add a new class or section for student grouping.
+            Add a new section and assign its grade level.
           </p>
         </div>
 
@@ -58,6 +76,26 @@ export default function StudentManagementForms({
             />
           </div>
 
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">
+              Grade Level
+            </label>
+            <select
+              name="gradeLevel"
+              defaultValue=""
+              className="h-11 w-full rounded-md border bg-background px-3 text-sm"
+            >
+              <option value="" disabled>
+                Select grade level
+              </option>
+              {gradeLevels.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex justify-end">
             <Button type="submit" disabled={sectionPending} className="min-w-32">
               {sectionPending ? "Saving..." : "Add Section"}
@@ -72,7 +110,7 @@ export default function StudentManagementForms({
             Create Student
           </h3>
           <p className="mt-1 text-sm text-slate-600">
-            Add a new student and assign them to a section.
+            Add a new student and enroll them in the active school year.
           </p>
         </div>
 
@@ -129,7 +167,7 @@ export default function StudentManagementForms({
               </option>
               {sections.map((section) => (
                 <option key={section.id} value={section.id}>
-                  {section.name}
+                  {section.name} ({section.gradeLevel})
                 </option>
               ))}
             </select>
@@ -138,8 +176,8 @@ export default function StudentManagementForms({
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-sm font-medium text-slate-800">Quick note</p>
             <p className="mt-1 text-xs text-slate-600">
-              Make sure the student email and student number are unique before
-              saving.
+              This creates the user account, student profile, and enrollment for
+              the active school year.
             </p>
           </div>
 

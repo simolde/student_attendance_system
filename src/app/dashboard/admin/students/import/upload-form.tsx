@@ -29,38 +29,40 @@ export default function ImportStudentsForm() {
     if (!file) return;
 
     try {
-        const buffer = await file.arrayBuffer();
-        const workbook = XLSX.read(buffer, { type: "array" });
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
 
-        const preferredSheetName =
-        workbook.SheetNames.find(
-            (name) => name.trim().toLowerCase() === "students"
-        ) ?? workbook.SheetNames[0];
+      const preferredSheetName =
+      workbook.SheetNames.find(
+        (name) => name.trim().toLowerCase() === "students"
+      ) ?? workbook.SheetNames[0];
 
-        const sheet = workbook.Sheets[preferredSheetName];
+      const sheet = workbook.Sheets[preferredSheetName];
 
-        // Read from row 4 where the real table headers begin.
-        const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+      // Read from row 4 where the real table headers begin.
+      const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
         defval: "",
         range: 3,
-        });
+      });
 
-        const mappedRows: ImportRow[] = json
+      const mappedRows: ImportRow[] = json
         .map((row) => ({
-            student_no: String(row.student_no ?? "").trim(),
-            full_name: String(row.full_name ?? "").trim(),
-            email: String(row.email ?? "").trim(),
-            section: String(row.section ?? "").trim(),
-            school_year: String(row.school_year ?? "").trim(),
-            status: String(row.status ?? "").trim(),
-            rfid_uid: String(row.rfid_uid ?? "").trim(),
+          student_no: String(row.student_no ?? "").trim(),
+          full_name: String(row.full_name ?? "").trim(),
+          email: String(row.email ?? "").trim(),
+          section: String(row.section ?? "").trim(),
+          grade_level: String(row.grade_level ?? "").trim(),
+          school_year: String(row.school_year ?? "").trim(),
+          status: String(row.status ?? "").trim(),
+          rfid_uid: String(row.rfid_uid ?? "").trim(),
         }))
         .filter(
-            (row) =>
+          (row) =>
             row.student_no ||
             row.full_name ||
             row.email ||
             row.section ||
+            row.grade_level ||
             row.school_year ||
             row.status ||
             row.rfid_uid
@@ -77,7 +79,7 @@ export default function ImportStudentsForm() {
         console.error(error);
         toast.error("Failed to read Excel file");
     }
-    }
+  }
 
   async function handleImport() {
     if (!rows.length) {
@@ -116,7 +118,7 @@ export default function ImportStudentsForm() {
           onChange={(e) => handleFileChange(e.target.files?.[0])}
         />
         <p className="mt-2 text-xs text-slate-600">
-          Use columns: student_no, full_name, email, section, school_year, status
+          Use columns: student_no, full_name, email, section, grade_level, school_year, status, rfid_uid
         </p>
       </div>
 
@@ -143,6 +145,7 @@ export default function ImportStudentsForm() {
                   <th className="px-4 py-3 text-left font-medium">Full Name</th>
                   <th className="px-4 py-3 text-left font-medium">Email</th>
                   <th className="px-4 py-3 text-left font-medium">Section</th>
+                  <th className="px-4 py-3 text-left font-medium">Grade Level</th>
                   <th className="px-4 py-3 text-left font-medium">Status</th>
                 </tr>
               </thead>
@@ -153,6 +156,7 @@ export default function ImportStudentsForm() {
                     <td className="px-4 py-3">{row.full_name}</td>
                     <td className="px-4 py-3">{row.email}</td>
                     <td className="px-4 py-3">{row.section}</td>
+                    <td className="px-4 py-3">{row.grade_level}</td>
                     <td className="px-4 py-3">{row.status || "ENROLLED"}</td>
                   </tr>
                 ))}

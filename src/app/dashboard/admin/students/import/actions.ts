@@ -12,6 +12,7 @@ export type ImportRow = {
   full_name: string;
   email: string;
   section: string;
+  grade_level: string;
   school_year?: string;
   status?: string;
   rfid_uid?: string;
@@ -25,11 +26,21 @@ export type ImportStudentsState = {
     createdStudents: number;
     createdEnrollments: number;
     updatedUsers: number;
+    updatedStudents: number;
     updatedEnrollments: number;
     skipped: number;
     errors: string[];
   };
 };
+
+const allowedGradeLevels = new Set([
+  "GRADE_7",
+  "GRADE_8",
+  "GRADE_9",
+  "GRADE_10",
+  "GRADE_11",
+  "GRADE_12",
+]);
 
 async function requireAdmin() {
   const session = await auth();
@@ -59,6 +70,11 @@ function normalizeStatus(value?: string) {
   return "ENROLLED";
 }
 
+function normalizeGradeLevel(value?: string) {
+  const v = (value ?? "").trim().toUpperCase().replaceAll(" ", "_");
+  return allowedGradeLevels.has(v) ? v : null;
+}
+
 export async function importStudentsFromRows(
   rows: ImportRow[]
 ): Promise<ImportStudentsState> {
@@ -81,6 +97,7 @@ export async function importStudentsFromRows(
   let createdStudents = 0;
   let createdEnrollments = 0;
   let updatedUsers = 0;
+  let updatedStudents = 0;
   let updatedEnrollments = 0;
   let skipped = 0;
   const errors: string[] = [];
@@ -93,19 +110,26 @@ export async function importStudentsFromRows(
     const fullName = row.full_name?.trim();
     const email = row.email?.trim().toLowerCase();
     const sectionName = row.section?.trim();
+    const gradeLevel = normalizeGradeLevel(row.grade_level);
     const status = normalizeStatus(row.status);
+    const rfidUid = row.rfid_uid?.trim().toUpperCase() || null;
 
-    if (!studentNo || !fullName || !email || !sectionName) {
+    if (!studentNo || !fullName || !email || !sectionName || !gradeLevel) {
       skipped++;
-      errors.push(`Row ${rowNo}: Missing required fields.`);
+      errors.push(`Row ${rowNo}: Missing required fields or invalid grade_level.`);
       continue;
     }
 
     try {
       const section = await prisma.section.upsert({
         where: { name: sectionName },
-        update: {},
-        create: { name: sectionName },
+        update: {
+          gradeLevel: gradeLevel as never,
+        },
+        create: {
+          name: sectionName,
+          gradeLevel: gradeLevel as never,
+        },
         select: { id: true },
       });
 
@@ -129,6 +153,22 @@ export async function importStudentsFromRows(
           continue;
         }
 
+        if (rfidUid) {
+          const rfidOwner = await prisma.student.findFirst({
+            where: {
+              rfidUid,
+              NOT: { id: existingStudent.id },
+            },
+            select: { id: true, studentNo: true },
+          });
+
+          if (rfidOwner) {
+            skipped++;
+            errors.push(`Row ${rowNo}: RFID ${rfidUid} already belongs to ${rfidOwner.studentNo}.`);
+            continue;
+          }
+        }
+
         await prisma.user.update({
           where: { id: existingStudent.userId },
           data: {
@@ -139,6 +179,15 @@ export async function importStudentsFromRows(
           },
         });
         updatedUsers++;
+
+        await prisma.student.update({
+          where: { id: existingStudent.id },
+          data: {
+            sectionId: section.id,
+            rfidUid: rfidUid || existingStudent.rfidUid || null,
+          },
+        });
+        updatedStudents++;
 
         const existingEnrollment = await prisma.enrollment.findUnique({
           where: {
@@ -171,16 +220,6 @@ export async function importStudentsFromRows(
           createdEnrollments++;
         }
 
-        if (existingStudent.sectionId !== section.id) {
-          await prisma.student.update({
-            where: { id: existingStudent.id },
-            data: { 
-                sectionId: section.id,
-                rfidUid: row.rfid_uid?.trim() || existingStudent.rfidUid || null,
-            },
-          });
-        }
-
         continue;
       }
 
@@ -193,6 +232,19 @@ export async function importStudentsFromRows(
         skipped++;
         errors.push(`Row ${rowNo}: Email ${email} already exists.`);
         continue;
+      }
+
+      if (rfidUid) {
+        const rfidOwner = await prisma.student.findFirst({
+          where: { rfidUid },
+          select: { studentNo: true },
+        });
+
+        if (rfidOwner) {
+          skipped++;
+          errors.push(`Row ${rowNo}: RFID ${rfidUid} already belongs to ${rfidOwner.studentNo}.`);
+          continue;
+        }
       }
 
       const defaultPassword = await bcrypt.hash("Student@123", 12);
@@ -214,7 +266,7 @@ export async function importStudentsFromRows(
           userId: createdUser.id,
           studentNo,
           sectionId: section.id,
-          rfidUid: row.rfid_uid?.trim() || null,
+          rfidUid,
         },
         select: { id: true },
       });
@@ -251,6 +303,7 @@ export async function importStudentsFromRows(
       createdStudents,
       createdEnrollments,
       updatedUsers,
+      updatedStudents,
       updatedEnrollments,
       skipped,
       errors,

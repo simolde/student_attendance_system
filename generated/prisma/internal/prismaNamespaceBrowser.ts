@@ -62,7 +62,8 @@ export const ModelName = {
   Attendance: 'Attendance',
   RfidDevice: 'RfidDevice',
   RfidLog: 'RfidLog',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  AttendanceRule: 'AttendanceRule'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -136,6 +137,7 @@ export type VerificationTokenScalarFieldEnum = (typeof VerificationTokenScalarFi
 export const SectionScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  gradeLevel: 'gradeLevel',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -237,6 +239,25 @@ export const AuditLogScalarFieldEnum = {
 } as const
 
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const AttendanceRuleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  gradeLevel: 'gradeLevel',
+  sectionId: 'sectionId',
+  isDefault: 'isDefault',
+  isActive: 'isActive',
+  timeInStart: 'timeInStart',
+  timeInEnd: 'timeInEnd',
+  lateAfter: 'lateAfter',
+  timeOutStart: 'timeOutStart',
+  timeOutEnd: 'timeOutEnd',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AttendanceRuleScalarFieldEnum = (typeof AttendanceRuleScalarFieldEnum)[keyof typeof AttendanceRuleScalarFieldEnum]
 
 
 export const SortOrder = {

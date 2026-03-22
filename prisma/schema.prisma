@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -42,6 +41,23 @@ enum RfidScanStatus {
   UNKNOWN_CARD
   DUPLICATE_SCAN
   DENIED
+}
+
+enum GradeLevel {
+  PRE_NURSERY
+  NURSERY
+  KINDER
+  GRADE_1
+  GRADE_2
+  GRADE_3
+  GRADE_5
+  GRADE_6
+  GRADE_7
+  GRADE_8
+  GRADE_9
+  GRADE_10
+  GRADE_11
+  GRADE_12
 }
 
 model User {
@@ -100,13 +116,15 @@ model VerificationToken {
 }
 
 model Section {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String     @id @default(cuid())
+  name       String     @unique
+  gradeLevel GradeLevel
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
   students    Student[]
   enrollments Enrollment[]
+  rules       AttendanceRule[]
 }
 
 model SchoolYear {
@@ -159,7 +177,7 @@ model Attendance {
   id           String           @id @default(cuid())
   studentId    String
   enrollmentId String?
-  date         DateTime @db.Date
+  date         DateTime         @db.Date
   status       AttendanceStatus
   source       AttendanceSource @default(MANUAL)
   remarks      String?
@@ -214,4 +232,25 @@ model AuditLog {
   createdAt   DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model AttendanceRule {
+  id           String      @id @default(cuid())
+  name         String      @unique
+  gradeLevel   GradeLevel?
+  sectionId    String?
+  isDefault    Boolean     @default(false)
+  isActive     Boolean     @default(true)
+  timeInStart  String
+  timeInEnd    String
+  lateAfter    String
+  timeOutStart String?
+  timeOutEnd   String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  section Section? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+
+  @@index([gradeLevel, isActive])
+  @@index([sectionId, isActive])
 }

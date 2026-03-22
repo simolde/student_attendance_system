@@ -58,3 +58,23 @@ export const RfidScanStatus = {
 } as const
 
 export type RfidScanStatus = (typeof RfidScanStatus)[keyof typeof RfidScanStatus]
+
+
+export const GradeLevel = {
+  PRE_NURSERY: 'PRE_NURSERY',
+  NURSERY: 'NURSERY',
+  KINDER: 'KINDER',
+  GRADE_1: 'GRADE_1',
+  GRADE_2: 'GRADE_2',
+  GRADE_3: 'GRADE_3',
+  GRADE_5: 'GRADE_5',
+  GRADE_6: 'GRADE_6',
+  GRADE_7: 'GRADE_7',
+  GRADE_8: 'GRADE_8',
+  GRADE_9: 'GRADE_9',
+  GRADE_10: 'GRADE_10',
+  GRADE_11: 'GRADE_11',
+  GRADE_12: 'GRADE_12'
+} as const
+
+export type GradeLevel = (typeof GradeLevel)[keyof typeof GradeLevel]

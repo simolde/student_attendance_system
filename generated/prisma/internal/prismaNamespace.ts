@@ -395,7 +395,8 @@ export const ModelName = {
   Attendance: 'Attendance',
   RfidDevice: 'RfidDevice',
   RfidLog: 'RfidLog',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  AttendanceRule: 'AttendanceRule'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -411,7 +412,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "session" | "verificationToken" | "section" | "schoolYear" | "student" | "enrollment" | "attendance" | "rfidDevice" | "rfidLog" | "auditLog"
+    modelProps: "user" | "account" | "session" | "verificationToken" | "section" | "schoolYear" | "student" | "enrollment" | "attendance" | "rfidDevice" | "rfidLog" | "auditLog" | "attendanceRule"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1303,6 +1304,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AttendanceRule: {
+      payload: Prisma.$AttendanceRulePayload<ExtArgs>
+      fields: Prisma.AttendanceRuleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AttendanceRuleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceRulePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AttendanceRuleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceRulePayload>
+        }
+        findFirst: {
+          args: Prisma.AttendanceRuleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceRulePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AttendanceRuleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceRulePayload>
+        }
+        findMany: {
+          args: Prisma.AttendanceRuleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceRulePayload>[]
+        }
+        create: {
+          args: Prisma.AttendanceRuleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceRulePayload>
+        }
+        createMany: {
+          args: Prisma.AttendanceRuleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AttendanceRuleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceRulePayload>[]
+        }
+        delete: {
+          args: Prisma.AttendanceRuleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceRulePayload>
+        }
+        update: {
+          args: Prisma.AttendanceRuleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceRulePayload>
+        }
+        deleteMany: {
+          args: Prisma.AttendanceRuleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AttendanceRuleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AttendanceRuleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceRulePayload>[]
+        }
+        upsert: {
+          args: Prisma.AttendanceRuleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceRulePayload>
+        }
+        aggregate: {
+          args: Prisma.AttendanceRuleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAttendanceRule>
+        }
+        groupBy: {
+          args: Prisma.AttendanceRuleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AttendanceRuleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AttendanceRuleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AttendanceRuleCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1397,6 +1472,7 @@ export type VerificationTokenScalarFieldEnum = (typeof VerificationTokenScalarFi
 export const SectionScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  gradeLevel: 'gradeLevel',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1500,6 +1576,25 @@ export const AuditLogScalarFieldEnum = {
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
 
 
+export const AttendanceRuleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  gradeLevel: 'gradeLevel',
+  sectionId: 'sectionId',
+  isDefault: 'isDefault',
+  isActive: 'isActive',
+  timeInStart: 'timeInStart',
+  timeInEnd: 'timeInEnd',
+  lateAfter: 'lateAfter',
+  timeOutStart: 'timeOutStart',
+  timeOutEnd: 'timeOutEnd',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AttendanceRuleScalarFieldEnum = (typeof AttendanceRuleScalarFieldEnum)[keyof typeof AttendanceRuleScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1590,6 +1685,20 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'GradeLevel'
+ */
+export type EnumGradeLevelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GradeLevel'>
+    
+
+
+/**
+ * Reference to a field of type 'GradeLevel[]'
+ */
+export type ListEnumGradeLevelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GradeLevel[]'>
     
 
 
@@ -1769,6 +1878,7 @@ export type GlobalOmitConfig = {
   rfidDevice?: Prisma.RfidDeviceOmit
   rfidLog?: Prisma.RfidLogOmit
   auditLog?: Prisma.AuditLogOmit
+  attendanceRule?: Prisma.AttendanceRuleOmit
 }
 
 /* Types for Logging */
