@@ -72,7 +72,7 @@ export async function createUser(
 
   try {
     const existingUser = await prisma.user.findUnique({
-      where: { email: parsed.data.email },
+      where: { email: parsed.data.email.trim().toLowerCase() },
     });
 
     if (existingUser) {
@@ -83,11 +83,12 @@ export async function createUser(
 
     const createdUser = await prisma.user.create({
       data: {
-        name: parsed.data.name,
-        email: parsed.data.email,
+        name: parsed.data.name.trim(),
+        email: parsed.data.email.trim().toLowerCase(),
         password: hashedPassword,
         role: parsed.data.role,
         isActive: true,
+        mustChangePassword: false,
       },
     });
 
@@ -102,7 +103,8 @@ export async function createUser(
     revalidatePath("/dashboard/admin/users");
 
     return { success: "User created successfully" };
-  } catch {
+  } catch (error) {
+    console.error(error);
     return { error: "Failed to create user" };
   }
 }
@@ -149,7 +151,8 @@ export async function updateUserRole(
     revalidatePath("/dashboard/admin/users");
 
     return { success: "Role updated successfully" };
-  } catch {
+  } catch (error) {
+    console.error(error);
     return { error: "Failed to update role" };
   }
 }
@@ -187,7 +190,10 @@ export async function resetUserPassword(
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { password: hashedPassword },
+      data: {
+        password: hashedPassword,
+        mustChangePassword: true,
+      },
     });
 
     await logAudit({
@@ -195,13 +201,14 @@ export async function resetUserPassword(
       action: "RESET_PASSWORD",
       entity: "User",
       entityId: updatedUser.id,
-      description: `Reset password for ${updatedUser.email}`,
+      description: `Reset password for ${updatedUser.email} and required password change on next login`,
     });
 
     revalidatePath("/dashboard/admin/users");
 
-    return { success: "Password reset successfully" };
-  } catch {
+    return { success: "Password reset successfully. User must change it on next login." };
+  } catch (error) {
+    console.error(error);
     return { error: "Failed to reset password" };
   }
 }
@@ -256,7 +263,8 @@ export async function toggleUserActive(
         ? "User activated successfully"
         : "User deactivated successfully",
     };
-  } catch {
+  } catch (error) {
+    console.error(error);
     return { error: "Failed to update user status" };
   }
 }
