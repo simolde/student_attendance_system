@@ -235,6 +235,11 @@ export default async function AdminStudentsPage({
             </form>
           </TableToolbar>
 
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+            Exported credentials only include the login email and the temporary
+            password policy. They do not read plain passwords from the database.
+          </div>
+
           {importBatchId ? (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
               Viewing students from import batch:
