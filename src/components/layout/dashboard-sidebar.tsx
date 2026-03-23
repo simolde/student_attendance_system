@@ -144,13 +144,11 @@ export default function DashboardSidebar({
   userName,
   userEmail,
   userImage,
-  mustChangePassword,
 }: {
   role: string;
   userName: string;
   userEmail: string;
   userImage: string | null;
-  mustChangePassword: boolean;
 }) {
   const { collapsed, mobileOpen, setMobileOpen } = useDashboardLayout();
 

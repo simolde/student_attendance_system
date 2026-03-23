@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { TriangleAlert } from "lucide-react";
 
 export default async function ChangePasswordPage() {
   const session = await auth();
@@ -16,6 +17,8 @@ export default async function ChangePasswordPage() {
   if (!session?.user) {
     redirect("/login");
   }
+
+  const mustChangePassword = session.user.mustChangePassword === true;
 
   return (
     <div className="space-y-8">
@@ -27,6 +30,23 @@ export default async function ChangePasswordPage() {
           { label: "Change Password" },
         ]}
       />
+
+      {mustChangePassword ? (
+        <Card className="border-amber-200 bg-amber-50 shadow-sm">
+          <CardContent className="flex items-start gap-3 p-5">
+            <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+            <div className="space-y-1">
+              <p className="font-medium text-amber-950">
+                Password update required
+              </p>
+              <p className="text-sm text-amber-900">
+                You must change your password before continuing to the rest of
+                the dashboard.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
         <Card className="border-slate-200 shadow-sm">
@@ -52,7 +72,7 @@ export default async function ChangePasswordPage() {
                 Password Tips
               </p>
               <ul className="mt-2 space-y-2 text-sm text-slate-600">
-                <li>Use at least 12 characters.</li>
+                <li>Use at least 8 characters.</li>
                 <li>Include uppercase, lowercase, numbers, and symbols.</li>
                 <li>Do not reuse old or common passwords.</li>
               </ul>
