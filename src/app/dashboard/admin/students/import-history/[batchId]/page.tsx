@@ -12,6 +12,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Download } from "lucide-react";
 import {
   Table,
@@ -21,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { toggleImportBatchArchive } from "../actions";
 
 function formatManilaDateTime(date: Date) {
   return new Intl.DateTimeFormat("en-PH", {
@@ -119,6 +121,13 @@ export default async function StudentImportBatchDetailsPage({
                 View in Students Page
               </Link>
             </Button>
+
+            <form action={toggleImportBatchArchive}>
+              <input type="hidden" name="batchId" value={batch.id} />
+              <Button type="submit" variant="outline">
+                {batch.isArchived ? "Unarchive" : "Archive"}
+              </Button>
+            </form>
           </div>
         }
       />
@@ -152,6 +161,16 @@ export default async function StudentImportBatchDetailsPage({
             value={String(batch.updatedEnrollments)}
           />
           <SummaryItem label="Skipped" value={String(batch.skipped)} />
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs text-slate-500">Status</p>
+            <div className="mt-1">
+              {batch.isArchived ? (
+                <Badge variant="secondary">Archived</Badge>
+              ) : (
+                <Badge>Active</Badge>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
 

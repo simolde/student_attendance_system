@@ -67,7 +67,7 @@ export async function GET() {
     student.user.email,
     student.section?.name ?? "",
     formatGradeLevel(student.section?.gradeLevel),
-    "Student@123",
+    "Starland@123",
     "Change password on first login",
     latestBatch.id!,
   ]);

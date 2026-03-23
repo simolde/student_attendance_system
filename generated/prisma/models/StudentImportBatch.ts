@@ -60,6 +60,7 @@ export type StudentImportBatchMinAggregateOutputType = {
   updatedStudents: number | null
   updatedEnrollments: number | null
   skipped: number | null
+  isArchived: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -76,6 +77,7 @@ export type StudentImportBatchMaxAggregateOutputType = {
   updatedStudents: number | null
   updatedEnrollments: number | null
   skipped: number | null
+  isArchived: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -92,6 +94,7 @@ export type StudentImportBatchCountAggregateOutputType = {
   updatedStudents: number
   updatedEnrollments: number
   skipped: number
+  isArchived: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -132,6 +135,7 @@ export type StudentImportBatchMinAggregateInputType = {
   updatedStudents?: true
   updatedEnrollments?: true
   skipped?: true
+  isArchived?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -148,6 +152,7 @@ export type StudentImportBatchMaxAggregateInputType = {
   updatedStudents?: true
   updatedEnrollments?: true
   skipped?: true
+  isArchived?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -164,6 +169,7 @@ export type StudentImportBatchCountAggregateInputType = {
   updatedStudents?: true
   updatedEnrollments?: true
   skipped?: true
+  isArchived?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -267,6 +273,7 @@ export type StudentImportBatchGroupByOutputType = {
   updatedStudents: number
   updatedEnrollments: number
   skipped: number
+  isArchived: boolean
   createdAt: Date
   updatedAt: Date
   _count: StudentImportBatchCountAggregateOutputType | null
@@ -306,6 +313,7 @@ export type StudentImportBatchWhereInput = {
   updatedStudents?: Prisma.IntFilter<"StudentImportBatch"> | number
   updatedEnrollments?: Prisma.IntFilter<"StudentImportBatch"> | number
   skipped?: Prisma.IntFilter<"StudentImportBatch"> | number
+  isArchived?: Prisma.BoolFilter<"StudentImportBatch"> | boolean
   createdAt?: Prisma.DateTimeFilter<"StudentImportBatch"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"StudentImportBatch"> | Date | string
   createdByUser?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -325,6 +333,7 @@ export type StudentImportBatchOrderByWithRelationInput = {
   updatedStudents?: Prisma.SortOrder
   updatedEnrollments?: Prisma.SortOrder
   skipped?: Prisma.SortOrder
+  isArchived?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   createdByUser?: Prisma.UserOrderByWithRelationInput
@@ -347,6 +356,7 @@ export type StudentImportBatchWhereUniqueInput = Prisma.AtLeast<{
   updatedStudents?: Prisma.IntFilter<"StudentImportBatch"> | number
   updatedEnrollments?: Prisma.IntFilter<"StudentImportBatch"> | number
   skipped?: Prisma.IntFilter<"StudentImportBatch"> | number
+  isArchived?: Prisma.BoolFilter<"StudentImportBatch"> | boolean
   createdAt?: Prisma.DateTimeFilter<"StudentImportBatch"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"StudentImportBatch"> | Date | string
   createdByUser?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -366,6 +376,7 @@ export type StudentImportBatchOrderByWithAggregationInput = {
   updatedStudents?: Prisma.SortOrder
   updatedEnrollments?: Prisma.SortOrder
   skipped?: Prisma.SortOrder
+  isArchived?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.StudentImportBatchCountOrderByAggregateInput
@@ -390,6 +401,7 @@ export type StudentImportBatchScalarWhereWithAggregatesInput = {
   updatedStudents?: Prisma.IntWithAggregatesFilter<"StudentImportBatch"> | number
   updatedEnrollments?: Prisma.IntWithAggregatesFilter<"StudentImportBatch"> | number
   skipped?: Prisma.IntWithAggregatesFilter<"StudentImportBatch"> | number
+  isArchived?: Prisma.BoolWithAggregatesFilter<"StudentImportBatch"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"StudentImportBatch"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"StudentImportBatch"> | Date | string
 }
@@ -404,6 +416,7 @@ export type StudentImportBatchCreateInput = {
   updatedStudents?: number
   updatedEnrollments?: number
   skipped?: number
+  isArchived?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   createdByUser?: Prisma.UserCreateNestedOneWithoutStudentImportBatchesInput
@@ -423,6 +436,7 @@ export type StudentImportBatchUncheckedCreateInput = {
   updatedStudents?: number
   updatedEnrollments?: number
   skipped?: number
+  isArchived?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   students?: Prisma.StudentUncheckedCreateNestedManyWithoutImportBatchInput
@@ -438,6 +452,7 @@ export type StudentImportBatchUpdateInput = {
   updatedStudents?: Prisma.IntFieldUpdateOperationsInput | number
   updatedEnrollments?: Prisma.IntFieldUpdateOperationsInput | number
   skipped?: Prisma.IntFieldUpdateOperationsInput | number
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdByUser?: Prisma.UserUpdateOneWithoutStudentImportBatchesNestedInput
@@ -457,6 +472,7 @@ export type StudentImportBatchUncheckedUpdateInput = {
   updatedStudents?: Prisma.IntFieldUpdateOperationsInput | number
   updatedEnrollments?: Prisma.IntFieldUpdateOperationsInput | number
   skipped?: Prisma.IntFieldUpdateOperationsInput | number
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.StudentUncheckedUpdateManyWithoutImportBatchNestedInput
@@ -474,6 +490,7 @@ export type StudentImportBatchCreateManyInput = {
   updatedStudents?: number
   updatedEnrollments?: number
   skipped?: number
+  isArchived?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -488,6 +505,7 @@ export type StudentImportBatchUpdateManyMutationInput = {
   updatedStudents?: Prisma.IntFieldUpdateOperationsInput | number
   updatedEnrollments?: Prisma.IntFieldUpdateOperationsInput | number
   skipped?: Prisma.IntFieldUpdateOperationsInput | number
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -504,6 +522,7 @@ export type StudentImportBatchUncheckedUpdateManyInput = {
   updatedStudents?: Prisma.IntFieldUpdateOperationsInput | number
   updatedEnrollments?: Prisma.IntFieldUpdateOperationsInput | number
   skipped?: Prisma.IntFieldUpdateOperationsInput | number
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -535,6 +554,7 @@ export type StudentImportBatchCountOrderByAggregateInput = {
   updatedStudents?: Prisma.SortOrder
   updatedEnrollments?: Prisma.SortOrder
   skipped?: Prisma.SortOrder
+  isArchived?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -562,6 +582,7 @@ export type StudentImportBatchMaxOrderByAggregateInput = {
   updatedStudents?: Prisma.SortOrder
   updatedEnrollments?: Prisma.SortOrder
   skipped?: Prisma.SortOrder
+  isArchived?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -578,6 +599,7 @@ export type StudentImportBatchMinOrderByAggregateInput = {
   updatedStudents?: Prisma.SortOrder
   updatedEnrollments?: Prisma.SortOrder
   skipped?: Prisma.SortOrder
+  isArchived?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -711,6 +733,7 @@ export type StudentImportBatchCreateWithoutCreatedByUserInput = {
   updatedStudents?: number
   updatedEnrollments?: number
   skipped?: number
+  isArchived?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   schoolYear?: Prisma.SchoolYearCreateNestedOneWithoutStudentImportBatchesInput
@@ -728,6 +751,7 @@ export type StudentImportBatchUncheckedCreateWithoutCreatedByUserInput = {
   updatedStudents?: number
   updatedEnrollments?: number
   skipped?: number
+  isArchived?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   students?: Prisma.StudentUncheckedCreateNestedManyWithoutImportBatchInput
@@ -774,6 +798,7 @@ export type StudentImportBatchScalarWhereInput = {
   updatedStudents?: Prisma.IntFilter<"StudentImportBatch"> | number
   updatedEnrollments?: Prisma.IntFilter<"StudentImportBatch"> | number
   skipped?: Prisma.IntFilter<"StudentImportBatch"> | number
+  isArchived?: Prisma.BoolFilter<"StudentImportBatch"> | boolean
   createdAt?: Prisma.DateTimeFilter<"StudentImportBatch"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"StudentImportBatch"> | Date | string
 }
@@ -788,6 +813,7 @@ export type StudentImportBatchCreateWithoutSchoolYearInput = {
   updatedStudents?: number
   updatedEnrollments?: number
   skipped?: number
+  isArchived?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   createdByUser?: Prisma.UserCreateNestedOneWithoutStudentImportBatchesInput
@@ -805,6 +831,7 @@ export type StudentImportBatchUncheckedCreateWithoutSchoolYearInput = {
   updatedStudents?: number
   updatedEnrollments?: number
   skipped?: number
+  isArchived?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   students?: Prisma.StudentUncheckedCreateNestedManyWithoutImportBatchInput
@@ -846,6 +873,7 @@ export type StudentImportBatchCreateWithoutStudentsInput = {
   updatedStudents?: number
   updatedEnrollments?: number
   skipped?: number
+  isArchived?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   createdByUser?: Prisma.UserCreateNestedOneWithoutStudentImportBatchesInput
@@ -864,6 +892,7 @@ export type StudentImportBatchUncheckedCreateWithoutStudentsInput = {
   updatedStudents?: number
   updatedEnrollments?: number
   skipped?: number
+  isArchived?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -894,6 +923,7 @@ export type StudentImportBatchUpdateWithoutStudentsInput = {
   updatedStudents?: Prisma.IntFieldUpdateOperationsInput | number
   updatedEnrollments?: Prisma.IntFieldUpdateOperationsInput | number
   skipped?: Prisma.IntFieldUpdateOperationsInput | number
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdByUser?: Prisma.UserUpdateOneWithoutStudentImportBatchesNestedInput
@@ -912,6 +942,7 @@ export type StudentImportBatchUncheckedUpdateWithoutStudentsInput = {
   updatedStudents?: Prisma.IntFieldUpdateOperationsInput | number
   updatedEnrollments?: Prisma.IntFieldUpdateOperationsInput | number
   skipped?: Prisma.IntFieldUpdateOperationsInput | number
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -927,6 +958,7 @@ export type StudentImportBatchCreateManyCreatedByUserInput = {
   updatedStudents?: number
   updatedEnrollments?: number
   skipped?: number
+  isArchived?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -941,6 +973,7 @@ export type StudentImportBatchUpdateWithoutCreatedByUserInput = {
   updatedStudents?: Prisma.IntFieldUpdateOperationsInput | number
   updatedEnrollments?: Prisma.IntFieldUpdateOperationsInput | number
   skipped?: Prisma.IntFieldUpdateOperationsInput | number
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   schoolYear?: Prisma.SchoolYearUpdateOneWithoutStudentImportBatchesNestedInput
@@ -958,6 +991,7 @@ export type StudentImportBatchUncheckedUpdateWithoutCreatedByUserInput = {
   updatedStudents?: Prisma.IntFieldUpdateOperationsInput | number
   updatedEnrollments?: Prisma.IntFieldUpdateOperationsInput | number
   skipped?: Prisma.IntFieldUpdateOperationsInput | number
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.StudentUncheckedUpdateManyWithoutImportBatchNestedInput
@@ -974,6 +1008,7 @@ export type StudentImportBatchUncheckedUpdateManyWithoutCreatedByUserInput = {
   updatedStudents?: Prisma.IntFieldUpdateOperationsInput | number
   updatedEnrollments?: Prisma.IntFieldUpdateOperationsInput | number
   skipped?: Prisma.IntFieldUpdateOperationsInput | number
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -989,6 +1024,7 @@ export type StudentImportBatchCreateManySchoolYearInput = {
   updatedStudents?: number
   updatedEnrollments?: number
   skipped?: number
+  isArchived?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1003,6 +1039,7 @@ export type StudentImportBatchUpdateWithoutSchoolYearInput = {
   updatedStudents?: Prisma.IntFieldUpdateOperationsInput | number
   updatedEnrollments?: Prisma.IntFieldUpdateOperationsInput | number
   skipped?: Prisma.IntFieldUpdateOperationsInput | number
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdByUser?: Prisma.UserUpdateOneWithoutStudentImportBatchesNestedInput
@@ -1020,6 +1057,7 @@ export type StudentImportBatchUncheckedUpdateWithoutSchoolYearInput = {
   updatedStudents?: Prisma.IntFieldUpdateOperationsInput | number
   updatedEnrollments?: Prisma.IntFieldUpdateOperationsInput | number
   skipped?: Prisma.IntFieldUpdateOperationsInput | number
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.StudentUncheckedUpdateManyWithoutImportBatchNestedInput
@@ -1036,6 +1074,7 @@ export type StudentImportBatchUncheckedUpdateManyWithoutSchoolYearInput = {
   updatedStudents?: Prisma.IntFieldUpdateOperationsInput | number
   updatedEnrollments?: Prisma.IntFieldUpdateOperationsInput | number
   skipped?: Prisma.IntFieldUpdateOperationsInput | number
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1083,6 +1122,7 @@ export type StudentImportBatchSelect<ExtArgs extends runtime.Types.Extensions.In
   updatedStudents?: boolean
   updatedEnrollments?: boolean
   skipped?: boolean
+  isArchived?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   createdByUser?: boolean | Prisma.StudentImportBatch$createdByUserArgs<ExtArgs>
@@ -1103,6 +1143,7 @@ export type StudentImportBatchSelectCreateManyAndReturn<ExtArgs extends runtime.
   updatedStudents?: boolean
   updatedEnrollments?: boolean
   skipped?: boolean
+  isArchived?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   createdByUser?: boolean | Prisma.StudentImportBatch$createdByUserArgs<ExtArgs>
@@ -1121,6 +1162,7 @@ export type StudentImportBatchSelectUpdateManyAndReturn<ExtArgs extends runtime.
   updatedStudents?: boolean
   updatedEnrollments?: boolean
   skipped?: boolean
+  isArchived?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   createdByUser?: boolean | Prisma.StudentImportBatch$createdByUserArgs<ExtArgs>
@@ -1139,11 +1181,12 @@ export type StudentImportBatchSelectScalar = {
   updatedStudents?: boolean
   updatedEnrollments?: boolean
   skipped?: boolean
+  isArchived?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type StudentImportBatchOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "createdByUserId" | "schoolYearId" | "totalRows" | "createdUsers" | "createdStudents" | "createdEnrollments" | "updatedUsers" | "updatedStudents" | "updatedEnrollments" | "skipped" | "createdAt" | "updatedAt", ExtArgs["result"]["studentImportBatch"]>
+export type StudentImportBatchOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "createdByUserId" | "schoolYearId" | "totalRows" | "createdUsers" | "createdStudents" | "createdEnrollments" | "updatedUsers" | "updatedStudents" | "updatedEnrollments" | "skipped" | "isArchived" | "createdAt" | "updatedAt", ExtArgs["result"]["studentImportBatch"]>
 export type StudentImportBatchInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   createdByUser?: boolean | Prisma.StudentImportBatch$createdByUserArgs<ExtArgs>
   schoolYear?: boolean | Prisma.StudentImportBatch$schoolYearArgs<ExtArgs>
@@ -1178,6 +1221,7 @@ export type $StudentImportBatchPayload<ExtArgs extends runtime.Types.Extensions.
     updatedStudents: number
     updatedEnrollments: number
     skipped: number
+    isArchived: boolean
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["studentImportBatch"]>
@@ -1617,6 +1661,7 @@ export interface StudentImportBatchFieldRefs {
   readonly updatedStudents: Prisma.FieldRef<"StudentImportBatch", 'Int'>
   readonly updatedEnrollments: Prisma.FieldRef<"StudentImportBatch", 'Int'>
   readonly skipped: Prisma.FieldRef<"StudentImportBatch", 'Int'>
+  readonly isArchived: Prisma.FieldRef<"StudentImportBatch", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"StudentImportBatch", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"StudentImportBatch", 'DateTime'>
 }

@@ -273,6 +273,7 @@ model StudentImportBatch {
   updatedStudents    Int         @default(0)
   updatedEnrollments Int         @default(0)
   skipped            Int         @default(0)
+  isArchived         Boolean     @default(false)
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
@@ -281,4 +282,5 @@ model StudentImportBatch {
   students           Student[]
 
   @@index([createdAt])
+  @@index([isArchived, createdAt])
 }

@@ -12,7 +12,9 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Download } from "lucide-react";
+import { toggleImportBatchArchive } from "./actions";
 
 function formatManilaDateTime(date: Date) {
   return new Intl.DateTimeFormat("en-PH", {
@@ -25,7 +27,11 @@ function formatManilaDateTime(date: Date) {
   }).format(date);
 }
 
-export default async function StudentImportHistoryPage() {
+export default async function StudentImportHistoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ archived?: string }>;
+}) {
   const session = await auth();
 
   if (!session?.user) {
@@ -36,7 +42,11 @@ export default async function StudentImportHistoryPage() {
     redirect("/unauthorized");
   }
 
+  const params = await searchParams;
+  const showArchived = params.archived === "1";
+
   const batches = await prisma.studentImportBatch.findMany({
+    where: showArchived ? {} : { isArchived: false },
     include: {
       createdByUser: {
         select: {
@@ -71,6 +81,19 @@ export default async function StudentImportHistoryPage() {
           { label: "Student Management", href: "/dashboard/admin/students" },
           { label: "Import History" },
         ]}
+        actions={
+          <Button asChild variant="outline">
+            <Link
+              href={
+                showArchived
+                  ? "/dashboard/admin/students/import-history"
+                  : "/dashboard/admin/students/import-history?archived=1"
+              }
+            >
+              {showArchived ? "Hide Archived" : "Show Archived"}
+            </Link>
+          </Button>
+        }
       />
 
       <Card className="border-slate-200 shadow-sm">
@@ -93,7 +116,13 @@ export default async function StudentImportHistoryPage() {
                 className="flex flex-col gap-4 rounded-xl border border-slate-200 p-4 md:flex-row md:items-center md:justify-between"
               >
                 <div className="space-y-1">
-                  <p className="font-semibold text-slate-900">Batch ID</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold text-slate-900">Batch ID</p>
+                    {batch.isArchived ? (
+                      <Badge variant="secondary">Archived</Badge>
+                    ) : null}
+                  </div>
+
                   <p className="break-all font-mono text-sm text-slate-700">
                     {batch.id}
                   </p>
@@ -132,6 +161,13 @@ export default async function StudentImportHistoryPage() {
                       View Batch
                     </Link>
                   </Button>
+
+                  <form action={toggleImportBatchArchive}>
+                    <input type="hidden" name="batchId" value={batch.id} />
+                    <Button type="submit" variant="outline">
+                      {batch.isArchived ? "Unarchive" : "Archive"}
+                    </Button>
+                  </form>
                 </div>
               </div>
             ))

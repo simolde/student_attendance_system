@@ -275,6 +275,7 @@ export const StudentImportBatchScalarFieldEnum = {
   updatedStudents: 'updatedStudents',
   updatedEnrollments: 'updatedEnrollments',
   skipped: 'skipped',
+  isArchived: 'isArchived',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
