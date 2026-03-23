@@ -26,6 +26,8 @@ const gradeLevels = [
   "GRADE_12",
 ] as const;
 
+const formatName = (name: string) => name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
 export default function StudentManagementForms({
   sections,
 }: {
@@ -71,7 +73,7 @@ export default function StudentManagementForms({
             <Input
               name="name"
               type="text"
-              placeholder="e.g. Grade 7 - A"
+              placeholder="e.g. PICASSO"
               className="h-11"
             />
           </div>
@@ -165,10 +167,13 @@ export default function StudentManagementForms({
               <option value="" disabled>
                 Select a section
               </option>
-              {sections.map((section) => (
-                <option key={section.id} value={section.id}>
-                  {section.name} ({section.gradeLevel})
-                </option>
+              {sections
+                .slice()
+                .sort((a, b) => a.id.localeCompare(b.id))
+                .map((section) => (
+                  <option key={section.id} value={section.id}>
+                    {formatName(section.gradeLevel)} - {section.name} 
+                  </option>
               ))}
             </select>
           </div>
