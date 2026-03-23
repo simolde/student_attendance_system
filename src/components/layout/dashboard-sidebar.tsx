@@ -55,6 +55,7 @@ function SidebarContent({
         { href: "/dashboard/admin/students/rfid", label: "Student RFID", icon: CreditCard },
         { href: "/dashboard/admin/rfid-monitor", label: "RFID Monitor", icon: MonitorPlay },
         { href: "/dashboard/admin/attendance-rules", label: "Attendance Rules", icon: AlarmClock },
+        { href: "/dashboard/admin/students/import-history", label: "Import History", icon: History },
       ]
     : [];
 

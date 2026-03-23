@@ -13,6 +13,7 @@ export default function UnauthorizedPage() {
           alt="School building"
           fill
           priority
+          sizes="100vw"
           className="object-cover"
         />
         <div className="absolute inset-0 bg-slate-950/75" />
@@ -72,6 +73,7 @@ export default function UnauthorizedPage() {
                 src="/kamias.webp"
                 alt="School campus"
                 fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-linear-to-t from-slate-950/85 via-slate-950/20 to-transparent" />
