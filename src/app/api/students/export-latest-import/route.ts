@@ -24,27 +24,22 @@ export async function GET() {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  const latestStudent = await prisma.student.findFirst({
-    where: {
-      importBatchId: {
-        not: null,
-      },
-    },
+  const latestBatch = await prisma.studentImportBatch.findFirst({
     orderBy: {
-      updatedAt: "desc",
+      createdAt: "desc",
     },
     select: {
-      importBatchId: true,
+      id: true,
     },
   });
 
-  if (!latestStudent?.importBatchId) {
+  if (!latestBatch) {
     return new NextResponse("No import batch found", { status: 404 });
   }
 
   const students = await prisma.student.findMany({
     where: {
-      importBatchId: latestStudent.importBatchId,
+      importBatchId: latestBatch.id,
     },
     include: {
       user: true,
@@ -74,7 +69,7 @@ export async function GET() {
     formatGradeLevel(student.section?.gradeLevel),
     "Student@123",
     "Change password on first login",
-    latestStudent.importBatchId!,
+    latestBatch.id!,
   ]);
 
   const csv = [
