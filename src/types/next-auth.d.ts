@@ -8,18 +8,19 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       role: string;
+      mustChangePassword?: boolean;
     };
   }
 
   interface User {
     role: string;
-    image?: string | null;
+    mustChangePassword?: boolean;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     role?: string;
-    image?: string | null;
+    mustChangePassword?: boolean;
   }
 }

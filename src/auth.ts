@@ -53,6 +53,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           role: user.role,
           image: user.image,
+          mustChangePassword: user.mustChangePassword,
         };
       },
     }),
@@ -61,7 +62,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     jwt({ token, user }) {
       if (user) {
         token.role = user.role;
-        token.image = user.image;
+        token.mustChangePassword = (user as { mustChangePassword?: boolean })
+          .mustChangePassword;
       }
       return token;
     },
@@ -69,7 +71,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.sub!;
         session.user.role = token.role as string;
-        session.user.image = token.image as string | null | undefined;
+        session.user.mustChangePassword = Boolean(token.mustChangePassword);
       }
       return session;
     },

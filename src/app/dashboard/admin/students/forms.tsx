@@ -92,7 +92,7 @@ export default function StudentManagementForms({
               </option>
               {gradeLevels.map((level) => (
                 <option key={level} value={level}>
-                  {level}
+                  {formatName(level)}
                 </option>
               ))}
             </select>
