@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 type ImportSummary = {
+  importBatchId: string;
   createdUsers: number;
   createdStudents: number;
   createdEnrollments: number;
@@ -232,6 +233,13 @@ export default function ImportStudentsForm() {
       {summary ? (
         <div className="space-y-4 rounded-xl border border-slate-200 p-4">
           <p className="text-sm font-semibold text-slate-900">Import Summary</p>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs text-slate-500">Import Batch ID</p>
+            <p className="mt-1 break-all font-mono text-sm font-semibold text-slate-900">
+              {summary.importBatchId}
+            </p>
+          </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <SummaryItem label="Created Users" value={summary.createdUsers} />
