@@ -52,12 +52,14 @@ export default function DashboardShell({
   userEmail,
   userImage,
   role,
+  mustChangePassword = false,
 }: {
   children: React.ReactNode;
   userName: string;
   userEmail: string;
   userImage: string | null;
   role: string;
+  mustChangePassword?: boolean;
 }) {
   return (
     <DashboardLayoutProvider>

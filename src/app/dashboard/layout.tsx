@@ -19,6 +19,7 @@ export default async function DashboardLayout({
       userEmail={session.user.email ?? ""}
       userImage={session.user.image ?? null}
       role={session.user.role}
+      mustChangePassword={session.user.mustChangePassword ?? false}
     >
       {children}
     </DashboardShell>

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { auth } from "@/auth";
 
 export default auth((req) => {
@@ -27,15 +26,6 @@ export default auth((req) => {
     !isChangePasswordRoute
   ) {
     return NextResponse.redirect(new URL("/dashboard/change-password", req.url));
-  }
-
-  if (
-    isLoggedIn &&
-    !mustChangePassword &&
-    isChangePasswordRoute &&
-    pathname === "/dashboard/change-password"
-  ) {
-    return NextResponse.next();
   }
 
   return NextResponse.next();
