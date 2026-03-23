@@ -28,7 +28,7 @@ export default async function ImportStudentsPage() {
     <div className="space-y-8">
       <PageHeader
         title="Import Students"
-        description="Upload an Excel file to create or update student accounts and enrollments."
+        description="Upload an Excel file to create or update student accounts, sections, enrollments, and optional RFID assignments."
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Admin", href: "/dashboard/admin" },
@@ -52,8 +52,8 @@ export default async function ImportStudentsPage() {
         <CardHeader>
           <CardTitle>Excel Import</CardTitle>
           <CardDescription>
-            Required columns: student_no, full_name, email, section. Optional:
-            school_year, status.
+            Required columns: student_no, full_name, email, section, grade_level.
+            Optional columns: school_year, status, rfid_uid.
           </CardDescription>
         </CardHeader>
         <CardContent>
