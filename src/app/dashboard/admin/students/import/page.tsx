@@ -36,15 +36,24 @@ export default async function ImportStudentsPage() {
           { label: "Import Students" },
         ]}
         actions={
-          <Button asChild variant="outline">
-            <a
-              href="/templates/student_import_template.xlsx"
-              download="student_import_template.xlsx"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Download Template
-            </a>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <a
+                href="/templates/student_import_template.xlsx"
+                download="student_import_template.xlsx"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download Template
+              </a>
+            </Button>
+
+            <Button asChild variant="outline">
+              <a href="/api/students/export-latest-import">
+                <Download className="mr-2 h-4 w-4" />
+                Export Latest Import
+              </a>
+            </Button>
+          </div>
         }
       />
 

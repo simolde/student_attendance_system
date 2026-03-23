@@ -239,6 +239,10 @@ export default function ImportStudentsForm() {
             <p className="mt-1 break-all font-mono text-sm font-semibold text-slate-900">
               {summary.importBatchId}
             </p>
+            <p className="text-xs text-slate-500">
+              Use the <span className="font-medium">Export Latest Import</span> button to
+              download credentials for this batch.
+            </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
