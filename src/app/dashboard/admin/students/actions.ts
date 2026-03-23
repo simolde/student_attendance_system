@@ -177,6 +177,7 @@ export async function createStudent(
           email,
           role: "STUDENT",
           isActive: true,
+          mustChangePassword: true,
         },
         select: {
           id: true,
