@@ -256,7 +256,7 @@ export async function importStudentsFromRows(
         }
       }
 
-      const defaultPassword = await bcrypt.hash("Starland@101", 12);
+      const defaultPassword = await bcrypt.hash("Starland@123", 12);
 
       const createdUser = await prisma.user.create({
         data: {

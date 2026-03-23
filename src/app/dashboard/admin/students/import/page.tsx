@@ -67,7 +67,7 @@ export default async function ImportStudentsPage() {
                 <p>
                   New imported student accounts currently use:
                   <span className="ml-1 rounded-md bg-amber-100 px-2 py-1 font-mono text-xs">
-                    Starland@101
+                    Starland@123
                   </span>
                 </p>
               </div>
