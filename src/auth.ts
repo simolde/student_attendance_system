@@ -59,12 +59,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
         token.mustChangePassword = (user as { mustChangePassword?: boolean })
           .mustChangePassword;
       }
+
+      // Refresh critical auth flags from DB on later requests
+      if (token.sub) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: {
+            role: true,
+            mustChangePassword: true,
+            isActive: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        });
+
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.mustChangePassword = dbUser.mustChangePassword;
+          token.name = dbUser.name ?? token.name;
+          token.email = dbUser.email ?? token.email;
+          token.picture = dbUser.image ?? token.picture;
+        }
+      }
+
       return token;
     },
     session({ session, token }) {
@@ -72,6 +96,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.sub!;
         session.user.role = token.role as string;
         session.user.mustChangePassword = Boolean(token.mustChangePassword);
+        session.user.name = token.name ?? session.user.name;
+        session.user.email = token.email ?? session.user.email;
+        session.user.image =
+          typeof token.picture === "string" ? token.picture : session.user.image;
       }
       return session;
     },

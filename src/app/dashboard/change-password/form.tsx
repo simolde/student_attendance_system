@@ -1,13 +1,14 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
-import { changeMyPassword, type ChangePasswordState } from "./actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import PasswordField from "@/components/password-field";
+import { signOut } from "next-auth/react";
 import { toast } from "sonner";
+import { changeMyPassword, type UserFormState } from "./actions";
 
-const initialState: ChangePasswordState = {};
+const initialState: UserFormState = {};
 
 export default function ChangePasswordForm() {
   const [state, formAction, pending] = useActionState(
@@ -18,10 +19,15 @@ export default function ChangePasswordForm() {
   useEffect(() => {
     if (state?.error) {
       toast.error(state.error);
+      return;
     }
 
     if (state?.success) {
       toast.success(state.success);
+
+      setTimeout(() => {
+        signOut({ callbackUrl: "/login" });
+      }, 800);
     }
   }, [state]);
 
