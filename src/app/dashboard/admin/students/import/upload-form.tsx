@@ -40,12 +40,45 @@ export default function ImportStudentsForm() {
 
       const sheet = workbook.Sheets[preferredSheetName];
 
-      const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+      const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
         defval: "",
         range: 3,
       });
 
-      const mappedRows: ImportRow[] = json
+      if (rawRows.length === 0) {
+        toast.error("No student rows found in the selected sheet.");
+        setRows([]);
+        setFileName("");
+        setSummary(null);
+        return;
+      }
+
+      const firstRow = rawRows[0];
+      const headers = Object.keys(firstRow);
+
+      const requiredHeaders = [
+        "student_no",
+        "full_name",
+        "email",
+        "section",
+        "grade_level",
+      ];
+
+      const missingHeaders = requiredHeaders.filter(
+        (header) => !headers.includes(header)
+      );
+
+      if (missingHeaders.length > 0) {
+        toast.error(
+          `Invalid template. Missing header(s): ${missingHeaders.join(", ")}`
+        );
+        setRows([]);
+        setFileName("");
+        setSummary(null);
+        return;
+      }
+
+      const mappedRows: ImportRow[] = rawRows
         .map((row) => ({
           student_no: String(row.student_no ?? "").trim(),
           full_name: String(row.full_name ?? "").trim(),
@@ -88,7 +121,7 @@ export default function ImportStudentsForm() {
       toast.error("Failed to read Excel file");
     }
   }
-
+  
   async function handleImport() {
     if (!rows.length) {
       toast.error("Please upload an Excel file first");
