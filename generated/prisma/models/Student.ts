@@ -30,6 +30,7 @@ export type StudentMinAggregateOutputType = {
   studentNo: string | null
   rfidUid: string | null
   sectionId: string | null
+  importBatchId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -40,6 +41,7 @@ export type StudentMaxAggregateOutputType = {
   studentNo: string | null
   rfidUid: string | null
   sectionId: string | null
+  importBatchId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -50,6 +52,7 @@ export type StudentCountAggregateOutputType = {
   studentNo: number
   rfidUid: number
   sectionId: number
+  importBatchId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -62,6 +65,7 @@ export type StudentMinAggregateInputType = {
   studentNo?: true
   rfidUid?: true
   sectionId?: true
+  importBatchId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -72,6 +76,7 @@ export type StudentMaxAggregateInputType = {
   studentNo?: true
   rfidUid?: true
   sectionId?: true
+  importBatchId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -82,6 +87,7 @@ export type StudentCountAggregateInputType = {
   studentNo?: true
   rfidUid?: true
   sectionId?: true
+  importBatchId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -165,6 +171,7 @@ export type StudentGroupByOutputType = {
   studentNo: string
   rfidUid: string | null
   sectionId: string | null
+  importBatchId: string | null
   createdAt: Date
   updatedAt: Date
   _count: StudentCountAggregateOutputType | null
@@ -196,6 +203,7 @@ export type StudentWhereInput = {
   studentNo?: Prisma.StringFilter<"Student"> | string
   rfidUid?: Prisma.StringNullableFilter<"Student"> | string | null
   sectionId?: Prisma.StringNullableFilter<"Student"> | string | null
+  importBatchId?: Prisma.StringNullableFilter<"Student"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Student"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Student"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -211,6 +219,7 @@ export type StudentOrderByWithRelationInput = {
   studentNo?: Prisma.SortOrder
   rfidUid?: Prisma.SortOrderInput | Prisma.SortOrder
   sectionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  importBatchId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -229,6 +238,7 @@ export type StudentWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.StudentWhereInput[]
   NOT?: Prisma.StudentWhereInput | Prisma.StudentWhereInput[]
   sectionId?: Prisma.StringNullableFilter<"Student"> | string | null
+  importBatchId?: Prisma.StringNullableFilter<"Student"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Student"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Student"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -244,6 +254,7 @@ export type StudentOrderByWithAggregationInput = {
   studentNo?: Prisma.SortOrder
   rfidUid?: Prisma.SortOrderInput | Prisma.SortOrder
   sectionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  importBatchId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.StudentCountOrderByAggregateInput
@@ -260,6 +271,7 @@ export type StudentScalarWhereWithAggregatesInput = {
   studentNo?: Prisma.StringWithAggregatesFilter<"Student"> | string
   rfidUid?: Prisma.StringNullableWithAggregatesFilter<"Student"> | string | null
   sectionId?: Prisma.StringNullableWithAggregatesFilter<"Student"> | string | null
+  importBatchId?: Prisma.StringNullableWithAggregatesFilter<"Student"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Student"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Student"> | Date | string
 }
@@ -268,6 +280,7 @@ export type StudentCreateInput = {
   id?: string
   studentNo: string
   rfidUid?: string | null
+  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutStudentInput
@@ -283,6 +296,7 @@ export type StudentUncheckedCreateInput = {
   studentNo: string
   rfidUid?: string | null
   sectionId?: string | null
+  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   enrollments?: Prisma.EnrollmentUncheckedCreateNestedManyWithoutStudentInput
@@ -294,6 +308,7 @@ export type StudentUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutStudentNestedInput
@@ -309,6 +324,7 @@ export type StudentUncheckedUpdateInput = {
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   enrollments?: Prisma.EnrollmentUncheckedUpdateManyWithoutStudentNestedInput
@@ -322,6 +338,7 @@ export type StudentCreateManyInput = {
   studentNo: string
   rfidUid?: string | null
   sectionId?: string | null
+  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -330,6 +347,7 @@ export type StudentUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -340,6 +358,7 @@ export type StudentUncheckedUpdateManyInput = {
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -365,6 +384,7 @@ export type StudentCountOrderByAggregateInput = {
   studentNo?: Prisma.SortOrder
   rfidUid?: Prisma.SortOrder
   sectionId?: Prisma.SortOrder
+  importBatchId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -375,6 +395,7 @@ export type StudentMaxOrderByAggregateInput = {
   studentNo?: Prisma.SortOrder
   rfidUid?: Prisma.SortOrder
   sectionId?: Prisma.SortOrder
+  importBatchId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -385,6 +406,7 @@ export type StudentMinOrderByAggregateInput = {
   studentNo?: Prisma.SortOrder
   rfidUid?: Prisma.SortOrder
   sectionId?: Prisma.SortOrder
+  importBatchId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -516,6 +538,7 @@ export type StudentCreateWithoutUserInput = {
   id?: string
   studentNo: string
   rfidUid?: string | null
+  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   section?: Prisma.SectionCreateNestedOneWithoutStudentsInput
@@ -529,6 +552,7 @@ export type StudentUncheckedCreateWithoutUserInput = {
   studentNo: string
   rfidUid?: string | null
   sectionId?: string | null
+  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   enrollments?: Prisma.EnrollmentUncheckedCreateNestedManyWithoutStudentInput
@@ -556,6 +580,7 @@ export type StudentUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   section?: Prisma.SectionUpdateOneWithoutStudentsNestedInput
@@ -569,6 +594,7 @@ export type StudentUncheckedUpdateWithoutUserInput = {
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   enrollments?: Prisma.EnrollmentUncheckedUpdateManyWithoutStudentNestedInput
@@ -580,6 +606,7 @@ export type StudentCreateWithoutSectionInput = {
   id?: string
   studentNo: string
   rfidUid?: string | null
+  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutStudentInput
@@ -593,6 +620,7 @@ export type StudentUncheckedCreateWithoutSectionInput = {
   userId: string
   studentNo: string
   rfidUid?: string | null
+  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   enrollments?: Prisma.EnrollmentUncheckedCreateNestedManyWithoutStudentInput
@@ -635,6 +663,7 @@ export type StudentScalarWhereInput = {
   studentNo?: Prisma.StringFilter<"Student"> | string
   rfidUid?: Prisma.StringNullableFilter<"Student"> | string | null
   sectionId?: Prisma.StringNullableFilter<"Student"> | string | null
+  importBatchId?: Prisma.StringNullableFilter<"Student"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Student"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Student"> | Date | string
 }
@@ -643,6 +672,7 @@ export type StudentCreateWithoutEnrollmentsInput = {
   id?: string
   studentNo: string
   rfidUid?: string | null
+  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutStudentInput
@@ -657,6 +687,7 @@ export type StudentUncheckedCreateWithoutEnrollmentsInput = {
   studentNo: string
   rfidUid?: string | null
   sectionId?: string | null
+  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutStudentInput
@@ -683,6 +714,7 @@ export type StudentUpdateWithoutEnrollmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutStudentNestedInput
@@ -697,6 +729,7 @@ export type StudentUncheckedUpdateWithoutEnrollmentsInput = {
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutStudentNestedInput
@@ -707,6 +740,7 @@ export type StudentCreateWithoutAttendancesInput = {
   id?: string
   studentNo: string
   rfidUid?: string | null
+  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutStudentInput
@@ -721,6 +755,7 @@ export type StudentUncheckedCreateWithoutAttendancesInput = {
   studentNo: string
   rfidUid?: string | null
   sectionId?: string | null
+  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   enrollments?: Prisma.EnrollmentUncheckedCreateNestedManyWithoutStudentInput
@@ -747,6 +782,7 @@ export type StudentUpdateWithoutAttendancesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutStudentNestedInput
@@ -761,6 +797,7 @@ export type StudentUncheckedUpdateWithoutAttendancesInput = {
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   enrollments?: Prisma.EnrollmentUncheckedUpdateManyWithoutStudentNestedInput
@@ -771,6 +808,7 @@ export type StudentCreateWithoutRfidLogsInput = {
   id?: string
   studentNo: string
   rfidUid?: string | null
+  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutStudentInput
@@ -785,6 +823,7 @@ export type StudentUncheckedCreateWithoutRfidLogsInput = {
   studentNo: string
   rfidUid?: string | null
   sectionId?: string | null
+  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   enrollments?: Prisma.EnrollmentUncheckedCreateNestedManyWithoutStudentInput
@@ -811,6 +850,7 @@ export type StudentUpdateWithoutRfidLogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutStudentNestedInput
@@ -825,6 +865,7 @@ export type StudentUncheckedUpdateWithoutRfidLogsInput = {
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   enrollments?: Prisma.EnrollmentUncheckedUpdateManyWithoutStudentNestedInput
@@ -836,6 +877,7 @@ export type StudentCreateManySectionInput = {
   userId: string
   studentNo: string
   rfidUid?: string | null
+  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -844,6 +886,7 @@ export type StudentUpdateWithoutSectionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutStudentNestedInput
@@ -857,6 +900,7 @@ export type StudentUncheckedUpdateWithoutSectionInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   enrollments?: Prisma.EnrollmentUncheckedUpdateManyWithoutStudentNestedInput
@@ -869,6 +913,7 @@ export type StudentUncheckedUpdateManyWithoutSectionInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -928,6 +973,7 @@ export type StudentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   studentNo?: boolean
   rfidUid?: boolean
   sectionId?: boolean
+  importBatchId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -944,6 +990,7 @@ export type StudentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   studentNo?: boolean
   rfidUid?: boolean
   sectionId?: boolean
+  importBatchId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -956,6 +1003,7 @@ export type StudentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   studentNo?: boolean
   rfidUid?: boolean
   sectionId?: boolean
+  importBatchId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -968,11 +1016,12 @@ export type StudentSelectScalar = {
   studentNo?: boolean
   rfidUid?: boolean
   sectionId?: boolean
+  importBatchId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type StudentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "studentNo" | "rfidUid" | "sectionId" | "createdAt" | "updatedAt", ExtArgs["result"]["student"]>
+export type StudentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "studentNo" | "rfidUid" | "sectionId" | "importBatchId" | "createdAt" | "updatedAt", ExtArgs["result"]["student"]>
 export type StudentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   section?: boolean | Prisma.Student$sectionArgs<ExtArgs>
@@ -1005,6 +1054,7 @@ export type $StudentPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     studentNo: string
     rfidUid: string | null
     sectionId: string | null
+    importBatchId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["student"]>
@@ -1440,6 +1490,7 @@ export interface StudentFieldRefs {
   readonly studentNo: Prisma.FieldRef<"Student", 'String'>
   readonly rfidUid: Prisma.FieldRef<"Student", 'String'>
   readonly sectionId: Prisma.FieldRef<"Student", 'String'>
+  readonly importBatchId: Prisma.FieldRef<"Student", 'String'>
   readonly createdAt: Prisma.FieldRef<"Student", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Student", 'DateTime'>
 }

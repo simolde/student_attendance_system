@@ -165,6 +165,7 @@ export const StudentScalarFieldEnum = {
   studentNo: 'studentNo',
   rfidUid: 'rfidUid',
   sectionId: 'sectionId',
+  importBatchId: 'importBatchId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

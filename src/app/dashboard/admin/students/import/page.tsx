@@ -38,8 +38,8 @@ export default async function ImportStudentsPage() {
         actions={
           <Button asChild variant="outline">
             <a
-              href="/templates/student_import_template_v2.xlsx"
-              download="student_import_template_v2.xlsx"
+              href="/templates/student_import_template.xlsx"
+              download="student_import_template.xlsx"
             >
               <Download className="mr-2 h-4 w-4" />
               Download Template
