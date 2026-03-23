@@ -143,7 +143,9 @@ export default async function StudentImportHistoryPage() {
 
                   <Button asChild variant="outline">
                     <Link
-                      href={`/dashboard/admin/students?q=&page=1`}
+                      href={`/dashboard/admin/students?importBatchId=${encodeURIComponent(
+                        batch.importBatchId
+                      )}&page=1`}
                     >
                       View Students
                     </Link>

@@ -30,7 +30,12 @@ const PAGE_SIZE = 10;
 export default async function AdminStudentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; sectionId?: string; page?: string }>;
+  searchParams: Promise<{ 
+    q?: string; 
+    sectionId?: string;
+    importBatchId?: string; 
+    page?: string;
+  }>;
 }) {
   const session = await auth();
 
@@ -45,6 +50,7 @@ export default async function AdminStudentsPage({
   const params = await searchParams;
   const q = params.q?.trim() ?? "";
   const sectionId = params.sectionId?.trim() ?? "";
+  const importBatchId = params.importBatchId?.trim() ?? "";
   const page = Math.max(Number(params.page || "1"), 1);
 
   const sections = await prisma.section.findMany({
@@ -59,6 +65,7 @@ export default async function AdminStudentsPage({
   const where = {
     AND: [
       sectionId ? { sectionId } : {},
+      importBatchId ? { importBatchId } : {},
       q
         ? {
             OR: [
@@ -93,6 +100,7 @@ export default async function AdminStudentsPage({
     const sp = new URLSearchParams();
     if (q) sp.set("q", q);
     if (sectionId) sp.set("sectionId", sectionId);
+    if (importBatchId) sp.set("importBatchId", importBatchId);
     sp.set("page", String(nextPage));
     return `/dashboard/admin/students?${sp.toString()}`;
   }
@@ -101,6 +109,7 @@ export default async function AdminStudentsPage({
     const sp = new URLSearchParams();
     if (q) sp.set("q", q);
     if (sectionId) sp.set("sectionId", sectionId);
+    if (importBatchId) sp.set("importBatchId", importBatchId);
     return `/api/students/export-credentials?${sp.toString()}`;
   }
 
@@ -207,20 +216,33 @@ export default async function AdminStudentsPage({
               </div>
 
               <input type="hidden" name="page" value="1" />
+              <input type="hidden" name="importBatchId" value={importBatchId} />
 
               <div className="flex items-end gap-2">
                 <Button type="submit">Apply</Button>
                 <Button type="button" variant="outline" asChild>
-                  <Link href="/dashboard/admin/students">Reset</Link>
+                  <Link
+                    href={
+                      importBatchId
+                        ? `/dashboard/admin/students?importBatchId=${encodeURIComponent(importBatchId)}`
+                        : "/dashboard/admin/students"
+                    }
+                  >
+                    Reset
+                  </Link>
                 </Button>
               </div>
             </form>
           </TableToolbar>
 
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-            Exported credentials only include the login email and the temporary
-            password policy. They do not read plain passwords from the database.
-          </div>
+          {importBatchId ? (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
+              Viewing students from import batch:
+              <span className="ml-2 break-all font-mono text-xs">
+                {importBatchId}
+              </span>
+            </div>
+          ) : null}
 
           {students.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
