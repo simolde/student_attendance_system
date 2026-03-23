@@ -6,6 +6,7 @@ import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { logAudit } from "@/lib/audit";
+import crypto from "node:crypto";
 
 export type ImportRow = {
   student_no: string;
@@ -22,6 +23,7 @@ export type ImportStudentsState = {
   error?: string;
   success?: string;
   summary?: {
+    importBatchId: string;
     createdUsers: number;
     createdStudents: number;
     createdEnrollments: number;
@@ -34,15 +36,6 @@ export type ImportStudentsState = {
 };
 
 const allowedGradeLevels = new Set([
-  "PRE_NURSERY",
-  "NURSERY",
-  "KINDER",
-  "GRADE_1",
-  "GRADE_2",
-  "GRADE_3",
-  "GRADE_4",
-  "GRADE_5",
-  "GRADE_6",
   "GRADE_7",
   "GRADE_8",
   "GRADE_9",
@@ -101,6 +94,8 @@ export async function importStudentsFromRows(
   if (!activeSchoolYear) {
     return { error: "No active school year found" };
   }
+
+  const importBatchId = crypto.randomUUID();
 
   let createdUsers = 0;
   let createdStudents = 0;
@@ -194,6 +189,7 @@ export async function importStudentsFromRows(
           data: {
             sectionId: section.id,
             rfidUid: rfidUid || existingStudent.rfidUid || null,
+            importBatchId,
           },
         });
         updatedStudents++;
@@ -256,7 +252,7 @@ export async function importStudentsFromRows(
         }
       }
 
-      const defaultPassword = await bcrypt.hash("Starland@123", 12);
+      const defaultPassword = await bcrypt.hash("Student@123", 12);
 
       const createdUser = await prisma.user.create({
         data: {
@@ -277,6 +273,7 @@ export async function importStudentsFromRows(
           studentNo,
           sectionId: section.id,
           rfidUid,
+          importBatchId,
         },
         select: { id: true },
       });
@@ -303,12 +300,13 @@ export async function importStudentsFromRows(
     action: "IMPORT_STUDENTS",
     entity: "Student",
     entityId: null,
-    description: `Imported students for active school year ${activeSchoolYear.name}`,
+    description: `Imported students for active school year ${activeSchoolYear.name} with batch ${importBatchId}`,
   });
 
   return {
     success: "Student import completed",
     summary: {
+      importBatchId,
       createdUsers,
       createdStudents,
       createdEnrollments,
