@@ -1,28 +1,46 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { auth } from "@/auth";
 
 export default auth((req) => {
-  const isLoggedIn = !!req.auth;
-  const { pathname } = req.nextUrl;
+  const isLoggedIn = !!req.auth?.user;
+  const pathname = req.nextUrl.pathname;
 
-  const publicRoutes = ["/login", "/unauthorized"];
-  const isPublicRoute = publicRoutes.includes(pathname);
+  const isDashboardRoute = pathname.startsWith("/dashboard");
+  const isLoginRoute = pathname.startsWith("/login");
+  const isChangePasswordRoute = pathname.startsWith("/dashboard/change-password");
 
-  const isProtectedRoute =
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/api/attendance");
-
-  if (isProtectedRoute && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/login", req.nextUrl.origin));
+  if (!isLoggedIn && isDashboardRoute) {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (isPublicRoute && isLoggedIn && pathname === "/login") {
-    return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
+  if (isLoggedIn && isLoginRoute) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
+  const mustChangePassword = req.auth?.user?.mustChangePassword === true;
+
+  if (
+    isLoggedIn &&
+    mustChangePassword &&
+    isDashboardRoute &&
+    !isChangePasswordRoute
+  ) {
+    return NextResponse.redirect(new URL("/dashboard/change-password", req.url));
+  }
+
+  if (
+    isLoggedIn &&
+    !mustChangePassword &&
+    isChangePasswordRoute &&
+    pathname === "/dashboard/change-password"
+  ) {
+    return NextResponse.next();
   }
 
   return NextResponse.next();
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/attendance/:path*", "/login"],
+  matcher: ["/dashboard/:path*", "/login"],
 };

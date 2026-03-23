@@ -9,14 +9,16 @@ function ShellContent({
   children,
   userName,
   userEmail,
-  userImage,
   role,
+  userImage,
+  mustChangePassword,
 }: {
   children: React.ReactNode;
   userName: string;
   userEmail: string;
-  userImage: string | null;
   role: string;
+  userImage: string | null;
+  mustChangePassword: boolean;
 }) {
   useDashboardLayout();
 
@@ -28,6 +30,7 @@ function ShellContent({
           userName={userName}
           userEmail={userEmail}
           userImage={userImage}
+          mustChangePassword={mustChangePassword}
         />
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -50,22 +53,25 @@ export default function DashboardShell({
   children,
   userName,
   userEmail,
-  userImage,
   role,
+  userImage,
+  mustChangePassword,
 }: {
   children: React.ReactNode;
   userName: string;
   userEmail: string;
-  userImage: string | null;
   role: string;
+  userImage: string | null;
+  mustChangePassword: boolean;
 }) {
   return (
     <DashboardLayoutProvider>
       <ShellContent
         userName={userName}
         userEmail={userEmail}
-        userImage={userImage}
         role={role}
+        userImage={userImage}
+        mustChangePassword={mustChangePassword}
       >
         {children}
       </ShellContent>
