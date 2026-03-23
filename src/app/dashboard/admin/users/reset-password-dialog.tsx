@@ -80,7 +80,7 @@ export default function ResetPasswordDialog({
               type="text"
               placeholder="Enter temporary password"
               className="h-11"
-              defaultValue="Student@123"
+              defaultValue="Starland@123"
             />
             <p className="text-xs text-slate-500">
               Choose a temporary password the user can use once before setting a new one.

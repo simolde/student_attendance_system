@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 const PAGE_SIZE = 10;
 
@@ -96,7 +97,15 @@ export default async function AdminStudentsPage({
     return `/dashboard/admin/students?${sp.toString()}`;
   }
 
-  const formatName = (name: string) =>name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  function buildExportUrl() {
+    const sp = new URLSearchParams();
+    if (q) sp.set("q", q);
+    if (sectionId) sp.set("sectionId", sectionId);
+    return `/api/students/export-credentials?${sp.toString()}`;
+  }
+
+  const formatName = (name: string) =>
+    name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
     <div className="space-y-8">
@@ -108,6 +117,14 @@ export default async function AdminStudentsPage({
           { label: "Admin", href: "/dashboard/admin" },
           { label: "Student Management" },
         ]}
+        actions={
+          <Button asChild variant="outline">
+            <a href={buildExportUrl()}>
+              <Download className="mr-2 h-4 w-4" />
+              Export Credentials
+            </a>
+          </Button>
+        }
       />
 
       <Card className="border-slate-200 shadow-sm">
@@ -143,10 +160,11 @@ export default async function AdminStudentsPage({
                     className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
                   >
                     <p className="font-medium text-slate-900">{section.name}</p>
-                    <p className="mt-1 text-sm text-slate-500">{formatName(section.gradeLevel)}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {formatName(section.gradeLevel)}
+                    </p>
                   </div>
-                )
-              )}
+                ))}
             </div>
           )}
         </CardContent>
@@ -198,6 +216,11 @@ export default async function AdminStudentsPage({
               </div>
             </form>
           </TableToolbar>
+
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+            Exported credentials only include the login email and the temporary
+            password policy. They do not read plain passwords from the database.
+          </div>
 
           {students.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
