@@ -4,13 +4,11 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
 import { logAudit } from "@/lib/audit";
-import { rateLimit } from "@/lib/rate-limit";
-import { passwordSchema } from "@/lib/password-policy";
 
-export type ChangePasswordState = {
+export type UserFormState = {
   error?: string;
   success?: string;
 };
@@ -18,8 +16,14 @@ export type ChangePasswordState = {
 const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: passwordSchema,
-    confirmPassword: passwordSchema,
+    newPassword: z
+      .string()
+      .min(8, "New password must be at least 8 characters")
+      .regex(/[A-Z]/, "New password must include at least one uppercase letter")
+      .regex(/[a-z]/, "New password must include at least one lowercase letter")
+      .regex(/[0-9]/, "New password must include at least one number")
+      .regex(/[^A-Za-z0-9]/, "New password must include at least one special character"),
+    confirmPassword: z.string().min(1, "Please confirm your new password"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "New password and confirm password do not match",
@@ -27,22 +31,13 @@ const changePasswordSchema = z
   });
 
 export async function changeMyPassword(
-  prevState: ChangePasswordState,
+  prevState: UserFormState,
   formData: FormData
-): Promise<ChangePasswordState> {
+): Promise<UserFormState> {
   const session = await auth();
 
   if (!session?.user) {
     redirect("/login");
-  }
-
-  const rl = rateLimit(`change-password:${session.user.id}`, {
-    limit: 5,
-    windowMs: 10 * 60 * 1000,
-  });
-
-  if (!rl.success) {
-    return { error: "Too many password change attempts. Please try again later." };
   }
 
   const parsed = changePasswordSchema.safeParse({
@@ -53,7 +48,7 @@ export async function changeMyPassword(
 
   if (!parsed.success) {
     return {
-      error: parsed.error.issues[0]?.message || "Invalid password change request",
+      error: parsed.error.issues[0]?.message || "Invalid password data",
     };
   }
 
@@ -62,43 +57,57 @@ export async function changeMyPassword(
   try {
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        mustChangePassword: true,
+      },
     });
 
     if (!user || !user.password) {
-      return { error: "User account not found" };
+      return { error: "User not found" };
     }
 
-    const isValid = await bcrypt.compare(currentPassword, user.password);
+    const isCurrentPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
 
-    if (!isValid) {
+    if (!isCurrentPasswordValid) {
       return { error: "Current password is incorrect" };
     }
 
-    const sameAsOld = await bcrypt.compare(newPassword, user.password);
-
-    if (sameAsOld) {
-      return { error: "New password must be different from your current password" };
+    const isSameAsOld = await bcrypt.compare(newPassword, user.password);
+    if (isSameAsOld) {
+      return { error: "New password must be different from the current password" };
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 12);
 
     await prisma.user.update({
-      where: { id: session.user.id },
-      data: { password: hashedPassword },
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        mustChangePassword: false,
+      },
     });
 
     await logAudit({
-      userId: session.user.id,
-      action: "CHANGE_OWN_PASSWORD",
+      userId: user.id,
+      action: "CHANGE_PASSWORD",
       entity: "User",
-      entityId: session.user.id,
-      description: `User changed their own password`,
+      entityId: user.id,
+      description: `Changed own password`,
     });
 
     revalidatePath("/dashboard/change-password");
+    revalidatePath("/dashboard/account");
+    revalidatePath("/dashboard");
 
     return { success: "Password changed successfully" };
-  } catch {
+  } catch (error) {
+    console.error(error);
     return { error: "Failed to change password" };
   }
 }
