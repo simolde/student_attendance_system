@@ -6,7 +6,6 @@ import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { logAudit } from "@/lib/audit";
-import crypto from "node:crypto";
 
 export type ImportRow = {
   student_no: string;
@@ -104,7 +103,16 @@ export async function importStudentsFromRows(
     return { error: "No active school year found" };
   }
 
-  const importBatchId = crypto.randomUUID();
+  const batch = await prisma.studentImportBatch.create({
+    data: {
+      createdByUserId: session.user.id,
+      schoolYearId: activeSchoolYear.id,
+      totalRows: rows.length,
+    },
+    select: { id: true },
+  });
+
+  const importBatchId = batch.id;
 
   let createdUsers = 0;
   let createdStudents = 0;
@@ -304,11 +312,24 @@ export async function importStudentsFromRows(
     }
   }
 
+  await prisma.studentImportBatch.update({
+    where: { id: importBatchId },
+    data: {
+      createdUsers,
+      createdStudents,
+      createdEnrollments,
+      updatedUsers,
+      updatedStudents,
+      updatedEnrollments,
+      skipped,
+    },
+  });
+
   await logAudit({
     userId: session.user.id,
     action: "IMPORT_STUDENTS",
-    entity: "Student",
-    entityId: null,
+    entity: "StudentImportBatch",
+    entityId: importBatchId,
     description: `Imported students for active school year ${activeSchoolYear.name} with batch ${importBatchId}`,
   });
 

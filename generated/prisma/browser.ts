@@ -82,3 +82,8 @@ export type AuditLog = Prisma.AuditLogModel
  * 
  */
 export type AttendanceRule = Prisma.AttendanceRuleModel
+/**
+ * Model StudentImportBatch
+ * 
+ */
+export type StudentImportBatch = Prisma.StudentImportBatchModel

@@ -62,22 +62,23 @@ enum GradeLevel {
 }
 
 model User {
-  id                 String    @id @default(cuid())
-  name               String?
-  email              String    @unique
-  emailVerified      DateTime?
-  image              String?
-  password           String?
-  role               Role      @default(STUDENT)
-  isActive           Boolean   @default(true)
-  mustChangePassword Boolean   @default(false)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id                   String              @id @default(cuid())
+  name                 String?
+  email                String              @unique
+  emailVerified        DateTime?
+  image                String?
+  password             String?
+  role                 Role                @default(STUDENT)
+  isActive             Boolean             @default(true)
+  mustChangePassword   Boolean             @default(false)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
 
-  student            Student?
-  accounts           Account[]
-  sessions           Session[]
-  auditLogs          AuditLog[]
+  student              Student?
+  accounts             Account[]
+  sessions             Session[]
+  auditLogs            AuditLog[]
+  studentImportBatches StudentImportBatch[] @relation("StudentImportBatchCreatedBy")
 }
 
 model Account {
@@ -130,32 +131,34 @@ model Section {
 }
 
 model SchoolYear {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  isActive  Boolean   @default(false)
-  startDate DateTime?
-  endDate   DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id                   String               @id @default(cuid())
+  name                 String               @unique
+  isActive             Boolean              @default(false)
+  startDate            DateTime?
+  endDate              DateTime?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
 
-  enrollments Enrollment[]
+  enrollments          Enrollment[]
+  studentImportBatches StudentImportBatch[]
 }
 
 model Student {
-  id          String        @id @default(cuid())
-  userId      String        @unique
-  studentNo   String        @unique
-  rfidUid     String?       @unique
-  sectionId   String?
+  id            String             @id @default(cuid())
+  userId        String             @unique
+  studentNo     String             @unique
+  rfidUid       String?            @unique
+  sectionId     String?
   importBatchId String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  section     Section?      @relation(fields: [sectionId], references: [id])
-  enrollments Enrollment[]
-  attendances Attendance[]
-  rfidLogs    RfidLog[]
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  section       Section?           @relation(fields: [sectionId], references: [id])
+  importBatch   StudentImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  enrollments   Enrollment[]
+  attendances   Attendance[]
+  rfidLogs      RfidLog[]
 }
 
 model Enrollment {
@@ -256,4 +259,26 @@ model AttendanceRule {
 
   @@index([gradeLevel, isActive])
   @@index([sectionId, isActive])
+}
+
+model StudentImportBatch {
+  id                 String      @id @default(cuid())
+  createdByUserId    String?
+  schoolYearId       String?
+  totalRows          Int         @default(0)
+  createdUsers       Int         @default(0)
+  createdStudents    Int         @default(0)
+  createdEnrollments Int         @default(0)
+  updatedUsers       Int         @default(0)
+  updatedStudents    Int         @default(0)
+  updatedEnrollments Int         @default(0)
+  skipped            Int         @default(0)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  createdByUser      User?       @relation("StudentImportBatchCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  schoolYear         SchoolYear? @relation(fields: [schoolYearId], references: [id], onDelete: SetNull)
+  students           Student[]
+
+  @@index([createdAt])
 }

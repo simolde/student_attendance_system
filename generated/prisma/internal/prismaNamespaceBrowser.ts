@@ -63,7 +63,8 @@ export const ModelName = {
   RfidDevice: 'RfidDevice',
   RfidLog: 'RfidLog',
   AuditLog: 'AuditLog',
-  AttendanceRule: 'AttendanceRule'
+  AttendanceRule: 'AttendanceRule',
+  StudentImportBatch: 'StudentImportBatch'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -260,6 +261,25 @@ export const AttendanceRuleScalarFieldEnum = {
 } as const
 
 export type AttendanceRuleScalarFieldEnum = (typeof AttendanceRuleScalarFieldEnum)[keyof typeof AttendanceRuleScalarFieldEnum]
+
+
+export const StudentImportBatchScalarFieldEnum = {
+  id: 'id',
+  createdByUserId: 'createdByUserId',
+  schoolYearId: 'schoolYearId',
+  totalRows: 'totalRows',
+  createdUsers: 'createdUsers',
+  createdStudents: 'createdStudents',
+  createdEnrollments: 'createdEnrollments',
+  updatedUsers: 'updatedUsers',
+  updatedStudents: 'updatedStudents',
+  updatedEnrollments: 'updatedEnrollments',
+  skipped: 'skipped',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type StudentImportBatchScalarFieldEnum = (typeof StudentImportBatchScalarFieldEnum)[keyof typeof StudentImportBatchScalarFieldEnum]
 
 
 export const SortOrder = {

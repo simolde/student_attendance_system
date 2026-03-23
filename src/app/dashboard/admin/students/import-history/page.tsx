@@ -14,12 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 
-type BatchRow = {
-  importBatchId: string;
-  count: number;
-  latestUpdatedAt: Date;
-};
-
 function formatManilaDateTime(date: Date) {
   return new Intl.DateTimeFormat("en-PH", {
     timeZone: "Asia/Manila",
@@ -42,47 +36,29 @@ export default async function StudentImportHistoryPage() {
     redirect("/unauthorized");
   }
 
-  const students = await prisma.student.findMany({
-    where: {
-      importBatchId: {
-        not: null,
+  const batches = await prisma.studentImportBatch.findMany({
+    include: {
+      createdByUser: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+      schoolYear: {
+        select: {
+          name: true,
+        },
+      },
+      _count: {
+        select: {
+          students: true,
+        },
       },
     },
-    select: {
-      importBatchId: true,
-      updatedAt: true,
-    },
     orderBy: {
-      updatedAt: "desc",
+      createdAt: "desc",
     },
   });
-
-  const batchMap = new Map<string, BatchRow>();
-
-  for (const student of students) {
-    if (!student.importBatchId) continue;
-
-    const existing = batchMap.get(student.importBatchId);
-
-    if (!existing) {
-      batchMap.set(student.importBatchId, {
-        importBatchId: student.importBatchId,
-        count: 1,
-        latestUpdatedAt: student.updatedAt,
-      });
-      continue;
-    }
-
-    existing.count += 1;
-
-    if (student.updatedAt > existing.latestUpdatedAt) {
-      existing.latestUpdatedAt = student.updatedAt;
-    }
-  }
-
-  const batches = Array.from(batchMap.values()).sort(
-    (a, b) => b.latestUpdatedAt.getTime() - a.latestUpdatedAt.getTime()
-  );
 
   return (
     <div className="space-y-8">
@@ -113,19 +89,25 @@ export default async function StudentImportHistoryPage() {
           ) : (
             batches.map((batch) => (
               <div
-                key={batch.importBatchId}
+                key={batch.id}
                 className="flex flex-col gap-4 rounded-xl border border-slate-200 p-4 md:flex-row md:items-center md:justify-between"
               >
                 <div className="space-y-1">
                   <p className="font-semibold text-slate-900">Batch ID</p>
                   <p className="break-all font-mono text-sm text-slate-700">
-                    {batch.importBatchId}
+                    {batch.id}
                   </p>
                   <p className="text-sm text-slate-500">
-                    Students in batch: {batch.count}
+                    Students in batch: {batch._count.students}
                   </p>
                   <p className="text-sm text-slate-500">
-                    Last updated: {formatManilaDateTime(batch.latestUpdatedAt)}
+                    School year: {batch.schoolYear?.name ?? "-"}
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    Imported by: {batch.createdByUser?.name ?? batch.createdByUser?.email ?? "-"}
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    Imported at: {formatManilaDateTime(batch.createdAt)}
                   </p>
                 </div>
 
@@ -133,7 +115,7 @@ export default async function StudentImportHistoryPage() {
                   <Button asChild variant="outline">
                     <a
                       href={`/api/students/export-batch?importBatchId=${encodeURIComponent(
-                        batch.importBatchId
+                        batch.id
                       )}`}
                     >
                       <Download className="mr-2 h-4 w-4" />
@@ -144,7 +126,7 @@ export default async function StudentImportHistoryPage() {
                   <Button asChild variant="outline">
                     <Link
                       href={`/dashboard/admin/students/import-history/${encodeURIComponent(
-                        batch.importBatchId
+                        batch.id
                       )}`}
                     >
                       View Batch

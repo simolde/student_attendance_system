@@ -55,26 +55,35 @@ export default async function StudentImportBatchDetailsPage({
 
   const { batchId } = await params;
 
-  const students = await prisma.student.findMany({
-    where: {
-      importBatchId: batchId,
-    },
+  const batch = await prisma.studentImportBatch.findUnique({
+    where: { id: batchId },
     include: {
-      user: true,
-      section: true,
-    },
-    orderBy: {
-      studentNo: "asc",
+      createdByUser: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+      schoolYear: {
+        select: {
+          name: true,
+        },
+      },
+      students: {
+        include: {
+          user: true,
+          section: true,
+        },
+        orderBy: {
+          studentNo: "asc",
+        },
+      },
     },
   });
 
-  if (students.length === 0) {
+  if (!batch) {
     notFound();
   }
-
-  const latestUpdatedAt = students.reduce((latest, student) => {
-    return student.updatedAt > latest ? student.updatedAt : latest;
-  }, students[0].updatedAt);
 
   return (
     <div className="space-y-8">
@@ -93,7 +102,7 @@ export default async function StudentImportBatchDetailsPage({
             <Button asChild variant="outline">
               <a
                 href={`/api/students/export-batch?importBatchId=${encodeURIComponent(
-                  batchId
+                  batch.id
                 )}`}
               >
                 <Download className="mr-2 h-4 w-4" />
@@ -104,7 +113,7 @@ export default async function StudentImportBatchDetailsPage({
             <Button asChild variant="outline">
               <Link
                 href={`/dashboard/admin/students?importBatchId=${encodeURIComponent(
-                  batchId
+                  batch.id
                 )}&page=1`}
               >
                 View in Students Page
@@ -118,30 +127,31 @@ export default async function StudentImportBatchDetailsPage({
         <CardHeader>
           <CardTitle>Batch Summary</CardTitle>
           <CardDescription>
-            Basic information about this import batch.
+            Stored batch information from the import run.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs text-slate-500">Import Batch ID</p>
-            <p className="mt-1 break-all font-mono text-sm font-semibold text-slate-900">
-              {batchId}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs text-slate-500">Students in Batch</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">
-              {students.length}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs text-slate-500">Last Updated</p>
-            <p className="mt-1 text-sm font-semibold text-slate-900">
-              {formatManilaDateTime(latestUpdatedAt)}
-            </p>
-          </div>
+        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <SummaryItem label="Batch ID" value={batch.id} mono />
+          <SummaryItem label="School Year" value={batch.schoolYear?.name ?? "-"} />
+          <SummaryItem
+            label="Imported By"
+            value={batch.createdByUser?.name ?? batch.createdByUser?.email ?? "-"}
+          />
+          <SummaryItem label="Imported At" value={formatManilaDateTime(batch.createdAt)} />
+          <SummaryItem label="Total Rows" value={String(batch.totalRows)} />
+          <SummaryItem label="Created Users" value={String(batch.createdUsers)} />
+          <SummaryItem label="Created Students" value={String(batch.createdStudents)} />
+          <SummaryItem
+            label="Created Enrollments"
+            value={String(batch.createdEnrollments)}
+          />
+          <SummaryItem label="Updated Users" value={String(batch.updatedUsers)} />
+          <SummaryItem label="Updated Students" value={String(batch.updatedStudents)} />
+          <SummaryItem
+            label="Updated Enrollments"
+            value={String(batch.updatedEnrollments)}
+          />
+          <SummaryItem label="Skipped" value={String(batch.skipped)} />
         </CardContent>
       </Card>
 
@@ -149,7 +159,7 @@ export default async function StudentImportBatchDetailsPage({
         <CardHeader>
           <CardTitle>Students in This Batch</CardTitle>
           <CardDescription>
-            All students tagged with this import batch ID.
+            All students tagged with this import batch.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -167,7 +177,7 @@ export default async function StudentImportBatchDetailsPage({
               </TableHeader>
 
               <TableBody>
-                {students.map((student) => (
+                {batch.students.map((student) => (
                   <TableRow key={student.id}>
                     <TableCell className="font-medium text-slate-900">
                       {student.studentNo}
@@ -188,6 +198,29 @@ export default async function StudentImportBatchDetailsPage({
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function SummaryItem({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p
+        className={`mt-1 text-sm font-semibold text-slate-900 ${
+          mono ? "break-all font-mono" : ""
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }

@@ -208,6 +208,7 @@ export type StudentWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Student"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   section?: Prisma.XOR<Prisma.SectionNullableScalarRelationFilter, Prisma.SectionWhereInput> | null
+  importBatch?: Prisma.XOR<Prisma.StudentImportBatchNullableScalarRelationFilter, Prisma.StudentImportBatchWhereInput> | null
   enrollments?: Prisma.EnrollmentListRelationFilter
   attendances?: Prisma.AttendanceListRelationFilter
   rfidLogs?: Prisma.RfidLogListRelationFilter
@@ -224,6 +225,7 @@ export type StudentOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   section?: Prisma.SectionOrderByWithRelationInput
+  importBatch?: Prisma.StudentImportBatchOrderByWithRelationInput
   enrollments?: Prisma.EnrollmentOrderByRelationAggregateInput
   attendances?: Prisma.AttendanceOrderByRelationAggregateInput
   rfidLogs?: Prisma.RfidLogOrderByRelationAggregateInput
@@ -243,6 +245,7 @@ export type StudentWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Student"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   section?: Prisma.XOR<Prisma.SectionNullableScalarRelationFilter, Prisma.SectionWhereInput> | null
+  importBatch?: Prisma.XOR<Prisma.StudentImportBatchNullableScalarRelationFilter, Prisma.StudentImportBatchWhereInput> | null
   enrollments?: Prisma.EnrollmentListRelationFilter
   attendances?: Prisma.AttendanceListRelationFilter
   rfidLogs?: Prisma.RfidLogListRelationFilter
@@ -280,11 +283,11 @@ export type StudentCreateInput = {
   id?: string
   studentNo: string
   rfidUid?: string | null
-  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutStudentInput
   section?: Prisma.SectionCreateNestedOneWithoutStudentsInput
+  importBatch?: Prisma.StudentImportBatchCreateNestedOneWithoutStudentsInput
   enrollments?: Prisma.EnrollmentCreateNestedManyWithoutStudentInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutStudentInput
   rfidLogs?: Prisma.RfidLogCreateNestedManyWithoutStudentInput
@@ -308,11 +311,11 @@ export type StudentUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutStudentNestedInput
   section?: Prisma.SectionUpdateOneWithoutStudentsNestedInput
+  importBatch?: Prisma.StudentImportBatchUpdateOneWithoutStudentsNestedInput
   enrollments?: Prisma.EnrollmentUpdateManyWithoutStudentNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutStudentNestedInput
   rfidLogs?: Prisma.RfidLogUpdateManyWithoutStudentNestedInput
@@ -347,7 +350,6 @@ export type StudentUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -534,14 +536,56 @@ export type StudentUpdateOneWithoutRfidLogsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.StudentUpdateToOneWithWhereWithoutRfidLogsInput, Prisma.StudentUpdateWithoutRfidLogsInput>, Prisma.StudentUncheckedUpdateWithoutRfidLogsInput>
 }
 
+export type StudentCreateNestedManyWithoutImportBatchInput = {
+  create?: Prisma.XOR<Prisma.StudentCreateWithoutImportBatchInput, Prisma.StudentUncheckedCreateWithoutImportBatchInput> | Prisma.StudentCreateWithoutImportBatchInput[] | Prisma.StudentUncheckedCreateWithoutImportBatchInput[]
+  connectOrCreate?: Prisma.StudentCreateOrConnectWithoutImportBatchInput | Prisma.StudentCreateOrConnectWithoutImportBatchInput[]
+  createMany?: Prisma.StudentCreateManyImportBatchInputEnvelope
+  connect?: Prisma.StudentWhereUniqueInput | Prisma.StudentWhereUniqueInput[]
+}
+
+export type StudentUncheckedCreateNestedManyWithoutImportBatchInput = {
+  create?: Prisma.XOR<Prisma.StudentCreateWithoutImportBatchInput, Prisma.StudentUncheckedCreateWithoutImportBatchInput> | Prisma.StudentCreateWithoutImportBatchInput[] | Prisma.StudentUncheckedCreateWithoutImportBatchInput[]
+  connectOrCreate?: Prisma.StudentCreateOrConnectWithoutImportBatchInput | Prisma.StudentCreateOrConnectWithoutImportBatchInput[]
+  createMany?: Prisma.StudentCreateManyImportBatchInputEnvelope
+  connect?: Prisma.StudentWhereUniqueInput | Prisma.StudentWhereUniqueInput[]
+}
+
+export type StudentUpdateManyWithoutImportBatchNestedInput = {
+  create?: Prisma.XOR<Prisma.StudentCreateWithoutImportBatchInput, Prisma.StudentUncheckedCreateWithoutImportBatchInput> | Prisma.StudentCreateWithoutImportBatchInput[] | Prisma.StudentUncheckedCreateWithoutImportBatchInput[]
+  connectOrCreate?: Prisma.StudentCreateOrConnectWithoutImportBatchInput | Prisma.StudentCreateOrConnectWithoutImportBatchInput[]
+  upsert?: Prisma.StudentUpsertWithWhereUniqueWithoutImportBatchInput | Prisma.StudentUpsertWithWhereUniqueWithoutImportBatchInput[]
+  createMany?: Prisma.StudentCreateManyImportBatchInputEnvelope
+  set?: Prisma.StudentWhereUniqueInput | Prisma.StudentWhereUniqueInput[]
+  disconnect?: Prisma.StudentWhereUniqueInput | Prisma.StudentWhereUniqueInput[]
+  delete?: Prisma.StudentWhereUniqueInput | Prisma.StudentWhereUniqueInput[]
+  connect?: Prisma.StudentWhereUniqueInput | Prisma.StudentWhereUniqueInput[]
+  update?: Prisma.StudentUpdateWithWhereUniqueWithoutImportBatchInput | Prisma.StudentUpdateWithWhereUniqueWithoutImportBatchInput[]
+  updateMany?: Prisma.StudentUpdateManyWithWhereWithoutImportBatchInput | Prisma.StudentUpdateManyWithWhereWithoutImportBatchInput[]
+  deleteMany?: Prisma.StudentScalarWhereInput | Prisma.StudentScalarWhereInput[]
+}
+
+export type StudentUncheckedUpdateManyWithoutImportBatchNestedInput = {
+  create?: Prisma.XOR<Prisma.StudentCreateWithoutImportBatchInput, Prisma.StudentUncheckedCreateWithoutImportBatchInput> | Prisma.StudentCreateWithoutImportBatchInput[] | Prisma.StudentUncheckedCreateWithoutImportBatchInput[]
+  connectOrCreate?: Prisma.StudentCreateOrConnectWithoutImportBatchInput | Prisma.StudentCreateOrConnectWithoutImportBatchInput[]
+  upsert?: Prisma.StudentUpsertWithWhereUniqueWithoutImportBatchInput | Prisma.StudentUpsertWithWhereUniqueWithoutImportBatchInput[]
+  createMany?: Prisma.StudentCreateManyImportBatchInputEnvelope
+  set?: Prisma.StudentWhereUniqueInput | Prisma.StudentWhereUniqueInput[]
+  disconnect?: Prisma.StudentWhereUniqueInput | Prisma.StudentWhereUniqueInput[]
+  delete?: Prisma.StudentWhereUniqueInput | Prisma.StudentWhereUniqueInput[]
+  connect?: Prisma.StudentWhereUniqueInput | Prisma.StudentWhereUniqueInput[]
+  update?: Prisma.StudentUpdateWithWhereUniqueWithoutImportBatchInput | Prisma.StudentUpdateWithWhereUniqueWithoutImportBatchInput[]
+  updateMany?: Prisma.StudentUpdateManyWithWhereWithoutImportBatchInput | Prisma.StudentUpdateManyWithWhereWithoutImportBatchInput[]
+  deleteMany?: Prisma.StudentScalarWhereInput | Prisma.StudentScalarWhereInput[]
+}
+
 export type StudentCreateWithoutUserInput = {
   id?: string
   studentNo: string
   rfidUid?: string | null
-  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   section?: Prisma.SectionCreateNestedOneWithoutStudentsInput
+  importBatch?: Prisma.StudentImportBatchCreateNestedOneWithoutStudentsInput
   enrollments?: Prisma.EnrollmentCreateNestedManyWithoutStudentInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutStudentInput
   rfidLogs?: Prisma.RfidLogCreateNestedManyWithoutStudentInput
@@ -580,10 +624,10 @@ export type StudentUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   section?: Prisma.SectionUpdateOneWithoutStudentsNestedInput
+  importBatch?: Prisma.StudentImportBatchUpdateOneWithoutStudentsNestedInput
   enrollments?: Prisma.EnrollmentUpdateManyWithoutStudentNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutStudentNestedInput
   rfidLogs?: Prisma.RfidLogUpdateManyWithoutStudentNestedInput
@@ -606,10 +650,10 @@ export type StudentCreateWithoutSectionInput = {
   id?: string
   studentNo: string
   rfidUid?: string | null
-  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutStudentInput
+  importBatch?: Prisma.StudentImportBatchCreateNestedOneWithoutStudentsInput
   enrollments?: Prisma.EnrollmentCreateNestedManyWithoutStudentInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutStudentInput
   rfidLogs?: Prisma.RfidLogCreateNestedManyWithoutStudentInput
@@ -672,11 +716,11 @@ export type StudentCreateWithoutEnrollmentsInput = {
   id?: string
   studentNo: string
   rfidUid?: string | null
-  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutStudentInput
   section?: Prisma.SectionCreateNestedOneWithoutStudentsInput
+  importBatch?: Prisma.StudentImportBatchCreateNestedOneWithoutStudentsInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutStudentInput
   rfidLogs?: Prisma.RfidLogCreateNestedManyWithoutStudentInput
 }
@@ -714,11 +758,11 @@ export type StudentUpdateWithoutEnrollmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutStudentNestedInput
   section?: Prisma.SectionUpdateOneWithoutStudentsNestedInput
+  importBatch?: Prisma.StudentImportBatchUpdateOneWithoutStudentsNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutStudentNestedInput
   rfidLogs?: Prisma.RfidLogUpdateManyWithoutStudentNestedInput
 }
@@ -740,11 +784,11 @@ export type StudentCreateWithoutAttendancesInput = {
   id?: string
   studentNo: string
   rfidUid?: string | null
-  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutStudentInput
   section?: Prisma.SectionCreateNestedOneWithoutStudentsInput
+  importBatch?: Prisma.StudentImportBatchCreateNestedOneWithoutStudentsInput
   enrollments?: Prisma.EnrollmentCreateNestedManyWithoutStudentInput
   rfidLogs?: Prisma.RfidLogCreateNestedManyWithoutStudentInput
 }
@@ -782,11 +826,11 @@ export type StudentUpdateWithoutAttendancesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutStudentNestedInput
   section?: Prisma.SectionUpdateOneWithoutStudentsNestedInput
+  importBatch?: Prisma.StudentImportBatchUpdateOneWithoutStudentsNestedInput
   enrollments?: Prisma.EnrollmentUpdateManyWithoutStudentNestedInput
   rfidLogs?: Prisma.RfidLogUpdateManyWithoutStudentNestedInput
 }
@@ -808,11 +852,11 @@ export type StudentCreateWithoutRfidLogsInput = {
   id?: string
   studentNo: string
   rfidUid?: string | null
-  importBatchId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutStudentInput
   section?: Prisma.SectionCreateNestedOneWithoutStudentsInput
+  importBatch?: Prisma.StudentImportBatchCreateNestedOneWithoutStudentsInput
   enrollments?: Prisma.EnrollmentCreateNestedManyWithoutStudentInput
   attendances?: Prisma.AttendanceCreateNestedManyWithoutStudentInput
 }
@@ -850,11 +894,11 @@ export type StudentUpdateWithoutRfidLogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutStudentNestedInput
   section?: Prisma.SectionUpdateOneWithoutStudentsNestedInput
+  importBatch?: Prisma.StudentImportBatchUpdateOneWithoutStudentsNestedInput
   enrollments?: Prisma.EnrollmentUpdateManyWithoutStudentNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutStudentNestedInput
 }
@@ -872,6 +916,58 @@ export type StudentUncheckedUpdateWithoutRfidLogsInput = {
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutStudentNestedInput
 }
 
+export type StudentCreateWithoutImportBatchInput = {
+  id?: string
+  studentNo: string
+  rfidUid?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutStudentInput
+  section?: Prisma.SectionCreateNestedOneWithoutStudentsInput
+  enrollments?: Prisma.EnrollmentCreateNestedManyWithoutStudentInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutStudentInput
+  rfidLogs?: Prisma.RfidLogCreateNestedManyWithoutStudentInput
+}
+
+export type StudentUncheckedCreateWithoutImportBatchInput = {
+  id?: string
+  userId: string
+  studentNo: string
+  rfidUid?: string | null
+  sectionId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  enrollments?: Prisma.EnrollmentUncheckedCreateNestedManyWithoutStudentInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutStudentInput
+  rfidLogs?: Prisma.RfidLogUncheckedCreateNestedManyWithoutStudentInput
+}
+
+export type StudentCreateOrConnectWithoutImportBatchInput = {
+  where: Prisma.StudentWhereUniqueInput
+  create: Prisma.XOR<Prisma.StudentCreateWithoutImportBatchInput, Prisma.StudentUncheckedCreateWithoutImportBatchInput>
+}
+
+export type StudentCreateManyImportBatchInputEnvelope = {
+  data: Prisma.StudentCreateManyImportBatchInput | Prisma.StudentCreateManyImportBatchInput[]
+  skipDuplicates?: boolean
+}
+
+export type StudentUpsertWithWhereUniqueWithoutImportBatchInput = {
+  where: Prisma.StudentWhereUniqueInput
+  update: Prisma.XOR<Prisma.StudentUpdateWithoutImportBatchInput, Prisma.StudentUncheckedUpdateWithoutImportBatchInput>
+  create: Prisma.XOR<Prisma.StudentCreateWithoutImportBatchInput, Prisma.StudentUncheckedCreateWithoutImportBatchInput>
+}
+
+export type StudentUpdateWithWhereUniqueWithoutImportBatchInput = {
+  where: Prisma.StudentWhereUniqueInput
+  data: Prisma.XOR<Prisma.StudentUpdateWithoutImportBatchInput, Prisma.StudentUncheckedUpdateWithoutImportBatchInput>
+}
+
+export type StudentUpdateManyWithWhereWithoutImportBatchInput = {
+  where: Prisma.StudentScalarWhereInput
+  data: Prisma.XOR<Prisma.StudentUpdateManyMutationInput, Prisma.StudentUncheckedUpdateManyWithoutImportBatchInput>
+}
+
 export type StudentCreateManySectionInput = {
   id?: string
   userId: string
@@ -886,10 +982,10 @@ export type StudentUpdateWithoutSectionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutStudentNestedInput
+  importBatch?: Prisma.StudentImportBatchUpdateOneWithoutStudentsNestedInput
   enrollments?: Prisma.EnrollmentUpdateManyWithoutStudentNestedInput
   attendances?: Prisma.AttendanceUpdateManyWithoutStudentNestedInput
   rfidLogs?: Prisma.RfidLogUpdateManyWithoutStudentNestedInput
@@ -914,6 +1010,52 @@ export type StudentUncheckedUpdateManyWithoutSectionInput = {
   studentNo?: Prisma.StringFieldUpdateOperationsInput | string
   rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   importBatchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type StudentCreateManyImportBatchInput = {
+  id?: string
+  userId: string
+  studentNo: string
+  rfidUid?: string | null
+  sectionId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type StudentUpdateWithoutImportBatchInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  studentNo?: Prisma.StringFieldUpdateOperationsInput | string
+  rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutStudentNestedInput
+  section?: Prisma.SectionUpdateOneWithoutStudentsNestedInput
+  enrollments?: Prisma.EnrollmentUpdateManyWithoutStudentNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutStudentNestedInput
+  rfidLogs?: Prisma.RfidLogUpdateManyWithoutStudentNestedInput
+}
+
+export type StudentUncheckedUpdateWithoutImportBatchInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  studentNo?: Prisma.StringFieldUpdateOperationsInput | string
+  rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  enrollments?: Prisma.EnrollmentUncheckedUpdateManyWithoutStudentNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutStudentNestedInput
+  rfidLogs?: Prisma.RfidLogUncheckedUpdateManyWithoutStudentNestedInput
+}
+
+export type StudentUncheckedUpdateManyWithoutImportBatchInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  studentNo?: Prisma.StringFieldUpdateOperationsInput | string
+  rfidUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -978,6 +1120,7 @@ export type StudentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   section?: boolean | Prisma.Student$sectionArgs<ExtArgs>
+  importBatch?: boolean | Prisma.Student$importBatchArgs<ExtArgs>
   enrollments?: boolean | Prisma.Student$enrollmentsArgs<ExtArgs>
   attendances?: boolean | Prisma.Student$attendancesArgs<ExtArgs>
   rfidLogs?: boolean | Prisma.Student$rfidLogsArgs<ExtArgs>
@@ -995,6 +1138,7 @@ export type StudentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   section?: boolean | Prisma.Student$sectionArgs<ExtArgs>
+  importBatch?: boolean | Prisma.Student$importBatchArgs<ExtArgs>
 }, ExtArgs["result"]["student"]>
 
 export type StudentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1008,6 +1152,7 @@ export type StudentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   section?: boolean | Prisma.Student$sectionArgs<ExtArgs>
+  importBatch?: boolean | Prisma.Student$importBatchArgs<ExtArgs>
 }, ExtArgs["result"]["student"]>
 
 export type StudentSelectScalar = {
@@ -1025,6 +1170,7 @@ export type StudentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type StudentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   section?: boolean | Prisma.Student$sectionArgs<ExtArgs>
+  importBatch?: boolean | Prisma.Student$importBatchArgs<ExtArgs>
   enrollments?: boolean | Prisma.Student$enrollmentsArgs<ExtArgs>
   attendances?: boolean | Prisma.Student$attendancesArgs<ExtArgs>
   rfidLogs?: boolean | Prisma.Student$rfidLogsArgs<ExtArgs>
@@ -1033,10 +1179,12 @@ export type StudentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
 export type StudentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   section?: boolean | Prisma.Student$sectionArgs<ExtArgs>
+  importBatch?: boolean | Prisma.Student$importBatchArgs<ExtArgs>
 }
 export type StudentIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   section?: boolean | Prisma.Student$sectionArgs<ExtArgs>
+  importBatch?: boolean | Prisma.Student$importBatchArgs<ExtArgs>
 }
 
 export type $StudentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1044,6 +1192,7 @@ export type $StudentPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
     section: Prisma.$SectionPayload<ExtArgs> | null
+    importBatch: Prisma.$StudentImportBatchPayload<ExtArgs> | null
     enrollments: Prisma.$EnrollmentPayload<ExtArgs>[]
     attendances: Prisma.$AttendancePayload<ExtArgs>[]
     rfidLogs: Prisma.$RfidLogPayload<ExtArgs>[]
@@ -1453,6 +1602,7 @@ export interface Prisma__StudentClient<T, Null = never, ExtArgs extends runtime.
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   section<T extends Prisma.Student$sectionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Student$sectionArgs<ExtArgs>>): Prisma.Prisma__SectionClient<runtime.Types.Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  importBatch<T extends Prisma.Student$importBatchArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Student$importBatchArgs<ExtArgs>>): Prisma.Prisma__StudentImportBatchClient<runtime.Types.Result.GetResult<Prisma.$StudentImportBatchPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   enrollments<T extends Prisma.Student$enrollmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Student$enrollmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EnrollmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   attendances<T extends Prisma.Student$attendancesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Student$attendancesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttendancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   rfidLogs<T extends Prisma.Student$rfidLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Student$rfidLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RfidLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1910,6 +2060,25 @@ export type Student$sectionArgs<ExtArgs extends runtime.Types.Extensions.Interna
    */
   include?: Prisma.SectionInclude<ExtArgs> | null
   where?: Prisma.SectionWhereInput
+}
+
+/**
+ * Student.importBatch
+ */
+export type Student$importBatchArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the StudentImportBatch
+   */
+  select?: Prisma.StudentImportBatchSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the StudentImportBatch
+   */
+  omit?: Prisma.StudentImportBatchOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StudentImportBatchInclude<ExtArgs> | null
+  where?: Prisma.StudentImportBatchWhereInput
 }
 
 /**

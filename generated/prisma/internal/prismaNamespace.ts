@@ -396,7 +396,8 @@ export const ModelName = {
   RfidDevice: 'RfidDevice',
   RfidLog: 'RfidLog',
   AuditLog: 'AuditLog',
-  AttendanceRule: 'AttendanceRule'
+  AttendanceRule: 'AttendanceRule',
+  StudentImportBatch: 'StudentImportBatch'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -412,7 +413,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "session" | "verificationToken" | "section" | "schoolYear" | "student" | "enrollment" | "attendance" | "rfidDevice" | "rfidLog" | "auditLog" | "attendanceRule"
+    modelProps: "user" | "account" | "session" | "verificationToken" | "section" | "schoolYear" | "student" | "enrollment" | "attendance" | "rfidDevice" | "rfidLog" | "auditLog" | "attendanceRule" | "studentImportBatch"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1378,6 +1379,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    StudentImportBatch: {
+      payload: Prisma.$StudentImportBatchPayload<ExtArgs>
+      fields: Prisma.StudentImportBatchFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StudentImportBatchFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentImportBatchPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StudentImportBatchFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentImportBatchPayload>
+        }
+        findFirst: {
+          args: Prisma.StudentImportBatchFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentImportBatchPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StudentImportBatchFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentImportBatchPayload>
+        }
+        findMany: {
+          args: Prisma.StudentImportBatchFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentImportBatchPayload>[]
+        }
+        create: {
+          args: Prisma.StudentImportBatchCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentImportBatchPayload>
+        }
+        createMany: {
+          args: Prisma.StudentImportBatchCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StudentImportBatchCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentImportBatchPayload>[]
+        }
+        delete: {
+          args: Prisma.StudentImportBatchDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentImportBatchPayload>
+        }
+        update: {
+          args: Prisma.StudentImportBatchUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentImportBatchPayload>
+        }
+        deleteMany: {
+          args: Prisma.StudentImportBatchDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StudentImportBatchUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StudentImportBatchUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentImportBatchPayload>[]
+        }
+        upsert: {
+          args: Prisma.StudentImportBatchUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudentImportBatchPayload>
+        }
+        aggregate: {
+          args: Prisma.StudentImportBatchAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStudentImportBatch>
+        }
+        groupBy: {
+          args: Prisma.StudentImportBatchGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StudentImportBatchGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StudentImportBatchCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StudentImportBatchCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1595,6 +1670,25 @@ export const AttendanceRuleScalarFieldEnum = {
 } as const
 
 export type AttendanceRuleScalarFieldEnum = (typeof AttendanceRuleScalarFieldEnum)[keyof typeof AttendanceRuleScalarFieldEnum]
+
+
+export const StudentImportBatchScalarFieldEnum = {
+  id: 'id',
+  createdByUserId: 'createdByUserId',
+  schoolYearId: 'schoolYearId',
+  totalRows: 'totalRows',
+  createdUsers: 'createdUsers',
+  createdStudents: 'createdStudents',
+  createdEnrollments: 'createdEnrollments',
+  updatedUsers: 'updatedUsers',
+  updatedStudents: 'updatedStudents',
+  updatedEnrollments: 'updatedEnrollments',
+  skipped: 'skipped',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type StudentImportBatchScalarFieldEnum = (typeof StudentImportBatchScalarFieldEnum)[keyof typeof StudentImportBatchScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1881,6 +1975,7 @@ export type GlobalOmitConfig = {
   rfidLog?: Prisma.RfidLogOmit
   auditLog?: Prisma.AuditLogOmit
   attendanceRule?: Prisma.AttendanceRuleOmit
+  studentImportBatch?: Prisma.StudentImportBatchOmit
 }
 
 /* Types for Logging */
