@@ -1,10 +1,9 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import {
-  resetUserPassword,
-  type UserFormState,
-} from "./actions";
+import { resetUserPassword, type UserFormState } from "./actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -13,8 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import PasswordField from "@/components/password-field";
 import { toast } from "sonner";
 
 const initialState: UserFormState = {};
@@ -35,6 +32,7 @@ export default function ResetPasswordDialog({
   useEffect(() => {
     if (state?.error) {
       toast.error(state.error);
+      return;
     }
 
     if (state?.success) {
@@ -51,26 +49,56 @@ export default function ResetPasswordDialog({
         </Button>
       </DialogTrigger>
 
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Reset Password</DialogTitle>
+          <DialogTitle>Reset User Password</DialogTitle>
           <DialogDescription>
-            Set a new password for {userEmail}.
+            Set a temporary password for <span className="font-medium">{userEmail}</span>.
+            The user will be required to change it on next login.
           </DialogDescription>
         </DialogHeader>
 
-        <form action={formAction} className="space-y-4">
+        <form action={formAction} className="space-y-5">
           <input type="hidden" name="userId" value={userId} />
 
-          <PasswordField
-            name="password"
-            label="New Password"
-            placeholder="Enter new password"
-          />
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-medium text-amber-950">
+              Important
+            </p>
+            <p className="mt-1 text-xs text-amber-900">
+              After reset, the account will be marked to change password before
+              accessing the dashboard.
+            </p>
+          </div>
 
-          <div className="flex justify-end">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">
+              Temporary Password
+            </label>
+            <Input
+              name="password"
+              type="text"
+              placeholder="Enter temporary password"
+              className="h-11"
+              defaultValue="Student@123"
+            />
+            <p className="text-xs text-slate-500">
+              Choose a temporary password the user can use once before setting a new one.
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={pending}
+            >
+              Cancel
+            </Button>
+
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving..." : "Reset Password"}
+              {pending ? "Resetting..." : "Reset Password"}
             </Button>
           </div>
         </form>
