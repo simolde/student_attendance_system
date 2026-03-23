@@ -50,6 +50,65 @@ export default async function ImportStudentsPage() {
 
       <Card className="border-slate-200 shadow-sm">
         <CardHeader>
+          <CardTitle>Template Guide</CardTitle>
+          <CardDescription>
+            Use the downloadable template and keep the required headers unchanged.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-medium text-slate-900">Required columns</p>
+            <p className="mt-1 text-sm text-slate-600">
+              student_no, full_name, email, section, grade_level
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-medium text-slate-900">Optional columns</p>
+            <p className="mt-1 text-sm text-slate-600">
+              school_year, status, rfid_uid
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-xl border border-slate-200">
+            <div className="border-b bg-slate-50 px-4 py-3">
+              <p className="text-sm font-medium text-slate-900">Sample row</p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50/80">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium">student_no</th>
+                    <th className="px-4 py-3 text-left font-medium">full_name</th>
+                    <th className="px-4 py-3 text-left font-medium">email</th>
+                    <th className="px-4 py-3 text-left font-medium">section</th>
+                    <th className="px-4 py-3 text-left font-medium">grade_level</th>
+                    <th className="px-4 py-3 text-left font-medium">school_year</th>
+                    <th className="px-4 py-3 text-left font-medium">status</th>
+                    <th className="px-4 py-3 text-left font-medium">rfid_uid</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t">
+                    <td className="px-4 py-3">2026-0001</td>
+                    <td className="px-4 py-3">Juan Dela Cruz</td>
+                    <td className="px-4 py-3">juan@email.com</td>
+                    <td className="px-4 py-3">PICASSO</td>
+                    <td className="px-4 py-3">GRADE_7</td>
+                    <td className="px-4 py-3">2026-2027</td>
+                    <td className="px-4 py-3">ENROLLED</td>
+                    <td className="px-4 py-3">04A1B29C</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader>
           <CardTitle>Excel Import</CardTitle>
           <CardDescription>
             Required columns: student_no, full_name, email, section, grade_level.
