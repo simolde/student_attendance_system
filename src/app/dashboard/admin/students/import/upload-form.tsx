@@ -239,9 +239,27 @@ export default function ImportStudentsForm() {
             <p className="mt-1 break-all font-mono text-sm font-semibold text-slate-900">
               {summary.importBatchId}
             </p>
-            <p className="text-xs text-slate-500">
-              Use the <span className="font-medium">Export Latest Import</span> button to
-              download credentials for this batch.
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button asChild type="button" variant="outline" size="sm">
+                <a
+                  href={`/api/students/export-batch?importBatchId=${encodeURIComponent(
+                    summary.importBatchId
+                  )}`}
+                >
+                  Export This Batch
+                </a>
+              </Button>
+
+              <Button asChild type="button" variant="outline" size="sm">
+                <a href="/api/students/export-latest-import">
+                  Export Latest Import
+                </a>
+              </Button>
+            </div>
+
+            <p className="mt-2 text-xs text-slate-500">
+              Export this exact batch to distribute login details safely.
             </p>
           </div>
 
