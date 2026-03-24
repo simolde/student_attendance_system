@@ -4,6 +4,7 @@ import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import PageHeader from "@/components/layout/page-header";
+import TableToolbar from "@/components/layout/table-toolbar";
 import {
   Card,
   CardContent,
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Download } from "lucide-react";
 import { toggleImportBatchArchive } from "./actions";
 
@@ -30,7 +32,7 @@ function formatManilaDateTime(date: Date) {
 export default async function StudentImportHistoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ archived?: string }>;
+  searchParams: Promise<{ archived?: string; q?: string }>;
 }) {
   const session = await auth();
 
@@ -44,10 +46,35 @@ export default async function StudentImportHistoryPage({
 
   const params = await searchParams;
   const showArchived = params.archived === "1";
+  const q = params.q?.trim() ?? "";
 
   const [batches, allCounts] = await Promise.all([
     prisma.studentImportBatch.findMany({
-      where: showArchived ? {} : { isArchived: false },
+      where: {
+        ...(showArchived ? {} : { isArchived: false }),
+        ...(q
+          ? {
+              OR: [
+                { id: { contains: q, mode: "insensitive" as const } },
+                {
+                  schoolYear: {
+                    name: { contains: q, mode: "insensitive" as const },
+                  },
+                },
+                {
+                  createdByUser: {
+                    name: { contains: q, mode: "insensitive" as const },
+                  },
+                },
+                {
+                  createdByUser: {
+                    email: { contains: q, mode: "insensitive" as const },
+                  },
+                },
+              ],
+            }
+          : {}),
+      },
       include: {
         createdByUser: {
           select: {
@@ -132,7 +159,41 @@ export default async function StudentImportHistoryPage({
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          <TableToolbar>
+            <form method="GET" className="grid flex-1 gap-4 md:grid-cols-[1fr_auto_auto]">
+              <div>
+                <label className="mb-2 block text-sm font-medium">Search</label>
+                <Input
+                  name="q"
+                  defaultValue={q}
+                  placeholder="Batch ID, school year, importer name or email"
+                />
+              </div>
+
+              <input
+                type="hidden"
+                name="archived"
+                value={showArchived ? "1" : ""}
+              />
+
+              <div className="flex items-end gap-2">
+                <Button type="submit">Apply</Button>
+                <Button type="button" variant="outline" asChild>
+                  <Link
+                    href={
+                      showArchived
+                        ? "/dashboard/admin/students/import-history?archived=1"
+                        : "/dashboard/admin/students/import-history"
+                    }
+                  >
+                    Reset
+                  </Link>
+                </Button>
+              </div>
+            </form>
+          </TableToolbar>
+
           <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <p className="text-xs text-slate-500">Active Batches</p>
@@ -155,6 +216,13 @@ export default async function StudentImportHistoryPage({
               </p>
             </div>
           </div>
+
+          {q ? (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
+              Showing results for:
+              <span className="ml-2 font-medium">{q}</span>
+            </div>
+          ) : null}
 
           {batches.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
