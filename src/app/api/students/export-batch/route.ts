@@ -31,6 +31,24 @@ export async function GET(req: Request) {
     return new NextResponse("Missing importBatchId", { status: 400 });
   }
 
+  const batch = await prisma.studentImportBatch.findUnique({
+    where: { id: importBatchId },
+    select: {
+      id: true,
+      isArchived: true,
+      schoolYear: {
+        select: {
+          name: true,
+        },
+      },
+      createdAt: true,
+    },
+  });
+
+  if (!batch) {
+    return new NextResponse("Import batch not found", { status: 404 });
+  }
+
   const students = await prisma.student.findMany({
     where: { importBatchId },
     include: {
@@ -48,6 +66,8 @@ export async function GET(req: Request) {
     });
   }
 
+  const batchStatus = batch.isArchived ? "ARCHIVED" : "ACTIVE";
+
   const header = [
     "student_no",
     "full_name",
@@ -57,6 +77,8 @@ export async function GET(req: Request) {
     "temporary_password",
     "login_note",
     "import_batch_id",
+    "batch_status",
+    "school_year",
   ];
 
   const rows = students.map((student) => [
@@ -66,8 +88,12 @@ export async function GET(req: Request) {
     student.section?.name ?? "",
     formatGradeLevel(student.section?.gradeLevel),
     "Starland@123",
-    "Change password on first login",
+    batch.isArchived
+      ? "Archived batch export. Change password on first login."
+      : "Change password on first login",
     importBatchId,
+    batchStatus,
+    batch.schoolYear?.name ?? "",
   ]);
 
   const csv = [

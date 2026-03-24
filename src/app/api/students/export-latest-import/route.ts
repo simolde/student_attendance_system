@@ -33,6 +33,11 @@ export async function GET() {
     },
     select: {
       id: true,
+      schoolYear: {
+        select: {
+          name: true,
+        },
+      },
     },
   });
 
@@ -68,6 +73,8 @@ export async function GET() {
     "temporary_password",
     "login_note",
     "import_batch_id",
+    "batch_status",
+    "school_year",
   ];
 
   const rows = students.map((student) => [
@@ -76,9 +83,11 @@ export async function GET() {
     student.user.email,
     student.section?.name ?? "",
     formatGradeLevel(student.section?.gradeLevel),
-    "Student@123",
+    "Starland@123",
     "Change password on first login",
     latestBatch.id,
+    "ACTIVE",
+    latestBatch.schoolYear?.name ?? "",
   ]);
 
   const csv = [
