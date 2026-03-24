@@ -90,15 +90,17 @@ export default async function AdminStudentsPage({
         ? {
             OR: [
               { studentNo: { contains: q, mode: "insensitive" as const } },
+              { rfidUid: { contains: q, mode: "insensitive" as const } },
               { user: { name: { contains: q, mode: "insensitive" as const } } },
               { user: { email: { contains: q, mode: "insensitive" as const } } },
+              { section: { name: { contains: q, mode: "insensitive" as const } } },
             ],
           }
         : {},
     ],
   };
 
-  const [students, totalStudents] = await Promise.all([
+  const [students, totalStudents, summaryRows] = await Promise.all([
     prisma.student.findMany({
       where,
       include: {
@@ -112,9 +114,18 @@ export default async function AdminStudentsPage({
       take: PAGE_SIZE,
     }),
     prisma.student.count({ where }),
+    prisma.student.findMany({
+      where,
+      select: {
+        id: true,
+        rfidUid: true,
+      },
+    }),
   ]);
 
   const totalPages = Math.max(Math.ceil(totalStudents / PAGE_SIZE), 1);
+  const withRfidCount = summaryRows.filter((student) => !!student.rfidUid).length;
+  const withoutRfidCount = summaryRows.filter((student) => !student.rfidUid).length;
 
   function buildUrl(nextPage: number) {
     const sp = new URLSearchParams();
@@ -226,7 +237,7 @@ export default async function AdminStudentsPage({
         <CardHeader className="pb-4">
           <CardTitle>Students Directory</CardTitle>
           <CardDescription>
-            Page {page} of {totalPages} • {totalStudents} total students
+            Page {page} of {totalPages} • {totalStudents} matching students
           </CardDescription>
         </CardHeader>
 
@@ -238,7 +249,7 @@ export default async function AdminStudentsPage({
                 <Input
                   name="q"
                   defaultValue={q}
-                  placeholder="Name, email, or student number"
+                  placeholder="Name, email, student number, section, or RFID"
                 />
               </div>
 
@@ -280,10 +291,53 @@ export default async function AdminStudentsPage({
             </form>
           </TableToolbar>
 
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <p className="text-xs text-blue-600">Matching Students</p>
+              <p className="mt-1 text-lg font-semibold text-blue-950">
+                {totalStudents}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-xs text-emerald-700">With RFID</p>
+              <p className="mt-1 text-lg font-semibold text-emerald-950">
+                {withRfidCount}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-xs text-amber-700">Without RFID</p>
+              <p className="mt-1 text-lg font-semibold text-amber-950">
+                {withoutRfidCount}
+              </p>
+            </div>
+          </div>
+
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
             Exported credentials only include the login email and the temporary
             password policy. They do not read plain passwords from the database.
           </div>
+
+          {q || sectionId ? (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
+              {q ? (
+                <div>
+                  Search:
+                  <span className="ml-2 font-medium">{q}</span>
+                </div>
+              ) : null}
+              {sectionId ? (
+                <div className="mt-1">
+                  Section:
+                  <span className="ml-2 font-medium">
+                    {sections.find((section) => section.id === sectionId)?.name ??
+                      sectionId}
+                  </span>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           {importBatchId && selectedBatch ? (
             <div
