@@ -80,6 +80,8 @@ export default async function AdminStudentsPage({
       : Promise.resolve(null),
   ]);
 
+  const isArchivedBatchView = Boolean(importBatchId && selectedBatch?.isArchived);
+
   const where = {
     AND: [
       sectionId ? { sectionId } : {},
@@ -145,12 +147,19 @@ export default async function AdminStudentsPage({
           { label: "Student Management" },
         ]}
         actions={
-          <Button asChild variant="outline">
-            <a href={buildExportUrl()}>
+          isArchivedBatchView ? (
+            <Button type="button" variant="outline" disabled>
               <Download className="mr-2 h-4 w-4" />
-              Export Credentials
-            </a>
-          </Button>
+              Export Credentials Disabled
+            </Button>
+          ) : (
+            <Button asChild variant="outline">
+              <a href={buildExportUrl()}>
+                <Download className="mr-2 h-4 w-4" />
+                Export Credentials
+              </a>
+            </Button>
+          )
         }
       />
 
@@ -288,9 +297,10 @@ export default async function AdminStudentsPage({
                   {selectedBatch.isArchived ? (
                     <p>
                       This batch is archived and excluded from{" "}
-                      <span className="font-medium">Export Latest Import</span>,
-                      but you can still review and export it manually for history
-                      or audit purposes.
+                      <span className="font-medium">Export Latest Import</span>.
+                      The general <span className="font-medium">Export Credentials</span>{" "}
+                      button is also disabled in this archived batch view. Export
+                      this batch from Import History or Batch Details instead.
                     </p>
                   ) : (
                     <p>
