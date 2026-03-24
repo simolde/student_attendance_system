@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Download } from "lucide-react";
 import { toggleImportBatchArchive } from "./actions";
 
+const PAGE_SIZE = 10;
+
 function formatManilaDateTime(date: Date) {
   return new Intl.DateTimeFormat("en-PH", {
     timeZone: "Asia/Manila",
@@ -32,7 +34,7 @@ function formatManilaDateTime(date: Date) {
 export default async function StudentImportHistoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ archived?: string; q?: string }>;
+  searchParams: Promise<{ archived?: string; q?: string; page?: string }>;
 }) {
   const session = await auth();
 
@@ -47,34 +49,37 @@ export default async function StudentImportHistoryPage({
   const params = await searchParams;
   const showArchived = params.archived === "1";
   const q = params.q?.trim() ?? "";
+  const page = Math.max(Number(params.page || "1"), 1);
 
-  const [batches, allCounts] = await Promise.all([
+  const where = {
+    ...(showArchived ? {} : { isArchived: false }),
+    ...(q
+      ? {
+          OR: [
+            { id: { contains: q, mode: "insensitive" as const } },
+            {
+              schoolYear: {
+                name: { contains: q, mode: "insensitive" as const },
+              },
+            },
+            {
+              createdByUser: {
+                name: { contains: q, mode: "insensitive" as const },
+              },
+            },
+            {
+              createdByUser: {
+                email: { contains: q, mode: "insensitive" as const },
+              },
+            },
+          ],
+        }
+      : {}),
+  };
+
+  const [batches, totalBatches, allCounts] = await Promise.all([
     prisma.studentImportBatch.findMany({
-      where: {
-        ...(showArchived ? {} : { isArchived: false }),
-        ...(q
-          ? {
-              OR: [
-                { id: { contains: q, mode: "insensitive" as const } },
-                {
-                  schoolYear: {
-                    name: { contains: q, mode: "insensitive" as const },
-                  },
-                },
-                {
-                  createdByUser: {
-                    name: { contains: q, mode: "insensitive" as const },
-                  },
-                },
-                {
-                  createdByUser: {
-                    email: { contains: q, mode: "insensitive" as const },
-                  },
-                },
-              ],
-            }
-          : {}),
-      },
+      where,
       include: {
         createdByUser: {
           select: {
@@ -96,7 +101,10 @@ export default async function StudentImportHistoryPage({
       orderBy: {
         createdAt: "desc",
       },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
     }),
+    prisma.studentImportBatch.count({ where }),
     prisma.studentImportBatch.groupBy({
       by: ["isArchived"],
       _count: {
@@ -105,10 +113,29 @@ export default async function StudentImportHistoryPage({
     }),
   ]);
 
+  const totalPages = Math.max(Math.ceil(totalBatches / PAGE_SIZE), 1);
+
   const activeCount =
     allCounts.find((row) => row.isArchived === false)?._count._all ?? 0;
   const archivedCount =
     allCounts.find((row) => row.isArchived === true)?._count._all ?? 0;
+
+  function buildUrl(nextPage: number) {
+    const sp = new URLSearchParams();
+    if (showArchived) sp.set("archived", "1");
+    if (q) sp.set("q", q);
+    sp.set("page", String(nextPage));
+    return `/dashboard/admin/students/import-history?${sp.toString()}`;
+  }
+
+  function buildBaseUrl(archived: boolean) {
+    const sp = new URLSearchParams();
+    if (archived) sp.set("archived", "1");
+    if (q) sp.set("q", q);
+    return `/dashboard/admin/students/import-history${
+      sp.toString() ? `?${sp.toString()}` : ""
+    }`;
+  }
 
   return (
     <div className="space-y-8">
@@ -124,7 +151,7 @@ export default async function StudentImportHistoryPage({
         actions={
           <div className="flex flex-wrap gap-2">
             <Button asChild variant={showArchived ? "outline" : "default"}>
-              <Link href="/dashboard/admin/students/import-history">
+              <Link href={buildBaseUrl(false)}>
                 Active Batches
                 <span className="ml-2 rounded-md bg-white/20 px-2 py-0.5 text-xs">
                   {activeCount}
@@ -133,7 +160,7 @@ export default async function StudentImportHistoryPage({
             </Button>
 
             <Button asChild variant={showArchived ? "default" : "outline"}>
-              <Link href="/dashboard/admin/students/import-history?archived=1">
+              <Link href={buildBaseUrl(true)}>
                 All Batches
                 <span className="ml-2 rounded-md bg-white/20 px-2 py-0.5 text-xs">
                   {activeCount + archivedCount}
@@ -155,13 +182,16 @@ export default async function StudentImportHistoryPage({
             )}
           </CardTitle>
           <CardDescription>
-            Each batch groups students imported in the same upload run.
+            Page {page} of {totalPages} • {totalBatches} matching batches
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
           <TableToolbar>
-            <form method="GET" className="grid flex-1 gap-4 md:grid-cols-[1fr_auto_auto]">
+            <form
+              method="GET"
+              className="grid flex-1 gap-4 md:grid-cols-[1fr_auto_auto]"
+            >
               <div>
                 <label className="mb-2 block text-sm font-medium">Search</label>
                 <Input
@@ -176,19 +206,12 @@ export default async function StudentImportHistoryPage({
                 name="archived"
                 value={showArchived ? "1" : ""}
               />
+              <input type="hidden" name="page" value="1" />
 
               <div className="flex items-end gap-2">
                 <Button type="submit">Apply</Button>
                 <Button type="button" variant="outline" asChild>
-                  <Link
-                    href={
-                      showArchived
-                        ? "/dashboard/admin/students/import-history?archived=1"
-                        : "/dashboard/admin/students/import-history"
-                    }
-                  >
-                    Reset
-                  </Link>
+                  <Link href={buildBaseUrl(showArchived)}>Reset</Link>
                 </Button>
               </div>
             </form>
@@ -229,72 +252,94 @@ export default async function StudentImportHistoryPage({
               No import history found.
             </div>
           ) : (
-            batches.map((batch) => (
-              <div
-                key={batch.id}
-                className="flex flex-col gap-4 rounded-xl border border-slate-200 p-4 md:flex-row md:items-center md:justify-between"
-              >
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold text-slate-900">Batch ID</p>
-                    {batch.isArchived ? (
-                      <Badge variant="secondary">Archived</Badge>
-                    ) : (
-                      <Badge>Active</Badge>
-                    )}
+            <>
+              <div className="space-y-4">
+                {batches.map((batch) => (
+                  <div
+                    key={batch.id}
+                    className="flex flex-col gap-4 rounded-xl border border-slate-200 p-4 md:flex-row md:items-center md:justify-between"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-slate-900">Batch ID</p>
+                        {batch.isArchived ? (
+                          <Badge variant="secondary">Archived</Badge>
+                        ) : (
+                          <Badge>Active</Badge>
+                        )}
+                      </div>
+
+                      <p className="break-all font-mono text-sm text-slate-700">
+                        {batch.id}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        Students in batch: {batch._count.students}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        School year: {batch.schoolYear?.name ?? "-"}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        Imported by:{" "}
+                        {batch.createdByUser?.name ??
+                          batch.createdByUser?.email ??
+                          "-"}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        Imported at: {formatManilaDateTime(batch.createdAt)}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button asChild variant="outline">
+                        <a
+                          href={`/api/students/export-batch?importBatchId=${encodeURIComponent(
+                            batch.id
+                          )}`}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Export Batch
+                        </a>
+                      </Button>
+
+                      <Button asChild variant="outline">
+                        <Link
+                          href={`/dashboard/admin/students/import-history/${encodeURIComponent(
+                            batch.id
+                          )}`}
+                        >
+                          View Batch
+                        </Link>
+                      </Button>
+
+                      <form action={toggleImportBatchArchive}>
+                        <input type="hidden" name="batchId" value={batch.id} />
+                        <Button type="submit" variant="outline">
+                          {batch.isArchived ? "Unarchive" : "Archive"}
+                        </Button>
+                      </form>
+                    </div>
                   </div>
-
-                  <p className="break-all font-mono text-sm text-slate-700">
-                    {batch.id}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    Students in batch: {batch._count.students}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    School year: {batch.schoolYear?.name ?? "-"}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    Imported by:{" "}
-                    {batch.createdByUser?.name ??
-                      batch.createdByUser?.email ??
-                      "-"}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    Imported at: {formatManilaDateTime(batch.createdAt)}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <Button asChild variant="outline">
-                    <a
-                      href={`/api/students/export-batch?importBatchId=${encodeURIComponent(
-                        batch.id
-                      )}`}
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Export Batch
-                    </a>
-                  </Button>
-
-                  <Button asChild variant="outline">
-                    <Link
-                      href={`/dashboard/admin/students/import-history/${encodeURIComponent(
-                        batch.id
-                      )}`}
-                    >
-                      View Batch
-                    </Link>
-                  </Button>
-
-                  <form action={toggleImportBatchArchive}>
-                    <input type="hidden" name="batchId" value={batch.id} />
-                    <Button type="submit" variant="outline">
-                      {batch.isArchived ? "Unarchive" : "Archive"}
-                    </Button>
-                  </form>
-                </div>
+                ))}
               </div>
-            ))
+
+              <div className="flex items-center justify-between">
+                <Button variant="outline" asChild disabled={page <= 1}>
+                  <Link href={buildUrl(page - 1)}>Previous</Link>
+                </Button>
+
+                <span className="text-sm text-slate-500">
+                  Page {page} of {totalPages}
+                </span>
+
+                <Button
+                  variant="outline"
+                  asChild
+                  disabled={page >= totalPages}
+                >
+                  <Link href={buildUrl(page + 1)}>Next</Link>
+                </Button>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
