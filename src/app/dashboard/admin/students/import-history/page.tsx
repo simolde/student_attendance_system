@@ -78,102 +78,90 @@ export default async function StudentImportHistoryPage({
 
   const createdAtRange = buildDateRange(dateFrom, dateTo);
 
-  const [schoolYears, batches, totalBatches, allCounts] = await Promise.all([
-    prisma.schoolYear.findMany({
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        name: true,
-      },
-    }),
-    prisma.studentImportBatch.findMany({
-      where: {
-        ...(showArchived ? {} : { isArchived: false }),
-        ...(schoolYearId ? { schoolYearId } : {}),
-        ...(createdAtRange ? { createdAt: createdAtRange } : {}),
-        ...(q
-          ? {
-              OR: [
-                { id: { contains: q, mode: "insensitive" as const } },
-                {
-                  schoolYear: {
-                    name: { contains: q, mode: "insensitive" as const },
-                  },
-                },
-                {
-                  createdByUser: {
-                    name: { contains: q, mode: "insensitive" as const },
-                  },
-                },
-                {
-                  createdByUser: {
-                    email: { contains: q, mode: "insensitive" as const },
-                  },
-                },
-              ],
-            }
-          : {}),
-      },
-      include: {
-        createdByUser: {
-          select: {
-            name: true,
-            email: true,
+  const where = {
+    ...(showArchived ? {} : { isArchived: false }),
+    ...(schoolYearId ? { schoolYearId } : {}),
+    ...(createdAtRange ? { createdAt: createdAtRange } : {}),
+    ...(q
+      ? {
+          OR: [
+            { id: { contains: q, mode: "insensitive" as const } },
+            {
+              schoolYear: {
+                name: { contains: q, mode: "insensitive" as const },
+              },
+            },
+            {
+              createdByUser: {
+                name: { contains: q, mode: "insensitive" as const },
+              },
+            },
+            {
+              createdByUser: {
+                email: { contains: q, mode: "insensitive" as const },
+              },
+            },
+          ],
+        }
+      : {}),
+  };
+
+  const [schoolYears, batches, totalBatches, allCounts, summaryRows] =
+    await Promise.all([
+      prisma.schoolYear.findMany({
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+        },
+      }),
+      prisma.studentImportBatch.findMany({
+        where,
+        include: {
+          createdByUser: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+          schoolYear: {
+            select: {
+              name: true,
+            },
+          },
+          _count: {
+            select: {
+              students: true,
+            },
           },
         },
-        schoolYear: {
-          select: {
-            name: true,
-          },
+        orderBy: {
+          createdAt: "desc",
         },
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+      }),
+      prisma.studentImportBatch.count({ where }),
+      prisma.studentImportBatch.groupBy({
+        by: ["isArchived"],
         _count: {
-          select: {
-            students: true,
+          _all: true,
+        },
+      }),
+      prisma.studentImportBatch.findMany({
+        where,
+        select: {
+          createdStudents: true,
+          updatedStudents: true,
+          skipped: true,
+          _count: {
+            select: {
+              students: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-    }),
-    prisma.studentImportBatch.count({
-      where: {
-        ...(showArchived ? {} : { isArchived: false }),
-        ...(schoolYearId ? { schoolYearId } : {}),
-        ...(createdAtRange ? { createdAt: createdAtRange } : {}),
-        ...(q
-          ? {
-              OR: [
-                { id: { contains: q, mode: "insensitive" as const } },
-                {
-                  schoolYear: {
-                    name: { contains: q, mode: "insensitive" as const },
-                  },
-                },
-                {
-                  createdByUser: {
-                    name: { contains: q, mode: "insensitive" as const },
-                  },
-                },
-                {
-                  createdByUser: {
-                    email: { contains: q, mode: "insensitive" as const },
-                  },
-                },
-              ],
-            }
-          : {}),
-      },
-    }),
-    prisma.studentImportBatch.groupBy({
-      by: ["isArchived"],
-      _count: {
-        _all: true,
-      },
-    }),
-  ]);
+      }),
+    ]);
 
   const totalPages = Math.max(Math.ceil(totalBatches / PAGE_SIZE), 1);
 
@@ -181,6 +169,24 @@ export default async function StudentImportHistoryPage({
     allCounts.find((row) => row.isArchived === false)?._count._all ?? 0;
   const archivedCount =
     allCounts.find((row) => row.isArchived === true)?._count._all ?? 0;
+
+  const filteredBatchCount = summaryRows.length;
+  const filteredStudentCount = summaryRows.reduce(
+    (sum, row) => sum + row._count.students,
+    0
+  );
+  const filteredCreatedStudents = summaryRows.reduce(
+    (sum, row) => sum + row.createdStudents,
+    0
+  );
+  const filteredUpdatedStudents = summaryRows.reduce(
+    (sum, row) => sum + row.updatedStudents,
+    0
+  );
+  const filteredSkipped = summaryRows.reduce(
+    (sum, row) => sum + row.skipped,
+    0
+  );
 
   function buildUrl(nextPage: number) {
     const sp = new URLSearchParams();
@@ -338,7 +344,7 @@ export default async function StudentImportHistoryPage({
             </form>
           </TableToolbar>
 
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <p className="text-xs text-slate-500">Active Batches</p>
               <p className="mt-1 text-lg font-semibold text-slate-900">
@@ -353,10 +359,47 @@ export default async function StudentImportHistoryPage({
               </p>
             </div>
 
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <p className="text-xs text-blue-600">Filtered Batches</p>
+              <p className="mt-1 text-lg font-semibold text-blue-950">
+                {filteredBatchCount}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <p className="text-xs text-blue-600">Filtered Students</p>
+              <p className="mt-1 text-lg font-semibold text-blue-950">
+                {filteredStudentCount}
+              </p>
+            </div>
+
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <p className="text-xs text-slate-500">Current View</p>
               <p className="mt-1 text-sm font-semibold text-slate-900">
                 {showArchived ? "Active + Archived" : "Active Only"}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-xs text-emerald-700">Created Students</p>
+              <p className="mt-1 text-lg font-semibold text-emerald-950">
+                {filteredCreatedStudents}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-xs text-amber-700">Updated Students</p>
+              <p className="mt-1 text-lg font-semibold text-amber-950">
+                {filteredUpdatedStudents}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+              <p className="text-xs text-rose-700">Skipped Rows</p>
+              <p className="mt-1 text-lg font-semibold text-rose-950">
+                {filteredSkipped}
               </p>
             </div>
           </div>
