@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Download } from "lucide-react";
 import { toggleImportBatchArchive } from "./actions";
+import CopyBatchIdButton from "@/components/copy-batch-id-button";
 
 const PAGE_SIZE = 10;
 
@@ -290,6 +291,7 @@ export default async function StudentImportHistoryPage({
                     </div>
 
                     <div className="flex flex-wrap gap-2">
+                      <CopyBatchIdButton value={batch.id} label="Copy Batch ID" />
                       <Button asChild variant="outline">
                         <a
                           href={`/api/students/export-batch?importBatchId=${encodeURIComponent(
