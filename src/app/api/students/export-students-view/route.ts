@@ -28,6 +28,7 @@ export async function GET(req: Request) {
   const q = searchParams.get("q")?.trim() ?? "";
   const sectionId = searchParams.get("sectionId")?.trim() ?? "";
   const importBatchId = searchParams.get("importBatchId")?.trim() ?? "";
+  const rfidStatus = searchParams.get("rfidStatus")?.trim() ?? "";
 
   const batch = importBatchId
     ? await prisma.studentImportBatch.findUnique({
@@ -44,10 +45,18 @@ export async function GET(req: Request) {
       })
     : null;
 
+  const rfidCondition =
+    rfidStatus === "WITH_RFID"
+      ? { NOT: { rfidUid: null as string | null } }
+      : rfidStatus === "WITHOUT_RFID"
+      ? { rfidUid: null as string | null }
+      : {};
+
   const where = {
     AND: [
       sectionId ? { sectionId } : {},
       importBatchId ? { importBatchId } : {},
+      rfidCondition,
       q
         ? {
             OR: [
@@ -86,6 +95,7 @@ export async function GET(req: Request) {
     "section",
     "grade_level",
     "rfid_uid",
+    "rfid_status",
     "import_batch_id",
     "batch_status",
     "school_year",
@@ -98,6 +108,7 @@ export async function GET(req: Request) {
     student.section?.name ?? "",
     formatGradeLevel(student.section?.gradeLevel),
     student.rfidUid ?? "",
+    student.rfidUid ? "WITH_RFID" : "WITHOUT_RFID",
     importBatchId || "",
     batch ? (batch.isArchived ? "ARCHIVED" : "ACTIVE") : "",
     batch?.schoolYear?.name ?? "",
@@ -112,6 +123,7 @@ export async function GET(req: Request) {
     status: 200,
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
+  
       "Content-Disposition": 'attachment; filename="students_view_export.csv"',
     },
   });

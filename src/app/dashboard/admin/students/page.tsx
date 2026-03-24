@@ -35,6 +35,7 @@ export default async function AdminStudentsPage({
     q?: string;
     sectionId?: string;
     importBatchId?: string;
+    rfidStatus?: string;
     page?: string;
   }>;
 }) {
@@ -52,6 +53,7 @@ export default async function AdminStudentsPage({
   const q = params.q?.trim() ?? "";
   const sectionId = params.sectionId?.trim() ?? "";
   const importBatchId = params.importBatchId?.trim() ?? "";
+  const rfidStatus = params.rfidStatus?.trim() ?? "";
   const page = Math.max(Number(params.page || "1"), 1);
 
   const [sections, selectedBatch] = await Promise.all([
@@ -82,10 +84,18 @@ export default async function AdminStudentsPage({
 
   const isArchivedBatchView = Boolean(importBatchId && selectedBatch?.isArchived);
 
+  const rfidCondition =
+    rfidStatus === "WITH_RFID"
+      ? { NOT: { rfidUid: null as string | null } }
+      : rfidStatus === "WITHOUT_RFID"
+      ? { rfidUid: null as string | null }
+      : {};
+
   const where = {
     AND: [
       sectionId ? { sectionId } : {},
       importBatchId ? { importBatchId } : {},
+      rfidCondition,
       q
         ? {
             OR: [
@@ -132,6 +142,7 @@ export default async function AdminStudentsPage({
     if (q) sp.set("q", q);
     if (sectionId) sp.set("sectionId", sectionId);
     if (importBatchId) sp.set("importBatchId", importBatchId);
+    if (rfidStatus) sp.set("rfidStatus", rfidStatus);
     sp.set("page", String(nextPage));
     return `/dashboard/admin/students?${sp.toString()}`;
   }
@@ -141,6 +152,7 @@ export default async function AdminStudentsPage({
     if (q) sp.set("q", q);
     if (sectionId) sp.set("sectionId", sectionId);
     if (importBatchId) sp.set("importBatchId", importBatchId);
+    if (rfidStatus) sp.set("rfidStatus", rfidStatus);
     return `/api/students/export-credentials?${sp.toString()}`;
   }
 
@@ -149,6 +161,7 @@ export default async function AdminStudentsPage({
     if (q) sp.set("q", q);
     if (sectionId) sp.set("sectionId", sectionId);
     if (importBatchId) sp.set("importBatchId", importBatchId);
+    if (rfidStatus) sp.set("rfidStatus", rfidStatus);
     return `/api/students/export-students-view?${sp.toString()}`;
   }
 
@@ -243,7 +256,7 @@ export default async function AdminStudentsPage({
 
         <CardContent className="space-y-6">
           <TableToolbar>
-            <form method="GET" className="grid flex-1 gap-4 md:grid-cols-3">
+            <form method="GET" className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_220px_220px_auto]">
               <div>
                 <label className="mb-2 block text-sm font-medium">Search</label>
                 <Input
@@ -266,6 +279,19 @@ export default async function AdminStudentsPage({
                       {section.name}
                     </option>
                   ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">RFID Status</label>
+                <select
+                  name="rfidStatus"
+                  defaultValue={rfidStatus}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">All students</option>
+                  <option value="WITH_RFID">With RFID</option>
+                  <option value="WITHOUT_RFID">Without RFID</option>
                 </select>
               </div>
 
@@ -319,7 +345,7 @@ export default async function AdminStudentsPage({
             password policy. They do not read plain passwords from the database.
           </div>
 
-          {q || sectionId ? (
+          {q || sectionId || rfidStatus ? (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
               {q ? (
                 <div>
@@ -333,6 +359,18 @@ export default async function AdminStudentsPage({
                   <span className="ml-2 font-medium">
                     {sections.find((section) => section.id === sectionId)?.name ??
                       sectionId}
+                  </span>
+                </div>
+              ) : null}
+              {rfidStatus ? (
+                <div className="mt-1">
+                  RFID Status:
+                  <span className="ml-2 font-medium">
+                    {rfidStatus === "WITH_RFID"
+                      ? "With RFID"
+                      : rfidStatus === "WITHOUT_RFID"
+                      ? "Without RFID"
+                      : rfidStatus}
                   </span>
                 </div>
               ) : null}
