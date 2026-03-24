@@ -25,6 +25,9 @@ export async function GET() {
   }
 
   const latestBatch = await prisma.studentImportBatch.findFirst({
+    where: {
+      isArchived: false,
+    },
     orderBy: {
       createdAt: "desc",
     },
@@ -34,7 +37,7 @@ export async function GET() {
   });
 
   if (!latestBatch) {
-    return new NextResponse("No import batch found", { status: 404 });
+    return new NextResponse("No active import batch found", { status: 404 });
   }
 
   const students = await prisma.student.findMany({
@@ -49,6 +52,12 @@ export async function GET() {
       studentNo: "asc",
     },
   });
+
+  if (students.length === 0) {
+    return new NextResponse("No students found for the latest import batch", {
+      status: 404,
+    });
+  }
 
   const header = [
     "student_no",
@@ -67,9 +76,9 @@ export async function GET() {
     student.user.email,
     student.section?.name ?? "",
     formatGradeLevel(student.section?.gradeLevel),
-    "Starland@123",
+    "Student@123",
     "Change password on first login",
-    latestBatch.id!,
+    latestBatch.id,
   ]);
 
   const csv = [
@@ -81,7 +90,8 @@ export async function GET() {
     status: 200,
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="student_credentials_latest_import.csv"`,
+      "Content-Disposition":
+        'attachment; filename="student_credentials_latest_import.csv"',
     },
   });
 }
