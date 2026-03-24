@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toggleImportBatchArchive } from "../actions";
+import CopyBatchIdButton from "@/components/copy-batch-id-button";
 
 const PAGE_SIZE = 20;
 
@@ -131,11 +132,9 @@ export default async function StudentImportBatchDetailsPage({
   }
 
   function buildBaseUrl() {
-    const qs = new URLSearchParams();
-    if (q) qs.set("q", q);
     return `/dashboard/admin/students/import-history/${encodeURIComponent(
       batchId
-    )}${qs.toString() ? `?${qs.toString()}` : ""}`;
+    )}`;
   }
 
   return (
@@ -155,6 +154,7 @@ export default async function StudentImportBatchDetailsPage({
         ]}
         actions={
           <div className="flex flex-wrap gap-2">
+            <CopyBatchIdButton value={batch.id} />
             <Button asChild variant="outline">
               <a
                 href={`/api/students/export-batch?importBatchId=${encodeURIComponent(
@@ -234,7 +234,12 @@ export default async function StudentImportBatchDetailsPage({
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <SummaryItem label="Batch ID" value={batch.id} mono />
+          <SummaryItem
+            label="Batch ID"
+            value={batch.id}
+            mono
+            extra={<CopyBatchIdButton value={batch.id} label="Copy" size="sm" />}
+          />
           <SummaryItem label="School Year" value={batch.schoolYear?.name ?? "-"} />
           <SummaryItem
             label="Imported By"
@@ -274,10 +279,7 @@ export default async function StudentImportBatchDetailsPage({
               )}
             </div>
           </div>
-          <SummaryItem
-            label="Matching Students"
-            value={String(totalStudents)}
-          />
+          <SummaryItem label="Matching Students" value={String(totalStudents)} />
         </CardContent>
       </Card>
 
@@ -389,10 +391,12 @@ function SummaryItem({
   label,
   value,
   mono = false,
+  extra,
 }: {
   label: string;
   value: string;
   mono?: boolean;
+  extra?: React.ReactNode;
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -404,6 +408,7 @@ function SummaryItem({
       >
         {value}
       </p>
+      {extra ? <div className="mt-3">{extra}</div> : null}
     </div>
   );
 }

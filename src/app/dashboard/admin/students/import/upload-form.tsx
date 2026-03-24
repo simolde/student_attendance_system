@@ -6,6 +6,7 @@ import { importStudentsFromRows, type ImportRow } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import CopyBatchIdButton from "@/components/copy-batch-id-button";
 
 type ImportSummary = {
   importBatchId: string;
@@ -122,7 +123,7 @@ export default function ImportStudentsForm() {
       toast.error("Failed to read Excel file");
     }
   }
-  
+
   async function handleImport() {
     if (!rows.length) {
       toast.error("Please upload an Excel file first");
@@ -241,6 +242,7 @@ export default function ImportStudentsForm() {
             </p>
 
             <div className="mt-3 flex flex-wrap gap-2">
+              <CopyBatchIdButton value={summary.importBatchId} />
               <Button asChild type="button" variant="outline" size="sm">
                 <a
                   href={`/api/students/export-batch?importBatchId=${encodeURIComponent(
@@ -271,10 +273,7 @@ export default function ImportStudentsForm() {
               value={summary.createdEnrollments}
             />
             <SummaryItem label="Updated Users" value={summary.updatedUsers} />
-            <SummaryItem
-              label="Updated Students"
-              value={summary.updatedStudents}
-            />
+            <SummaryItem label="Updated Students" value={summary.updatedStudents} />
             <SummaryItem
               label="Updated Enrollments"
               value={summary.updatedEnrollments}
