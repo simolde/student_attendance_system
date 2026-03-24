@@ -147,6 +147,13 @@ export default async function StudentImportBatchDetailsPage({
     )}`;
   }
 
+  function buildExportStudentsUrl() {
+    const qs = new URLSearchParams();
+    qs.set("batchId", batch.id);
+    if (q) qs.set("q", q);
+    return `/api/students/export-batch-students?${qs.toString()}`;
+  }
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -165,6 +172,12 @@ export default async function StudentImportBatchDetailsPage({
         actions={
           <div className="flex flex-wrap gap-2">
             <CopyBatchIdButton value={batch.id} />
+            <Button asChild variant="outline">
+              <a href={buildExportStudentsUrl()}>
+                <Download className="mr-2 h-4 w-4" />
+                Export Students View
+              </a>
+            </Button>
             <Button asChild variant="outline">
               <a
                 href={`/api/students/export-batch?importBatchId=${encodeURIComponent(
