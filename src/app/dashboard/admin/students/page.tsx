@@ -133,6 +133,14 @@ export default async function AdminStudentsPage({
     return `/api/students/export-credentials?${sp.toString()}`;
   }
 
+  function buildViewExportUrl() {
+    const sp = new URLSearchParams();
+    if (q) sp.set("q", q);
+    if (sectionId) sp.set("sectionId", sectionId);
+    if (importBatchId) sp.set("importBatchId", importBatchId);
+    return `/api/students/export-students-view?${sp.toString()}`;
+  }
+
   const formatName = (name: string) =>
     name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -147,19 +155,30 @@ export default async function AdminStudentsPage({
           { label: "Student Management" },
         ]}
         actions={
-          isArchivedBatchView ? (
-            <Button type="button" variant="outline" disabled>
-              <Download className="mr-2 h-4 w-4" />
-              Export Credentials Disabled
-            </Button>
-          ) : (
-            <Button asChild variant="outline">
-              <a href={buildExportUrl()}>
+          <div className="flex flex-wrap gap-2">
+            {importBatchId ? (
+              <Button asChild variant="outline">
+                <a href={buildViewExportUrl()}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Export Students View
+                </a>
+              </Button>
+            ) : null}
+
+            {isArchivedBatchView ? (
+              <Button type="button" variant="outline" disabled>
                 <Download className="mr-2 h-4 w-4" />
-                Export Credentials
-              </a>
-            </Button>
-          )
+                Export Credentials Disabled
+              </Button>
+            ) : (
+              <Button asChild variant="outline">
+                <a href={buildExportUrl()}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Export Credentials
+                </a>
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -290,17 +309,16 @@ export default async function AdminStudentsPage({
 
                   <p className="break-all font-mono text-xs">{selectedBatch.id}</p>
 
-                  <p>
-                    School year: {selectedBatch.schoolYear?.name ?? "-"}
-                  </p>
+                  <p>School year: {selectedBatch.schoolYear?.name ?? "-"}</p>
 
                   {selectedBatch.isArchived ? (
                     <p>
                       This batch is archived and excluded from{" "}
                       <span className="font-medium">Export Latest Import</span>.
                       The general <span className="font-medium">Export Credentials</span>{" "}
-                      button is also disabled in this archived batch view. Export
-                      this batch from Import History or Batch Details instead.
+                      button is disabled in this archived batch view. You can still
+                      use <span className="font-medium">Export Students View</span>{" "}
+                      to export the currently filtered student list.
                     </p>
                   ) : (
                     <p>
