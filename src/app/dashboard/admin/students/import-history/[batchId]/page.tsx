@@ -102,7 +102,7 @@ export default async function StudentImportBatchDetailsPage({
       : {}),
   };
 
-  const [students, totalStudents] = await Promise.all([
+  const [students, totalStudents, summaryRows] = await Promise.all([
     prisma.student.findMany({
       where: studentWhere,
       include: {
@@ -118,9 +118,19 @@ export default async function StudentImportBatchDetailsPage({
     prisma.student.count({
       where: studentWhere,
     }),
+    prisma.student.findMany({
+      where: studentWhere,
+      select: {
+        id: true,
+        rfidUid: true,
+      },
+    }),
   ]);
 
   const totalPages = Math.max(Math.ceil(totalStudents / PAGE_SIZE), 1);
+
+  const withRfidCount = summaryRows.filter((student) => !!student.rfidUid).length;
+  const withoutRfidCount = summaryRows.filter((student) => !student.rfidUid).length;
 
   function buildUrl(nextPage: number) {
     const qs = new URLSearchParams();
@@ -279,7 +289,6 @@ export default async function StudentImportBatchDetailsPage({
               )}
             </div>
           </div>
-          <SummaryItem label="Matching Students" value={String(totalStudents)} />
         </CardContent>
       </Card>
 
@@ -315,6 +324,29 @@ export default async function StudentImportBatchDetailsPage({
               </div>
             </form>
           </TableToolbar>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <p className="text-xs text-blue-600">Matching Students</p>
+              <p className="mt-1 text-lg font-semibold text-blue-950">
+                {totalStudents}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-xs text-emerald-700">With RFID</p>
+              <p className="mt-1 text-lg font-semibold text-emerald-950">
+                {withRfidCount}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-xs text-amber-700">Without RFID</p>
+              <p className="mt-1 text-lg font-semibold text-amber-950">
+                {withoutRfidCount}
+              </p>
+            </div>
+          </div>
 
           {q ? (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
