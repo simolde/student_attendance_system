@@ -19,6 +19,20 @@ function formatManilaDateTime(date: Date) {
   }).format(date);
 }
 
+function buildDateRange(dateFrom: string, dateTo: string) {
+  const createdAt: { gte?: Date; lte?: Date } = {};
+
+  if (dateFrom) {
+    createdAt.gte = new Date(`${dateFrom}T00:00:00.000+08:00`);
+  }
+
+  if (dateTo) {
+    createdAt.lte = new Date(`${dateTo}T23:59:59.999+08:00`);
+  }
+
+  return Object.keys(createdAt).length > 0 ? createdAt : undefined;
+}
+
 export async function GET(req: Request) {
   const session = await auth();
 
@@ -33,9 +47,14 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const showArchived = searchParams.get("archived") === "1";
   const q = searchParams.get("q")?.trim() ?? "";
+  const dateFrom = searchParams.get("dateFrom")?.trim() ?? "";
+  const dateTo = searchParams.get("dateTo")?.trim() ?? "";
+
+  const createdAtRange = buildDateRange(dateFrom, dateTo);
 
   const where = {
     ...(showArchived ? {} : { isArchived: false }),
+    ...(createdAtRange ? { createdAt: createdAtRange } : {}),
     ...(q
       ? {
           OR: [

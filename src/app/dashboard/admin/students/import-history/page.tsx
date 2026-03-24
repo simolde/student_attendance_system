@@ -32,10 +32,30 @@ function formatManilaDateTime(date: Date) {
   }).format(date);
 }
 
+function buildDateRange(dateFrom: string, dateTo: string) {
+  const createdAt: { gte?: Date; lte?: Date } = {};
+
+  if (dateFrom) {
+    createdAt.gte = new Date(`${dateFrom}T00:00:00.000+08:00`);
+  }
+
+  if (dateTo) {
+    createdAt.lte = new Date(`${dateTo}T23:59:59.999+08:00`);
+  }
+
+  return Object.keys(createdAt).length > 0 ? createdAt : undefined;
+}
+
 export default async function StudentImportHistoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ archived?: string; q?: string; page?: string }>;
+  searchParams: Promise<{
+    archived?: string;
+    q?: string;
+    page?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }>;
 }) {
   const session = await auth();
 
@@ -50,10 +70,15 @@ export default async function StudentImportHistoryPage({
   const params = await searchParams;
   const showArchived = params.archived === "1";
   const q = params.q?.trim() ?? "";
+  const dateFrom = params.dateFrom?.trim() ?? "";
+  const dateTo = params.dateTo?.trim() ?? "";
   const page = Math.max(Number(params.page || "1"), 1);
+
+  const createdAtRange = buildDateRange(dateFrom, dateTo);
 
   const where = {
     ...(showArchived ? {} : { isArchived: false }),
+    ...(createdAtRange ? { createdAt: createdAtRange } : {}),
     ...(q
       ? {
           OR: [
@@ -125,6 +150,8 @@ export default async function StudentImportHistoryPage({
     const sp = new URLSearchParams();
     if (showArchived) sp.set("archived", "1");
     if (q) sp.set("q", q);
+    if (dateFrom) sp.set("dateFrom", dateFrom);
+    if (dateTo) sp.set("dateTo", dateTo);
     sp.set("page", String(nextPage));
     return `/dashboard/admin/students/import-history?${sp.toString()}`;
   }
@@ -133,6 +160,8 @@ export default async function StudentImportHistoryPage({
     const sp = new URLSearchParams();
     if (archived) sp.set("archived", "1");
     if (q) sp.set("q", q);
+    if (dateFrom) sp.set("dateFrom", dateFrom);
+    if (dateTo) sp.set("dateTo", dateTo);
     return `/dashboard/admin/students/import-history${
       sp.toString() ? `?${sp.toString()}` : ""
     }`;
@@ -142,6 +171,8 @@ export default async function StudentImportHistoryPage({
     const sp = new URLSearchParams();
     if (showArchived) sp.set("archived", "1");
     if (q) sp.set("q", q);
+    if (dateFrom) sp.set("dateFrom", dateFrom);
+    if (dateTo) sp.set("dateTo", dateTo);
     return `/api/students/export-import-history${
       sp.toString() ? `?${sp.toString()}` : ""
     }`;
@@ -207,7 +238,7 @@ export default async function StudentImportHistoryPage({
           <TableToolbar>
             <form
               method="GET"
-              className="grid flex-1 gap-4 md:grid-cols-[1fr_auto_auto]"
+              className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_180px_auto]"
             >
               <div>
                 <label className="mb-2 block text-sm font-medium">Search</label>
@@ -216,6 +247,16 @@ export default async function StudentImportHistoryPage({
                   defaultValue={q}
                   placeholder="Batch ID, school year, importer name or email"
                 />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">From</label>
+                <Input name="dateFrom" type="date" defaultValue={dateFrom} />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">To</label>
+                <Input name="dateTo" type="date" defaultValue={dateTo} />
               </div>
 
               <input
@@ -228,7 +269,15 @@ export default async function StudentImportHistoryPage({
               <div className="flex items-end gap-2">
                 <Button type="submit">Apply</Button>
                 <Button type="button" variant="outline" asChild>
-                  <Link href={buildBaseUrl(showArchived)}>Reset</Link>
+                  <Link
+                    href={
+                      showArchived
+                        ? "/dashboard/admin/students/import-history?archived=1"
+                        : "/dashboard/admin/students/import-history"
+                    }
+                  >
+                    Reset
+                  </Link>
                 </Button>
               </div>
             </form>
@@ -257,10 +306,26 @@ export default async function StudentImportHistoryPage({
             </div>
           </div>
 
-          {q ? (
+          {q || dateFrom || dateTo ? (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
-              Showing results for:
-              <span className="ml-2 font-medium">{q}</span>
+              <div>
+                {q ? (
+                  <span>
+                    Search:
+                    <span className="ml-2 font-medium">{q}</span>
+                  </span>
+                ) : null}
+              </div>
+              <div className="mt-1">
+                {dateFrom || dateTo ? (
+                  <span>
+                    Date range:
+                    <span className="ml-2 font-medium">
+                      {dateFrom || "Any"} → {dateTo || "Any"}
+                    </span>
+                  </span>
+                ) : null}
+              </div>
             </div>
           ) : null}
 
