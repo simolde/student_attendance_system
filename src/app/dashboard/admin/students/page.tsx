@@ -23,17 +23,18 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Download, TriangleAlert } from "lucide-react";
 
 const PAGE_SIZE = 10;
 
 export default async function AdminStudentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ 
-    q?: string; 
+  searchParams: Promise<{
+    q?: string;
     sectionId?: string;
-    importBatchId?: string; 
+    importBatchId?: string;
     page?: string;
   }>;
 }) {
@@ -53,14 +54,31 @@ export default async function AdminStudentsPage({
   const importBatchId = params.importBatchId?.trim() ?? "";
   const page = Math.max(Number(params.page || "1"), 1);
 
-  const sections = await prisma.section.findMany({
-    orderBy: { name: "asc" },
-    select: {
-      id: true,
-      name: true,
-      gradeLevel: true,
-    },
-  });
+  const [sections, selectedBatch] = await Promise.all([
+    prisma.section.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        gradeLevel: true,
+      },
+    }),
+    importBatchId
+      ? prisma.studentImportBatch.findUnique({
+          where: { id: importBatchId },
+          select: {
+            id: true,
+            isArchived: true,
+            createdAt: true,
+            schoolYear: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        })
+      : Promise.resolve(null),
+  ]);
 
   const where = {
     AND: [
@@ -160,20 +178,17 @@ export default async function AdminStudentsPage({
             </div>
           ) : (
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {sections
-                .slice()
-                .sort((a, b) => a.id.localeCompare(b.id))
-                .map((section) => (
-                  <div
-                    key={section.id}
-                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-                  >
-                    <p className="font-medium text-slate-900">{section.name}</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {formatName(section.gradeLevel)}
-                    </p>
-                  </div>
-                ))}
+              {sections.map((section) => (
+                <div
+                  key={section.id}
+                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                >
+                  <p className="font-medium text-slate-900">{section.name}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {formatName(section.gradeLevel)}
+                  </p>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
@@ -215,8 +230,8 @@ export default async function AdminStudentsPage({
                 </select>
               </div>
 
-              <input type="hidden" name="page" value="1" />
               <input type="hidden" name="importBatchId" value={importBatchId} />
+              <input type="hidden" name="page" value="1" />
 
               <div className="flex items-end gap-2">
                 <Button type="submit">Apply</Button>
@@ -224,7 +239,9 @@ export default async function AdminStudentsPage({
                   <Link
                     href={
                       importBatchId
-                        ? `/dashboard/admin/students?importBatchId=${encodeURIComponent(importBatchId)}`
+                        ? `/dashboard/admin/students?importBatchId=${encodeURIComponent(
+                            importBatchId
+                          )}`
                         : "/dashboard/admin/students"
                     }
                   >
@@ -240,12 +257,49 @@ export default async function AdminStudentsPage({
             password policy. They do not read plain passwords from the database.
           </div>
 
-          {importBatchId ? (
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
-              Viewing students from import batch:
-              <span className="ml-2 break-all font-mono text-xs">
-                {importBatchId}
-              </span>
+          {importBatchId && selectedBatch ? (
+            <div
+              className={`rounded-xl border p-4 text-sm ${
+                selectedBatch.isArchived
+                  ? "border-amber-200 bg-amber-50 text-amber-950"
+                  : "border-blue-200 bg-blue-50 text-blue-950"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0" />
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium">
+                      Viewing students from import batch
+                    </p>
+                    {selectedBatch.isArchived ? (
+                      <Badge variant="secondary">Archived</Badge>
+                    ) : (
+                      <Badge>Active Batch</Badge>
+                    )}
+                  </div>
+
+                  <p className="break-all font-mono text-xs">{selectedBatch.id}</p>
+
+                  <p>
+                    School year: {selectedBatch.schoolYear?.name ?? "-"}
+                  </p>
+
+                  {selectedBatch.isArchived ? (
+                    <p>
+                      This batch is archived and excluded from{" "}
+                      <span className="font-medium">Export Latest Import</span>,
+                      but you can still review and export it manually for history
+                      or audit purposes.
+                    </p>
+                  ) : (
+                    <p>
+                      This batch is active and can still be used in normal export
+                      and review flows.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           ) : null}
 
