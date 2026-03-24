@@ -65,11 +65,15 @@ export default function AttendanceForm({
               className="h-11 w-full rounded-md border bg-background px-3 text-sm"
             >
               <option value="">Select section</option>
-              {sections.map((section) => (
-                <option key={section.id} value={section.id}>
-                  {section.name}
-                </option>
-              ))}
+              {sections
+                .slice()
+                .sort((a, b) => a.id.localeCompare(b.id))
+                .map((section) => (
+                  <option key={section.id} value={section.id}>
+                    {section.name}
+                  </option>
+                )
+              )}
             </select>
           </div>
 

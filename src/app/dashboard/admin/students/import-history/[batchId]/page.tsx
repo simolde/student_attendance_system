@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/table";
 import { toggleImportBatchArchive } from "../actions";
 
+const PAGE_SIZE = 20;
+
 function formatManilaDateTime(date: Date) {
   return new Intl.DateTimeFormat("en-PH", {
     timeZone: "Asia/Manila",
@@ -42,8 +44,10 @@ function formatGradeLevel(value: string | null | undefined) {
 
 export default async function StudentImportBatchDetailsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ batchId: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
   const session = await auth();
 
@@ -55,7 +59,8 @@ export default async function StudentImportBatchDetailsPage({
     redirect("/unauthorized");
   }
 
-  const { batchId } = await params;
+  const [{ batchId }, sp] = await Promise.all([params, searchParams]);
+  const page = Math.max(Number(sp.page || "1"), 1);
 
   const batch = await prisma.studentImportBatch.findUnique({
     where: { id: batchId },
@@ -71,13 +76,9 @@ export default async function StudentImportBatchDetailsPage({
           name: true,
         },
       },
-      students: {
-        include: {
-          user: true,
-          section: true,
-        },
-        orderBy: {
-          studentNo: "asc",
+      _count: {
+        select: {
+          students: true,
         },
       },
     },
@@ -85,6 +86,31 @@ export default async function StudentImportBatchDetailsPage({
 
   if (!batch) {
     notFound();
+  }
+
+  const students = await prisma.student.findMany({
+    where: {
+      importBatchId: batchId,
+    },
+    include: {
+      user: true,
+      section: true,
+    },
+    orderBy: {
+      studentNo: "asc",
+    },
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+  });
+
+  const totalPages = Math.max(Math.ceil(batch._count.students / PAGE_SIZE), 1);
+
+  function buildUrl(nextPage: number) {
+    const qs = new URLSearchParams();
+    qs.set("page", String(nextPage));
+    return `/dashboard/admin/students/import-history/${encodeURIComponent(
+      batchId
+    )}?${qs.toString()}`;
   }
 
   return (
@@ -96,7 +122,10 @@ export default async function StudentImportBatchDetailsPage({
           { label: "Dashboard", href: "/dashboard" },
           { label: "Admin", href: "/dashboard/admin" },
           { label: "Student Management", href: "/dashboard/admin/students" },
-          { label: "Import History", href: "/dashboard/admin/students/import-history" },
+          {
+            label: "Import History",
+            href: "/dashboard/admin/students/import-history",
+          },
           { label: "Batch Details" },
         ]}
         actions={
@@ -145,8 +174,9 @@ export default async function StudentImportBatchDetailsPage({
               </div>
               <p className="text-sm text-amber-900">
                 This batch is kept for history and audit purposes. It is excluded
-                from current-flow features like <span className="font-medium">Export Latest Import</span>,
-                but batch-specific export is still allowed from this page.
+                from current-flow features like{" "}
+                <span className="font-medium">Export Latest Import</span>, but
+                batch-specific export is still allowed from this page.
               </p>
             </div>
           </CardContent>
@@ -163,7 +193,8 @@ export default async function StudentImportBatchDetailsPage({
                 <Badge>Active</Badge>
               </div>
               <p className="text-sm text-blue-900">
-                This batch is active and still part of normal review and export flows.
+                This batch is active and still part of normal review and export
+                flows.
               </p>
             </div>
           </CardContent>
@@ -184,16 +215,25 @@ export default async function StudentImportBatchDetailsPage({
             label="Imported By"
             value={batch.createdByUser?.name ?? batch.createdByUser?.email ?? "-"}
           />
-          <SummaryItem label="Imported At" value={formatManilaDateTime(batch.createdAt)} />
+          <SummaryItem
+            label="Imported At"
+            value={formatManilaDateTime(batch.createdAt)}
+          />
           <SummaryItem label="Total Rows" value={String(batch.totalRows)} />
           <SummaryItem label="Created Users" value={String(batch.createdUsers)} />
-          <SummaryItem label="Created Students" value={String(batch.createdStudents)} />
+          <SummaryItem
+            label="Created Students"
+            value={String(batch.createdStudents)}
+          />
           <SummaryItem
             label="Created Enrollments"
             value={String(batch.createdEnrollments)}
           />
           <SummaryItem label="Updated Users" value={String(batch.updatedUsers)} />
-          <SummaryItem label="Updated Students" value={String(batch.updatedStudents)} />
+          <SummaryItem
+            label="Updated Students"
+            value={String(batch.updatedStudents)}
+          />
           <SummaryItem
             label="Updated Enrollments"
             value={String(batch.updatedEnrollments)}
@@ -209,6 +249,10 @@ export default async function StudentImportBatchDetailsPage({
               )}
             </div>
           </div>
+          <SummaryItem
+            label="Students in Batch"
+            value={String(batch._count.students)}
+          />
         </CardContent>
       </Card>
 
@@ -216,10 +260,10 @@ export default async function StudentImportBatchDetailsPage({
         <CardHeader>
           <CardTitle>Students in This Batch</CardTitle>
           <CardDescription>
-            All students tagged with this import batch.
+            Page {page} of {totalPages} • {batch._count.students} total students
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <div className="overflow-hidden rounded-xl border border-slate-200">
             <Table>
               <TableHeader>
@@ -234,7 +278,7 @@ export default async function StudentImportBatchDetailsPage({
               </TableHeader>
 
               <TableBody>
-                {batch.students.map((student) => (
+                {students.map((student) => (
                   <TableRow key={student.id}>
                     <TableCell className="font-medium text-slate-900">
                       {student.studentNo}
@@ -252,6 +296,20 @@ export default async function StudentImportBatchDetailsPage({
                 ))}
               </TableBody>
             </Table>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Button variant="outline" asChild disabled={page <= 1}>
+              <Link href={buildUrl(page - 1)}>Previous</Link>
+            </Button>
+
+            <span className="text-sm text-slate-500">
+              Page {page} of {totalPages}
+            </span>
+
+            <Button variant="outline" asChild disabled={page >= totalPages}>
+              <Link href={buildUrl(page + 1)}>Next</Link>
+            </Button>
           </div>
         </CardContent>
       </Card>
