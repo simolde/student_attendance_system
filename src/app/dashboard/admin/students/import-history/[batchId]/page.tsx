@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download } from "lucide-react";
+import { Download, TriangleAlert } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -131,6 +131,44 @@ export default async function StudentImportBatchDetailsPage({
           </div>
         }
       />
+
+      {batch.isArchived ? (
+        <Card className="border-amber-200 bg-amber-50 shadow-sm">
+          <CardContent className="flex items-start gap-3 p-5">
+            <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <p className="font-medium text-amber-950">
+                  Archived import batch
+                </p>
+                <Badge variant="secondary">Archived</Badge>
+              </div>
+              <p className="text-sm text-amber-900">
+                This batch is kept for history and audit purposes. It is excluded
+                from current-flow features like <span className="font-medium">Export Latest Import</span>,
+                but batch-specific export is still allowed from this page.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-blue-200 bg-blue-50 shadow-sm">
+          <CardContent className="flex items-start gap-3 p-5">
+            <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" />
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <p className="font-medium text-blue-950">
+                  Active import batch
+                </p>
+                <Badge>Active</Badge>
+              </div>
+              <p className="text-sm text-blue-900">
+                This batch is active and still part of normal review and export flows.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-slate-200 shadow-sm">
         <CardHeader>
