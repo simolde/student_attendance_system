@@ -4,6 +4,7 @@ import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import PageHeader from "@/components/layout/page-header";
+import TableToolbar from "@/components/layout/table-toolbar";
 import {
   Card,
   CardContent,
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Download, TriangleAlert } from "lucide-react";
 import {
   Table,
@@ -47,7 +49,7 @@ export default async function StudentImportBatchDetailsPage({
   searchParams,
 }: {
   params: Promise<{ batchId: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; q?: string }>;
 }) {
   const session = await auth();
 
@@ -61,6 +63,7 @@ export default async function StudentImportBatchDetailsPage({
 
   const [{ batchId }, sp] = await Promise.all([params, searchParams]);
   const page = Math.max(Number(sp.page || "1"), 1);
+  const q = sp.q?.trim() ?? "";
 
   const batch = await prisma.studentImportBatch.findUnique({
     where: { id: batchId },
@@ -76,11 +79,6 @@ export default async function StudentImportBatchDetailsPage({
           name: true,
         },
       },
-      _count: {
-        select: {
-          students: true,
-        },
-      },
     },
   });
 
@@ -88,29 +86,56 @@ export default async function StudentImportBatchDetailsPage({
     notFound();
   }
 
-  const students = await prisma.student.findMany({
-    where: {
-      importBatchId: batchId,
-    },
-    include: {
-      user: true,
-      section: true,
-    },
-    orderBy: {
-      studentNo: "asc",
-    },
-    skip: (page - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
-  });
+  const studentWhere = {
+    importBatchId: batchId,
+    ...(q
+      ? {
+          OR: [
+            { studentNo: { contains: q, mode: "insensitive" as const } },
+            { rfidUid: { contains: q, mode: "insensitive" as const } },
+            { user: { name: { contains: q, mode: "insensitive" as const } } },
+            { user: { email: { contains: q, mode: "insensitive" as const } } },
+            { section: { name: { contains: q, mode: "insensitive" as const } } },
+          ],
+        }
+      : {}),
+  };
 
-  const totalPages = Math.max(Math.ceil(batch._count.students / PAGE_SIZE), 1);
+  const [students, totalStudents] = await Promise.all([
+    prisma.student.findMany({
+      where: studentWhere,
+      include: {
+        user: true,
+        section: true,
+      },
+      orderBy: {
+        studentNo: "asc",
+      },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.student.count({
+      where: studentWhere,
+    }),
+  ]);
+
+  const totalPages = Math.max(Math.ceil(totalStudents / PAGE_SIZE), 1);
 
   function buildUrl(nextPage: number) {
     const qs = new URLSearchParams();
     qs.set("page", String(nextPage));
+    if (q) qs.set("q", q);
     return `/dashboard/admin/students/import-history/${encodeURIComponent(
       batchId
     )}?${qs.toString()}`;
+  }
+
+  function buildBaseUrl() {
+    const qs = new URLSearchParams();
+    if (q) qs.set("q", q);
+    return `/dashboard/admin/students/import-history/${encodeURIComponent(
+      batchId
+    )}${qs.toString() ? `?${qs.toString()}` : ""}`;
   }
 
   return (
@@ -250,8 +275,8 @@ export default async function StudentImportBatchDetailsPage({
             </div>
           </div>
           <SummaryItem
-            label="Students in Batch"
-            value={String(batch._count.students)}
+            label="Matching Students"
+            value={String(totalStudents)}
           />
         </CardContent>
       </Card>
@@ -260,10 +285,42 @@ export default async function StudentImportBatchDetailsPage({
         <CardHeader>
           <CardTitle>Students in This Batch</CardTitle>
           <CardDescription>
-            Page {page} of {totalPages} • {batch._count.students} total students
+            Page {page} of {totalPages} • {totalStudents} matching students
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <TableToolbar>
+            <form
+              method="GET"
+              className="grid flex-1 gap-4 md:grid-cols-[1fr_auto_auto]"
+            >
+              <div>
+                <label className="mb-2 block text-sm font-medium">Search</label>
+                <Input
+                  name="q"
+                  defaultValue={q}
+                  placeholder="Student no, name, email, section, or RFID"
+                />
+              </div>
+
+              <input type="hidden" name="page" value="1" />
+
+              <div className="flex items-end gap-2">
+                <Button type="submit">Apply</Button>
+                <Button type="button" variant="outline" asChild>
+                  <Link href={buildBaseUrl()}>Reset</Link>
+                </Button>
+              </div>
+            </form>
+          </TableToolbar>
+
+          {q ? (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
+              Showing results for:
+              <span className="ml-2 font-medium">{q}</span>
+            </div>
+          ) : null}
+
           <div className="overflow-hidden rounded-xl border border-slate-200">
             <Table>
               <TableHeader>
@@ -278,22 +335,33 @@ export default async function StudentImportBatchDetailsPage({
               </TableHeader>
 
               <TableBody>
-                {students.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell className="font-medium text-slate-900">
-                      {student.studentNo}
+                {students.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="py-10 text-center text-sm text-slate-500"
+                    >
+                      No students found for this batch.
                     </TableCell>
-                    <TableCell>{student.user.name ?? "-"}</TableCell>
-                    <TableCell className="text-slate-600">
-                      {student.user.email}
-                    </TableCell>
-                    <TableCell>{student.section?.name ?? "-"}</TableCell>
-                    <TableCell>
-                      {formatGradeLevel(student.section?.gradeLevel)}
-                    </TableCell>
-                    <TableCell>{student.rfidUid ?? "-"}</TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  students.map((student) => (
+                    <TableRow key={student.id}>
+                      <TableCell className="font-medium text-slate-900">
+                        {student.studentNo}
+                      </TableCell>
+                      <TableCell>{student.user.name ?? "-"}</TableCell>
+                      <TableCell className="text-slate-600">
+                        {student.user.email}
+                      </TableCell>
+                      <TableCell>{student.section?.name ?? "-"}</TableCell>
+                      <TableCell>
+                        {formatGradeLevel(student.section?.gradeLevel)}
+                      </TableCell>
+                      <TableCell>{student.rfidUid ?? "-"}</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
