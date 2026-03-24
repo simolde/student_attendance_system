@@ -55,6 +55,7 @@ export default async function StudentImportHistoryPage({
     page?: string;
     dateFrom?: string;
     dateTo?: string;
+    schoolYearId?: string;
   }>;
 }) {
   const session = await auth();
@@ -72,40 +73,47 @@ export default async function StudentImportHistoryPage({
   const q = params.q?.trim() ?? "";
   const dateFrom = params.dateFrom?.trim() ?? "";
   const dateTo = params.dateTo?.trim() ?? "";
+  const schoolYearId = params.schoolYearId?.trim() ?? "";
   const page = Math.max(Number(params.page || "1"), 1);
 
   const createdAtRange = buildDateRange(dateFrom, dateTo);
 
-  const where = {
-    ...(showArchived ? {} : { isArchived: false }),
-    ...(createdAtRange ? { createdAt: createdAtRange } : {}),
-    ...(q
-      ? {
-          OR: [
-            { id: { contains: q, mode: "insensitive" as const } },
-            {
-              schoolYear: {
-                name: { contains: q, mode: "insensitive" as const },
-              },
-            },
-            {
-              createdByUser: {
-                name: { contains: q, mode: "insensitive" as const },
-              },
-            },
-            {
-              createdByUser: {
-                email: { contains: q, mode: "insensitive" as const },
-              },
-            },
-          ],
-        }
-      : {}),
-  };
-
-  const [batches, totalBatches, allCounts] = await Promise.all([
+  const [schoolYears, batches, totalBatches, allCounts] = await Promise.all([
+    prisma.schoolYear.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+      },
+    }),
     prisma.studentImportBatch.findMany({
-      where,
+      where: {
+        ...(showArchived ? {} : { isArchived: false }),
+        ...(schoolYearId ? { schoolYearId } : {}),
+        ...(createdAtRange ? { createdAt: createdAtRange } : {}),
+        ...(q
+          ? {
+              OR: [
+                { id: { contains: q, mode: "insensitive" as const } },
+                {
+                  schoolYear: {
+                    name: { contains: q, mode: "insensitive" as const },
+                  },
+                },
+                {
+                  createdByUser: {
+                    name: { contains: q, mode: "insensitive" as const },
+                  },
+                },
+                {
+                  createdByUser: {
+                    email: { contains: q, mode: "insensitive" as const },
+                  },
+                },
+              ],
+            }
+          : {}),
+      },
       include: {
         createdByUser: {
           select: {
@@ -130,7 +138,35 @@ export default async function StudentImportHistoryPage({
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    prisma.studentImportBatch.count({ where }),
+    prisma.studentImportBatch.count({
+      where: {
+        ...(showArchived ? {} : { isArchived: false }),
+        ...(schoolYearId ? { schoolYearId } : {}),
+        ...(createdAtRange ? { createdAt: createdAtRange } : {}),
+        ...(q
+          ? {
+              OR: [
+                { id: { contains: q, mode: "insensitive" as const } },
+                {
+                  schoolYear: {
+                    name: { contains: q, mode: "insensitive" as const },
+                  },
+                },
+                {
+                  createdByUser: {
+                    name: { contains: q, mode: "insensitive" as const },
+                  },
+                },
+                {
+                  createdByUser: {
+                    email: { contains: q, mode: "insensitive" as const },
+                  },
+                },
+              ],
+            }
+          : {}),
+      },
+    }),
     prisma.studentImportBatch.groupBy({
       by: ["isArchived"],
       _count: {
@@ -152,6 +188,7 @@ export default async function StudentImportHistoryPage({
     if (q) sp.set("q", q);
     if (dateFrom) sp.set("dateFrom", dateFrom);
     if (dateTo) sp.set("dateTo", dateTo);
+    if (schoolYearId) sp.set("schoolYearId", schoolYearId);
     sp.set("page", String(nextPage));
     return `/dashboard/admin/students/import-history?${sp.toString()}`;
   }
@@ -162,6 +199,7 @@ export default async function StudentImportHistoryPage({
     if (q) sp.set("q", q);
     if (dateFrom) sp.set("dateFrom", dateFrom);
     if (dateTo) sp.set("dateTo", dateTo);
+    if (schoolYearId) sp.set("schoolYearId", schoolYearId);
     return `/dashboard/admin/students/import-history${
       sp.toString() ? `?${sp.toString()}` : ""
     }`;
@@ -173,6 +211,7 @@ export default async function StudentImportHistoryPage({
     if (q) sp.set("q", q);
     if (dateFrom) sp.set("dateFrom", dateFrom);
     if (dateTo) sp.set("dateTo", dateTo);
+    if (schoolYearId) sp.set("schoolYearId", schoolYearId);
     return `/api/students/export-import-history${
       sp.toString() ? `?${sp.toString()}` : ""
     }`;
@@ -238,7 +277,7 @@ export default async function StudentImportHistoryPage({
           <TableToolbar>
             <form
               method="GET"
-              className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_180px_auto]"
+              className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_180px_220px_auto]"
             >
               <div>
                 <label className="mb-2 block text-sm font-medium">Search</label>
@@ -257,6 +296,22 @@ export default async function StudentImportHistoryPage({
               <div>
                 <label className="mb-2 block text-sm font-medium">To</label>
                 <Input name="dateTo" type="date" defaultValue={dateTo} />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">School Year</label>
+                <select
+                  name="schoolYearId"
+                  defaultValue={schoolYearId}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">All school years</option>
+                  {schoolYears.map((schoolYear) => (
+                    <option key={schoolYear.id} value={schoolYear.id}>
+                      {schoolYear.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <input
@@ -306,26 +361,30 @@ export default async function StudentImportHistoryPage({
             </div>
           </div>
 
-          {q || dateFrom || dateTo ? (
+          {q || dateFrom || dateTo || schoolYearId ? (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
-              <div>
-                {q ? (
-                  <span>
-                    Search:
-                    <span className="ml-2 font-medium">{q}</span>
+              {q ? (
+                <div>
+                  Search:
+                  <span className="ml-2 font-medium">{q}</span>
+                </div>
+              ) : null}
+              {dateFrom || dateTo ? (
+                <div className="mt-1">
+                  Date range:
+                  <span className="ml-2 font-medium">
+                    {dateFrom || "Any"} → {dateTo || "Any"}
                   </span>
-                ) : null}
-              </div>
-              <div className="mt-1">
-                {dateFrom || dateTo ? (
-                  <span>
-                    Date range:
-                    <span className="ml-2 font-medium">
-                      {dateFrom || "Any"} → {dateTo || "Any"}
-                    </span>
+                </div>
+              ) : null}
+              {schoolYearId ? (
+                <div className="mt-1">
+                  School year:
+                  <span className="ml-2 font-medium">
+                    {schoolYears.find((s) => s.id === schoolYearId)?.name ?? schoolYearId}
                   </span>
-                ) : null}
-              </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
 

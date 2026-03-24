@@ -49,11 +49,13 @@ export async function GET(req: Request) {
   const q = searchParams.get("q")?.trim() ?? "";
   const dateFrom = searchParams.get("dateFrom")?.trim() ?? "";
   const dateTo = searchParams.get("dateTo")?.trim() ?? "";
+  const schoolYearId = searchParams.get("schoolYearId")?.trim() ?? "";
 
   const createdAtRange = buildDateRange(dateFrom, dateTo);
 
   const where = {
     ...(showArchived ? {} : { isArchived: false }),
+    ...(schoolYearId ? { schoolYearId } : {}),
     ...(createdAtRange ? { createdAt: createdAtRange } : {}),
     ...(q
       ? {
