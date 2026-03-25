@@ -293,7 +293,7 @@ export default async function StudentImportHistoryPage({
     return `/api/students/export-import-history-page?${sp.toString()}`;
   }
 
-  function buildPagePdfUrl() {
+  function buildPrintUrl() {
     const sp = new URLSearchParams();
     if (showArchived) sp.set("archived", "1");
     if (q) sp.set("q", q);
@@ -303,7 +303,7 @@ export default async function StudentImportHistoryPage({
     if (sectionId) sp.set("sectionId", sectionId);
     if (createdByUserId) sp.set("createdByUserId", createdByUserId);
     sp.set("page", String(page));
-    return `/api/students/export-import-history-page-pdf?${sp.toString()}`;
+    return `/dashboard/admin/students/import-history/print?${sp.toString()}`;
   }
 
   return (
@@ -320,9 +320,8 @@ export default async function StudentImportHistoryPage({
         actions={
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline">
-              <a href={buildPagePdfUrl()}>
-                <Download className="mr-2 h-4 w-4" />
-                PDF This Page
+              <a href={buildPrintUrl()} target="_blank" rel="noreferrer">
+                Print View
               </a>
             </Button>
 
