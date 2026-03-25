@@ -204,6 +204,17 @@ export default async function StudentImportBatchDetailsPage({
     return `/api/students/export-batch-students-page?${qs.toString()}`;
   }
 
+  function buildPrintUrl() {
+    const qs = new URLSearchParams();
+    if (q) qs.set("q", q);
+    if (rfidStatus) qs.set("rfidStatus", rfidStatus);
+    if (sectionId) qs.set("sectionId", sectionId);
+    qs.set("page", String(page));
+    return `/dashboard/admin/students/import-history/${encodeURIComponent(
+      batch.id
+    )}/print?${qs.toString()}`;
+  }
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -222,6 +233,11 @@ export default async function StudentImportBatchDetailsPage({
         actions={
           <div className="flex flex-wrap gap-2">
             <CopyBatchIdButton value={batch.id} />
+            <Button asChild variant="outline">
+              <a href={buildPrintUrl()} target="_blank" rel="noreferrer">
+                Print View
+              </a>
+            </Button>
             <Button asChild variant="outline">
               <a href={buildExportStudentsPageUrl()}>
                 <Download className="mr-2 h-4 w-4" />
