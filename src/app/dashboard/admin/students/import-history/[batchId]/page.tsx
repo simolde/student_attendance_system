@@ -50,7 +50,12 @@ export default async function StudentImportBatchDetailsPage({
   searchParams,
 }: {
   params: Promise<{ batchId: string }>;
-  searchParams: Promise<{ page?: string; q?: string; rfidStatus?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    q?: string;
+    rfidStatus?: string;
+    sectionId?: string;
+  }>;
 }) {
   const session = await auth();
 
@@ -66,6 +71,7 @@ export default async function StudentImportBatchDetailsPage({
   const page = Math.max(Number(sp.page || "1"), 1);
   const q = sp.q?.trim() ?? "";
   const rfidStatus = sp.rfidStatus?.trim() ?? "";
+  const sectionId = sp.sectionId?.trim() ?? "";
 
   const batch = await prisma.studentImportBatch.findUnique({
     where: { id: batchId },
@@ -88,6 +94,24 @@ export default async function StudentImportBatchDetailsPage({
     notFound();
   }
 
+  const batchSections = await prisma.section.findMany({
+    where: {
+      students: {
+        some: {
+          importBatchId: batchId,
+        },
+      },
+    },
+    orderBy: {
+      name: "asc",
+    },
+    select: {
+      id: true,
+      name: true,
+      gradeLevel: true,
+    },
+  });
+
   const rfidCondition =
     rfidStatus === "WITH_RFID"
       ? { NOT: { rfidUid: null as string | null } }
@@ -98,6 +122,7 @@ export default async function StudentImportBatchDetailsPage({
   const studentWhere = {
     AND: [
       { importBatchId: batchId },
+      sectionId ? { sectionId } : {},
       rfidCondition,
       q
         ? {
@@ -148,6 +173,7 @@ export default async function StudentImportBatchDetailsPage({
     qs.set("page", String(nextPage));
     if (q) qs.set("q", q);
     if (rfidStatus) qs.set("rfidStatus", rfidStatus);
+    if (sectionId) qs.set("sectionId", sectionId);
     return `/dashboard/admin/students/import-history/${encodeURIComponent(
       batchId
     )}?${qs.toString()}`;
@@ -164,6 +190,7 @@ export default async function StudentImportBatchDetailsPage({
     qs.set("batchId", batch.id);
     if (q) qs.set("q", q);
     if (rfidStatus) qs.set("rfidStatus", rfidStatus);
+    if (sectionId) qs.set("sectionId", sectionId);
     return `/api/students/export-batch-students?${qs.toString()}`;
   }
 
@@ -329,7 +356,7 @@ export default async function StudentImportBatchDetailsPage({
           <TableToolbar>
             <form
               method="GET"
-              className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_220px_auto]"
+              className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_220px_220px_auto]"
             >
               <div>
                 <label className="mb-2 block text-sm font-medium">Search</label>
@@ -350,6 +377,22 @@ export default async function StudentImportBatchDetailsPage({
                   <option value="">All students</option>
                   <option value="WITH_RFID">With RFID</option>
                   <option value="WITHOUT_RFID">Without RFID</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">Section</label>
+                <select
+                  name="sectionId"
+                  defaultValue={sectionId}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">All sections</option>
+                  {batchSections.map((section) => (
+                    <option key={section.id} value={section.id}>
+                      {section.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -387,7 +430,7 @@ export default async function StudentImportBatchDetailsPage({
             </div>
           </div>
 
-          {q || rfidStatus ? (
+          {q || rfidStatus || sectionId ? (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
               {q ? (
                 <div>
@@ -404,6 +447,15 @@ export default async function StudentImportBatchDetailsPage({
                       : rfidStatus === "WITHOUT_RFID"
                       ? "Without RFID"
                       : rfidStatus}
+                  </span>
+                </div>
+              ) : null}
+              {sectionId ? (
+                <div className="mt-1">
+                  Section:
+                  <span className="ml-2 font-medium">
+                    {batchSections.find((section) => section.id === sectionId)?.name ??
+                      sectionId}
                   </span>
                 </div>
               ) : null}

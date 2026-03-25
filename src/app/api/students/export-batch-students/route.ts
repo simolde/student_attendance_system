@@ -28,6 +28,7 @@ export async function GET(req: Request) {
   const batchId = searchParams.get("batchId")?.trim();
   const q = searchParams.get("q")?.trim() ?? "";
   const rfidStatus = searchParams.get("rfidStatus")?.trim() ?? "";
+  const sectionId = searchParams.get("sectionId")?.trim() ?? "";
 
   if (!batchId) {
     return new NextResponse("Missing batchId", { status: 400 });
@@ -60,6 +61,7 @@ export async function GET(req: Request) {
   const where = {
     AND: [
       { importBatchId: batchId },
+      sectionId ? { sectionId } : {},
       rfidCondition,
       q
         ? {
