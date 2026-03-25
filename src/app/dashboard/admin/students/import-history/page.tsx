@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { toggleImportBatchArchive } from "./actions";
 import CopyBatchIdButton from "@/components/copy-batch-id-button";
 import ExportActionsMenu from "@/components/export-actions-menu";
+import BatchCardActions from "./batch-card-cations";
 
 const PAGE_SIZE = 10;
 
@@ -626,32 +627,7 @@ export default async function StudentImportHistoryPage({
 
                     <div className="flex flex-wrap gap-2">
                       <CopyBatchIdButton value={batch.id} label="Copy Batch ID" />
-                      <Button asChild variant="outline">
-                        <a
-                          href={`/api/students/export-batch?importBatchId=${encodeURIComponent(
-                            batch.id
-                          )}`}
-                        >
-                          Export Batch
-                        </a>
-                      </Button>
-
-                      <Button asChild variant="outline">
-                        <Link
-                          href={`/dashboard/admin/students/import-history/${encodeURIComponent(
-                            batch.id
-                          )}`}
-                        >
-                          View Batch
-                        </Link>
-                      </Button>
-
-                      <form action={toggleImportBatchArchive}>
-                        <input type="hidden" name="batchId" value={batch.id} />
-                        <Button type="submit" variant="outline">
-                          {batch.isArchived ? "Unarchive" : "Archive"}
-                        </Button>
-                      </form>
+                      <BatchCardActions batchId={batch.id} isArchived={batch.isArchived} />
                     </div>
                   </div>
                 ))}
