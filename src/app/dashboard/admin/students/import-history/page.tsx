@@ -19,6 +19,7 @@ import { toggleImportBatchArchive } from "./actions";
 import CopyBatchIdButton from "@/components/copy-batch-id-button";
 import ExportActionsMenu from "@/components/export-actions-menu";
 import BatchCardActions from "./batch-card-actions";
+import { buildImportHistoryExportUrl, buildImportHistoryPageExportUrl, buildImportHistoryPrintUrl, buildImportHistoryUrl } from "@/lib/student-url-builders";
 
 const PAGE_SIZE = 10;
 
@@ -241,70 +242,66 @@ export default async function StudentImportHistoryPage({
   ).length;
 
   function buildUrl(nextPage: number) {
-    const sp = new URLSearchParams();
-    if (showArchived) sp.set("archived", "1");
-    if (q) sp.set("q", q);
-    if (dateFrom) sp.set("dateFrom", dateFrom);
-    if (dateTo) sp.set("dateTo", dateTo);
-    if (schoolYearId) sp.set("schoolYearId", schoolYearId);
-    if (sectionId) sp.set("sectionId", sectionId);
-    if (createdByUserId) sp.set("createdByUserId", createdByUserId);
-    sp.set("page", String(nextPage));
-    return `/dashboard/admin/students/import-history?${sp.toString()}`;
+    return buildImportHistoryUrl({
+      archived: showArchived ? "1" : "",
+      q,
+      dateFrom,
+      dateTo,
+      schoolYearId,
+      sectionId,
+      createdByUserId,
+      page: nextPage,
+    });
   }
 
   function buildBaseUrl(archived: boolean) {
-    const sp = new URLSearchParams();
-    if (archived) sp.set("archived", "1");
-    if (q) sp.set("q", q);
-    if (dateFrom) sp.set("dateFrom", dateFrom);
-    if (dateTo) sp.set("dateTo", dateTo);
-    if (schoolYearId) sp.set("schoolYearId", schoolYearId);
-    if (sectionId) sp.set("sectionId", sectionId);
-    if (createdByUserId) sp.set("createdByUserId", createdByUserId);
-    return `/dashboard/admin/students/import-history${
-      sp.toString() ? `?${sp.toString()}` : ""
-    }`;
+    return buildImportHistoryUrl({
+      archived: archived ? "1" : "",
+      q,
+      dateFrom,
+      dateTo,
+      schoolYearId,
+      sectionId,
+      createdByUserId,
+    });
   }
 
   function buildExportUrl() {
-    const sp = new URLSearchParams();
-    if (showArchived) sp.set("archived", "1");
-    if (q) sp.set("q", q);
-    if (dateFrom) sp.set("dateFrom", dateFrom);
-    if (dateTo) sp.set("dateTo", dateTo);
-    if (schoolYearId) sp.set("schoolYearId", schoolYearId);
-    if (sectionId) sp.set("sectionId", sectionId);
-    if (createdByUserId) sp.set("createdByUserId", createdByUserId);
-    return `/api/students/export-import-history${
-      sp.toString() ? `?${sp.toString()}` : ""
-    }`;
+    return buildImportHistoryExportUrl({
+      archived: showArchived ? "1" : "",
+      q,
+      dateFrom,
+      dateTo,
+      schoolYearId,
+      sectionId,
+      createdByUserId,
+    });
   }
 
   function buildPageExportUrl() {
-    const sp = new URLSearchParams();
-    if (showArchived) sp.set("archived", "1");
-    if (q) sp.set("q", q);
-    if (dateFrom) sp.set("dateFrom", dateFrom);
-    if (dateTo) sp.set("dateTo", dateTo);
-    if (schoolYearId) sp.set("schoolYearId", schoolYearId);
-    if (sectionId) sp.set("sectionId", sectionId);
-    if (createdByUserId) sp.set("createdByUserId", createdByUserId);
-    sp.set("page", String(page));
-    return `/api/students/export-import-history-page?${sp.toString()}`;
+    return buildImportHistoryPageExportUrl({
+      archived: showArchived ? "1" : "",
+      q,
+      dateFrom,
+      dateTo,
+      schoolYearId,
+      sectionId,
+      createdByUserId,
+      page,
+    });
   }
 
   function buildPrintUrl() {
-    const sp = new URLSearchParams();
-    if (showArchived) sp.set("archived", "1");
-    if (q) sp.set("q", q);
-    if (dateFrom) sp.set("dateFrom", dateFrom);
-    if (dateTo) sp.set("dateTo", dateTo);
-    if (schoolYearId) sp.set("schoolYearId", schoolYearId);
-    if (sectionId) sp.set("sectionId", sectionId);
-    if (createdByUserId) sp.set("createdByUserId", createdByUserId);
-    sp.set("page", String(page));
-    return `/dashboard/admin/students/import-history/print?${sp.toString()}`;
+    return buildImportHistoryPrintUrl({
+      archived: showArchived ? "1" : "",
+      q,
+      dateFrom,
+      dateTo,
+      schoolYearId,
+      sectionId,
+      createdByUserId,
+      page,
+    });
   }
 
   return (

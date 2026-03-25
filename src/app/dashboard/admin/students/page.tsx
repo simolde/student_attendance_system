@@ -28,6 +28,14 @@ import { Download, TriangleAlert } from "lucide-react";
 import StudentsPageActions from "./students-page-actions";
 import { buildStudentsWhere } from "@/lib/student-filters";
 
+import {
+  buildPathWithQuery,
+  buildStudentsExportUrl,
+  buildStudentsPageExportUrl,
+  buildStudentsPageUrl,
+  buildStudentsPrintUrl,
+} from "@/lib/student-url-builders";
+
 const PAGE_SIZE = 10;
 
 export default async function AdminStudentsPage({
@@ -121,51 +129,51 @@ export default async function AdminStudentsPage({
   const withoutRfidCount = summaryRows.filter((student) => !student.rfidUid).length;
 
   function buildUrl(nextPage: number) {
-    const sp = new URLSearchParams();
-    if (q) sp.set("q", q);
-    if (sectionId) sp.set("sectionId", sectionId);
-    if (importBatchId) sp.set("importBatchId", importBatchId);
-    if (rfidStatus) sp.set("rfidStatus", rfidStatus);
-    sp.set("page", String(nextPage));
-    return `/dashboard/admin/students?${sp.toString()}`;
+    return buildStudentsPageUrl({
+      q,
+      sectionId,
+      importBatchId,
+      rfidStatus,
+      page: nextPage,
+    });
   }
 
   function buildExportUrl() {
-    const sp = new URLSearchParams();
-    if (q) sp.set("q", q);
-    if (sectionId) sp.set("sectionId", sectionId);
-    if (importBatchId) sp.set("importBatchId", importBatchId);
-    if (rfidStatus) sp.set("rfidStatus", rfidStatus);
-    return `/api/students/export-credentials?${sp.toString()}`;
+    return buildPathWithQuery("/api/students/export-credentials", {
+      q,
+      sectionId,
+      importBatchId,
+      rfidStatus,
+    });
   }
 
   function buildViewExportUrl() {
-    const sp = new URLSearchParams();
-    if (q) sp.set("q", q);
-    if (sectionId) sp.set("sectionId", sectionId);
-    if (importBatchId) sp.set("importBatchId", importBatchId);
-    if (rfidStatus) sp.set("rfidStatus", rfidStatus);
-    return `/api/students/export-students-view?${sp.toString()}`;
+    return buildStudentsExportUrl({
+      q,
+      sectionId,
+      importBatchId,
+      rfidStatus,
+    });
   }
 
   function buildPageExportUrl() {
-    const sp = new URLSearchParams();
-    if (q) sp.set("q", q);
-    if (sectionId) sp.set("sectionId", sectionId);
-    if (importBatchId) sp.set("importBatchId", importBatchId);
-    if (rfidStatus) sp.set("rfidStatus", rfidStatus);
-    sp.set("page", String(page));
-    return `/api/students/export-students-view-page?${sp.toString()}`;
+    return buildStudentsPageExportUrl({
+      q,
+      sectionId,
+      importBatchId,
+      rfidStatus,
+      page,
+    });
   }
 
   function buildPrintUrl() {
-    const sp = new URLSearchParams();
-    if (q) sp.set("q", q);
-    if (sectionId) sp.set("sectionId", sectionId);
-    if (importBatchId) sp.set("importBatchId", importBatchId);
-    if (rfidStatus) sp.set("rfidStatus", rfidStatus);
-    sp.set("page", String(page));
-    return `/dashboard/admin/students/print?${sp.toString()}`;
+    return buildStudentsPrintUrl({
+      q,
+      sectionId,
+      importBatchId,
+      rfidStatus,
+      page,
+    });
   }
 
   const formatName = (name: string) =>

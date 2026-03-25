@@ -83,11 +83,15 @@ export default function AttendanceRuleForm({
             className="h-11 w-full rounded-md border bg-background px-3 text-sm"
           >
             <option value="">None</option>
-            {sections.map((section) => (
-              <option key={section.id} value={section.id}>
-                {section.name} ({section.gradeLevel})
-              </option>
-            ))}
+            {sections
+              .slice()
+              .sort((a, b) => a.id.localeCompare(b.id))
+              .map((section) => (
+                <option key={section.id} value={section.id}>
+                  {section.name} ({section.gradeLevel})
+                </option>
+              )
+            )}
           </select>
         </div>
 

@@ -28,6 +28,7 @@ import { toggleImportBatchArchive } from "../actions";
 import CopyBatchIdButton from "@/components/copy-batch-id-button";
 import BatchDetailsActions from "./batch-details-actions";
 import { buildBatchStudentsWhere } from "@/lib/student-filters";
+import { buildBatchDetailsUrl, buildBatchExportUrl, buildBatchPageExportUrl, buildBatchPrintUrl } from "@/lib/student-url-builders";
 
 const PAGE_SIZE = 20;
 
@@ -152,50 +153,44 @@ export default async function StudentImportBatchDetailsPage({
   const withoutRfidCount = summaryRows.filter((student) => !student.rfidUid).length;
 
   function buildUrl(nextPage: number) {
-    const qs = new URLSearchParams();
-    qs.set("page", String(nextPage));
-    if (q) qs.set("q", q);
-    if (rfidStatus) qs.set("rfidStatus", rfidStatus);
-    if (sectionId) qs.set("sectionId", sectionId);
-    return `/dashboard/admin/students/import-history/${encodeURIComponent(
-      batchId
-    )}?${qs.toString()}`;
+    return buildBatchDetailsUrl(batchId, {
+      q,
+      rfidStatus,
+      sectionId,
+      page: nextPage,
+    });
   }
 
   function buildBaseUrl() {
-    return `/dashboard/admin/students/import-history/${encodeURIComponent(
-      batchId
-    )}`;
+    return buildBatchDetailsUrl(batchId, {});
   }
 
   function buildExportStudentsUrl() {
-    const qs = new URLSearchParams();
-    qs.set("batchId", batch.id);
-    if (q) qs.set("q", q);
-    if (rfidStatus) qs.set("rfidStatus", rfidStatus);
-    if (sectionId) qs.set("sectionId", sectionId);
-    return `/api/students/export-batch-students?${qs.toString()}`;
+    return buildBatchExportUrl({
+      batchId: batch.id,
+      q,
+      rfidStatus,
+      sectionId,
+    });
   }
 
   function buildExportStudentsPageUrl() {
-    const qs = new URLSearchParams();
-    qs.set("batchId", batch.id);
-    if (q) qs.set("q", q);
-    if (rfidStatus) qs.set("rfidStatus", rfidStatus);
-    if (sectionId) qs.set("sectionId", sectionId);
-    qs.set("page", String(page));
-    return `/api/students/export-batch-students-page?${qs.toString()}`;
+    return buildBatchPageExportUrl({
+      batchId: batch.id,
+      q,
+      rfidStatus,
+      sectionId,
+      page,
+    });
   }
 
   function buildPrintUrl() {
-    const qs = new URLSearchParams();
-    if (q) qs.set("q", q);
-    if (rfidStatus) qs.set("rfidStatus", rfidStatus);
-    if (sectionId) qs.set("sectionId", sectionId);
-    qs.set("page", String(page));
-    return `/dashboard/admin/students/import-history/${encodeURIComponent(
-      batch.id
-    )}/print?${qs.toString()}`;
+    return buildBatchPrintUrl(batch.id, {
+      q,
+      rfidStatus,
+      sectionId,
+      page,
+    });
   }
 
   return (
