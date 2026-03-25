@@ -230,17 +230,21 @@ export default async function AdminStudentsPage({
             </div>
           ) : (
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {sections.map((section) => (
-                <div
-                  key={section.id}
-                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-                >
-                  <p className="font-medium text-slate-900">{section.name}</p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {formatName(section.gradeLevel)}
-                  </p>
-                </div>
-              ))}
+              {sections
+                .slice()
+                .sort((a, b) => a.id.localeCompare(b.id))
+                .map((section) => (
+                  <div
+                    key={section.id}
+                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                  >
+                    <p className="font-medium text-slate-900">{section.name}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {formatName(section.gradeLevel)}
+                    </p>
+                  </div>
+                )
+              )}
             </div>
           )}
         </CardContent>

@@ -50,7 +50,7 @@ export default async function StudentImportBatchDetailsPage({
   searchParams,
 }: {
   params: Promise<{ batchId: string }>;
-  searchParams: Promise<{ page?: string; q?: string }>;
+  searchParams: Promise<{ page?: string; q?: string; rfidStatus?: string }>;
 }) {
   const session = await auth();
 
@@ -65,6 +65,7 @@ export default async function StudentImportBatchDetailsPage({
   const [{ batchId }, sp] = await Promise.all([params, searchParams]);
   const page = Math.max(Number(sp.page || "1"), 1);
   const q = sp.q?.trim() ?? "";
+  const rfidStatus = sp.rfidStatus?.trim() ?? "";
 
   const batch = await prisma.studentImportBatch.findUnique({
     where: { id: batchId },
@@ -87,19 +88,29 @@ export default async function StudentImportBatchDetailsPage({
     notFound();
   }
 
+  const rfidCondition =
+    rfidStatus === "WITH_RFID"
+      ? { NOT: { rfidUid: null as string | null } }
+      : rfidStatus === "WITHOUT_RFID"
+      ? { rfidUid: null as string | null }
+      : {};
+
   const studentWhere = {
-    importBatchId: batchId,
-    ...(q
-      ? {
-          OR: [
-            { studentNo: { contains: q, mode: "insensitive" as const } },
-            { rfidUid: { contains: q, mode: "insensitive" as const } },
-            { user: { name: { contains: q, mode: "insensitive" as const } } },
-            { user: { email: { contains: q, mode: "insensitive" as const } } },
-            { section: { name: { contains: q, mode: "insensitive" as const } } },
-          ],
-        }
-      : {}),
+    AND: [
+      { importBatchId: batchId },
+      rfidCondition,
+      q
+        ? {
+            OR: [
+              { studentNo: { contains: q, mode: "insensitive" as const } },
+              { rfidUid: { contains: q, mode: "insensitive" as const } },
+              { user: { name: { contains: q, mode: "insensitive" as const } } },
+              { user: { email: { contains: q, mode: "insensitive" as const } } },
+              { section: { name: { contains: q, mode: "insensitive" as const } } },
+            ],
+          }
+        : {},
+    ],
   };
 
   const [students, totalStudents, summaryRows] = await Promise.all([
@@ -136,6 +147,7 @@ export default async function StudentImportBatchDetailsPage({
     const qs = new URLSearchParams();
     qs.set("page", String(nextPage));
     if (q) qs.set("q", q);
+    if (rfidStatus) qs.set("rfidStatus", rfidStatus);
     return `/dashboard/admin/students/import-history/${encodeURIComponent(
       batchId
     )}?${qs.toString()}`;
@@ -151,6 +163,7 @@ export default async function StudentImportBatchDetailsPage({
     const qs = new URLSearchParams();
     qs.set("batchId", batch.id);
     if (q) qs.set("q", q);
+    if (rfidStatus) qs.set("rfidStatus", rfidStatus);
     return `/api/students/export-batch-students?${qs.toString()}`;
   }
 
@@ -316,7 +329,7 @@ export default async function StudentImportBatchDetailsPage({
           <TableToolbar>
             <form
               method="GET"
-              className="grid flex-1 gap-4 md:grid-cols-[1fr_auto_auto]"
+              className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_220px_auto]"
             >
               <div>
                 <label className="mb-2 block text-sm font-medium">Search</label>
@@ -325,6 +338,19 @@ export default async function StudentImportBatchDetailsPage({
                   defaultValue={q}
                   placeholder="Student no, name, email, section, or RFID"
                 />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">RFID Status</label>
+                <select
+                  name="rfidStatus"
+                  defaultValue={rfidStatus}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">All students</option>
+                  <option value="WITH_RFID">With RFID</option>
+                  <option value="WITHOUT_RFID">Without RFID</option>
+                </select>
               </div>
 
               <input type="hidden" name="page" value="1" />
@@ -361,10 +387,26 @@ export default async function StudentImportBatchDetailsPage({
             </div>
           </div>
 
-          {q ? (
+          {q || rfidStatus ? (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
-              Showing results for:
-              <span className="ml-2 font-medium">{q}</span>
+              {q ? (
+                <div>
+                  Search:
+                  <span className="ml-2 font-medium">{q}</span>
+                </div>
+              ) : null}
+              {rfidStatus ? (
+                <div className="mt-1">
+                  RFID Status:
+                  <span className="ml-2 font-medium">
+                    {rfidStatus === "WITH_RFID"
+                      ? "With RFID"
+                      : rfidStatus === "WITHOUT_RFID"
+                      ? "Without RFID"
+                      : rfidStatus}
+                  </span>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
