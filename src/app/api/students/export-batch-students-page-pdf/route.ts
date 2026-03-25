@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 
 function formatGradeLevel(value: string | null | undefined) {
   if (!value) return "-";
@@ -24,26 +24,32 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
+  const batchId = searchParams.get("batchId")?.trim();
   const q = searchParams.get("q")?.trim() ?? "";
-  const sectionId = searchParams.get("sectionId")?.trim() ?? "";
-  const importBatchId = searchParams.get("importBatchId")?.trim() ?? "";
   const rfidStatus = searchParams.get("rfidStatus")?.trim() ?? "";
+  const sectionId = searchParams.get("sectionId")?.trim() ?? "";
   const page = Math.max(Number(searchParams.get("page") || "1"), 1);
 
-  const batch = importBatchId
-    ? await prisma.studentImportBatch.findUnique({
-        where: { id: importBatchId },
+  if (!batchId) {
+    return new NextResponse("Missing batchId", { status: 400 });
+  }
+
+  const batch = await prisma.studentImportBatch.findUnique({
+    where: { id: batchId },
+    select: {
+      id: true,
+      isArchived: true,
+      schoolYear: {
         select: {
-          id: true,
-          isArchived: true,
-          schoolYear: {
-            select: {
-              name: true,
-            },
-          },
+          name: true,
         },
-      })
-    : null;
+      },
+    },
+  });
+
+  if (!batch) {
+    return new NextResponse("Import batch not found", { status: 404 });
+  }
 
   const rfidCondition =
     rfidStatus === "WITH_RFID"
@@ -54,8 +60,8 @@ export async function GET(req: Request) {
 
   const where = {
     AND: [
+      { importBatchId: batchId },
       sectionId ? { sectionId } : {},
-      importBatchId ? { importBatchId } : {},
       rfidCondition,
       q
         ? {
@@ -78,7 +84,7 @@ export async function GET(req: Request) {
       section: true,
     },
     orderBy: {
-      createdAt: "desc",
+      studentNo: "asc",
     },
     skip: (page - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
@@ -97,25 +103,21 @@ export async function GET(req: Request) {
   });
 
   doc.setFontSize(16);
-  doc.text("Students Directory - Current Page", 14, 14);
+  doc.text("Batch Students - Current Page", 14, 14);
 
   doc.setFontSize(10);
-  doc.text(`Page: ${page}`, 14, 21);
+  doc.text(`Batch ID: ${batch.id}`, 14, 21);
+  doc.text(`Page: ${page}`, 14, 27);
+  doc.text(
+    `Batch Status: ${batch.isArchived ? "ARCHIVED" : "ACTIVE"} | School Year: ${batch.schoolYear?.name ?? "-"}`,
+    14,
+    33
+  );
 
-  let metaY = 27;
-
-  if (importBatchId) {
-    doc.text(`Batch: ${importBatchId}`, 14, metaY);
-    metaY += 6;
-  }
+  let metaY = 39;
 
   if (q) {
     doc.text(`Search: ${q}`, 14, metaY);
-    metaY += 6;
-  }
-
-  if (sectionId) {
-    doc.text(`Section Filter ID: ${sectionId}`, 14, metaY);
     metaY += 6;
   }
 
@@ -124,12 +126,8 @@ export async function GET(req: Request) {
     metaY += 6;
   }
 
-  if (batch) {
-    doc.text(
-      `Batch Status: ${batch.isArchived ? "ARCHIVED" : "ACTIVE"} | School Year: ${batch.schoolYear?.name ?? "-"}`,
-      14,
-      metaY
-    );
+  if (sectionId) {
+    doc.text(`Section Filter ID: ${sectionId}`, 14, metaY);
     metaY += 6;
   }
 
@@ -179,7 +177,7 @@ export async function GET(req: Request) {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="students_view_page_${page}.pdf"`,
+      "Content-Disposition": `attachment; filename="batch_students_page_${page}.pdf"`,
     },
   });
 }

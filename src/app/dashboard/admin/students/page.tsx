@@ -175,6 +175,16 @@ export default async function AdminStudentsPage({
     return `/api/students/export-students-view-page?${sp.toString()}`;
   }
 
+  function buildPagePdfUrl() {
+    const sp = new URLSearchParams();
+    if (q) sp.set("q", q);
+    if (sectionId) sp.set("sectionId", sectionId);
+    if (importBatchId) sp.set("importBatchId", importBatchId);
+    if (rfidStatus) sp.set("rfidStatus", rfidStatus);
+    sp.set("page", String(page));
+    return `/api/students/export-students-view-page-pdf?${sp.toString()}`;
+  }
+
   const formatName = (name: string) =>
     name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -190,6 +200,13 @@ export default async function AdminStudentsPage({
         ]}
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <a href={buildPagePdfUrl()}>
+                <Download className="mr-2 h-4 w-4" />
+                PDF This Page
+              </a>
+            </Button>
+
             <Button asChild variant="outline">
               <a href={buildPageExportUrl()}>
                 <Download className="mr-2 h-4 w-4" />
