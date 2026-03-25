@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/table";
 import { toggleImportBatchArchive } from "../actions";
 import CopyBatchIdButton from "@/components/copy-batch-id-button";
+import BatchDetailsActions from "./batch-details-actions";
 
 const PAGE_SIZE = 20;
 
@@ -233,50 +234,13 @@ export default async function StudentImportBatchDetailsPage({
         actions={
           <div className="flex flex-wrap gap-2">
             <CopyBatchIdButton value={batch.id} />
-            <Button asChild variant="outline">
-              <a href={buildPrintUrl()} target="_blank" rel="noreferrer">
-                Print View
-              </a>
-            </Button>
-            <Button asChild variant="outline">
-              <a href={buildExportStudentsPageUrl()}>
-                <Download className="mr-2 h-4 w-4" />
-                Export This Page
-              </a>
-            </Button>
-            <Button asChild variant="outline">
-              <a href={buildExportStudentsUrl()}>
-                <Download className="mr-2 h-4 w-4" />
-                Export All Filtered
-              </a>
-            </Button>
-            <Button asChild variant="outline">
-              <a
-                href={`/api/students/export-batch?importBatchId=${encodeURIComponent(
-                  batch.id
-                )}`}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export Batch
-              </a>
-            </Button>
-
-            <Button asChild variant="outline">
-              <Link
-                href={`/dashboard/admin/students?importBatchId=${encodeURIComponent(
-                  batch.id
-                )}&page=1`}
-              >
-                View in Students Page
-              </Link>
-            </Button>
-
-            <form action={toggleImportBatchArchive}>
-              <input type="hidden" name="batchId" value={batch.id} />
-              <Button type="submit" variant="outline">
-                {batch.isArchived ? "Unarchive" : "Archive"}
-              </Button>
-            </form>
+            <BatchDetailsActions
+              batchId={batch.id}
+              isArchived={batch.isArchived}
+              exportThisPageHref={buildExportStudentsPageUrl()}
+              exportAllFilteredHref={buildExportStudentsUrl()}
+              printViewHref={buildPrintUrl()}
+            />
           </div>
         }
       />

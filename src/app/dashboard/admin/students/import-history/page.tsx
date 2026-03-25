@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { toggleImportBatchArchive } from "./actions";
 import CopyBatchIdButton from "@/components/copy-batch-id-button";
 import ExportActionsMenu from "@/components/export-actions-menu";
-import BatchCardActions from "./batch-card-cations";
+import BatchCardActions from "./batch-card-actions";
 
 const PAGE_SIZE = 10;
 
