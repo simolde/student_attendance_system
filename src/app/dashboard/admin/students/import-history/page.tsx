@@ -15,9 +15,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Download } from "lucide-react";
 import { toggleImportBatchArchive } from "./actions";
 import CopyBatchIdButton from "@/components/copy-batch-id-button";
+import ExportActionsMenu from "@/components/export-actions-menu";
 
 const PAGE_SIZE = 10;
 
@@ -319,25 +319,13 @@ export default async function StudentImportHistoryPage({
         ]}
         actions={
           <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline">
-              <a href={buildPrintUrl()} target="_blank" rel="noreferrer">
-                Print View
-              </a>
-            </Button>
-
-            <Button asChild variant="outline">
-              <a href={buildPageExportUrl()}>
-                <Download className="mr-2 h-4 w-4" />
-                Export This Page
-              </a>
-            </Button>
-
-            <Button asChild variant="outline">
-              <a href={buildExportUrl()}>
-                <Download className="mr-2 h-4 w-4" />
-                Export All Filtered
-              </a>
-            </Button>
+            <ExportActionsMenu
+              items={[
+                { label: "Print View", href: buildPrintUrl(), icon: "print", newTab: true },
+                { label: "Export This Page", href: buildPageExportUrl(), icon: "csv" },
+                { label: "Export All Filtered", href: buildExportUrl(), icon: "csv" },
+              ]}
+            />
 
             <Button asChild variant={showArchived ? "outline" : "default"}>
               <Link href={buildBaseUrl(false)}>
@@ -644,7 +632,6 @@ export default async function StudentImportHistoryPage({
                             batch.id
                           )}`}
                         >
-                          <Download className="mr-2 h-4 w-4" />
                           Export Batch
                         </a>
                       </Button>
@@ -679,11 +666,7 @@ export default async function StudentImportHistoryPage({
                   Page {page} of {totalPages}
                 </span>
 
-                <Button
-                  variant="outline"
-                  asChild
-                  disabled={page >= totalPages}
-                >
+                <Button variant="outline" asChild disabled={page >= totalPages}>
                   <Link href={buildUrl(page + 1)}>Next</Link>
                 </Button>
               </div>
