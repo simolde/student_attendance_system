@@ -50,39 +50,47 @@ export async function GET(req: Request) {
   const dateFrom = searchParams.get("dateFrom")?.trim() ?? "";
   const dateTo = searchParams.get("dateTo")?.trim() ?? "";
   const schoolYearId = searchParams.get("schoolYearId")?.trim() ?? "";
+  const sectionId = searchParams.get("sectionId")?.trim() ?? "";
 
   const createdAtRange = buildDateRange(dateFrom, dateTo);
 
-  const where = {
-    ...(showArchived ? {} : { isArchived: false }),
-    ...(schoolYearId ? { schoolYearId } : {}),
-    ...(createdAtRange ? { createdAt: createdAtRange } : {}),
-    ...(q
-      ? {
-          OR: [
-            { id: { contains: q, mode: "insensitive" as const } },
-            {
-              schoolYear: {
-                name: { contains: q, mode: "insensitive" as const },
-              },
-            },
-            {
-              createdByUser: {
-                name: { contains: q, mode: "insensitive" as const },
-              },
-            },
-            {
-              createdByUser: {
-                email: { contains: q, mode: "insensitive" as const },
-              },
-            },
-          ],
-        }
-      : {}),
-  };
-
   const batches = await prisma.studentImportBatch.findMany({
-    where,
+    where: {
+      ...(showArchived ? {} : { isArchived: false }),
+      ...(schoolYearId ? { schoolYearId } : {}),
+      ...(createdAtRange ? { createdAt: createdAtRange } : {}),
+      ...(sectionId
+        ? {
+            students: {
+              some: {
+                sectionId,
+              },
+            },
+          }
+        : {}),
+      ...(q
+        ? {
+            OR: [
+              { id: { contains: q, mode: "insensitive" as const } },
+              {
+                schoolYear: {
+                  name: { contains: q, mode: "insensitive" as const },
+                },
+              },
+              {
+                createdByUser: {
+                  name: { contains: q, mode: "insensitive" as const },
+                },
+              },
+              {
+                createdByUser: {
+                  email: { contains: q, mode: "insensitive" as const },
+                },
+              },
+            ],
+          }
+        : {}),
+    },
     include: {
       createdByUser: {
         select: {

@@ -56,6 +56,7 @@ export default async function StudentImportHistoryPage({
     dateFrom?: string;
     dateTo?: string;
     schoolYearId?: string;
+    sectionId?: string;
   }>;
 }) {
   const session = await auth();
@@ -74,39 +75,12 @@ export default async function StudentImportHistoryPage({
   const dateFrom = params.dateFrom?.trim() ?? "";
   const dateTo = params.dateTo?.trim() ?? "";
   const schoolYearId = params.schoolYearId?.trim() ?? "";
+  const sectionId = params.sectionId?.trim() ?? "";
   const page = Math.max(Number(params.page || "1"), 1);
 
   const createdAtRange = buildDateRange(dateFrom, dateTo);
 
-  const where = {
-    ...(showArchived ? {} : { isArchived: false }),
-    ...(schoolYearId ? { schoolYearId } : {}),
-    ...(createdAtRange ? { createdAt: createdAtRange } : {}),
-    ...(q
-      ? {
-          OR: [
-            { id: { contains: q, mode: "insensitive" as const } },
-            {
-              schoolYear: {
-                name: { contains: q, mode: "insensitive" as const },
-              },
-            },
-            {
-              createdByUser: {
-                name: { contains: q, mode: "insensitive" as const },
-              },
-            },
-            {
-              createdByUser: {
-                email: { contains: q, mode: "insensitive" as const },
-              },
-            },
-          ],
-        }
-      : {}),
-  };
-
-  const [schoolYears, batches, totalBatches, allCounts, summaryRows] =
+  const [schoolYears, sections, batches, totalBatches, allCounts, summaryRows] =
     await Promise.all([
       prisma.schoolYear.findMany({
         orderBy: { createdAt: "desc" },
@@ -115,8 +89,51 @@ export default async function StudentImportHistoryPage({
           name: true,
         },
       }),
+      prisma.section.findMany({
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          gradeLevel: true,
+        },
+      }),
       prisma.studentImportBatch.findMany({
-        where,
+        where: {
+          ...(showArchived ? {} : { isArchived: false }),
+          ...(schoolYearId ? { schoolYearId } : {}),
+          ...(createdAtRange ? { createdAt: createdAtRange } : {}),
+          ...(sectionId
+            ? {
+                students: {
+                  some: {
+                    sectionId,
+                  },
+                },
+              }
+            : {}),
+          ...(q
+            ? {
+                OR: [
+                  { id: { contains: q, mode: "insensitive" as const } },
+                  {
+                    schoolYear: {
+                      name: { contains: q, mode: "insensitive" as const },
+                    },
+                  },
+                  {
+                    createdByUser: {
+                      name: { contains: q, mode: "insensitive" as const },
+                    },
+                  },
+                  {
+                    createdByUser: {
+                      email: { contains: q, mode: "insensitive" as const },
+                    },
+                  },
+                ],
+              }
+            : {}),
+        },
         include: {
           createdByUser: {
             select: {
@@ -141,7 +158,44 @@ export default async function StudentImportHistoryPage({
         skip: (page - 1) * PAGE_SIZE,
         take: PAGE_SIZE,
       }),
-      prisma.studentImportBatch.count({ where }),
+      prisma.studentImportBatch.count({
+        where: {
+          ...(showArchived ? {} : { isArchived: false }),
+          ...(schoolYearId ? { schoolYearId } : {}),
+          ...(createdAtRange ? { createdAt: createdAtRange } : {}),
+          ...(sectionId
+            ? {
+                students: {
+                  some: {
+                    sectionId,
+                  },
+                },
+              }
+            : {}),
+          ...(q
+            ? {
+                OR: [
+                  { id: { contains: q, mode: "insensitive" as const } },
+                  {
+                    schoolYear: {
+                      name: { contains: q, mode: "insensitive" as const },
+                    },
+                  },
+                  {
+                    createdByUser: {
+                      name: { contains: q, mode: "insensitive" as const },
+                    },
+                  },
+                  {
+                    createdByUser: {
+                      email: { contains: q, mode: "insensitive" as const },
+                    },
+                  },
+                ],
+              }
+            : {}),
+        },
+      }),
       prisma.studentImportBatch.groupBy({
         by: ["isArchived"],
         _count: {
@@ -149,7 +203,42 @@ export default async function StudentImportHistoryPage({
         },
       }),
       prisma.studentImportBatch.findMany({
-        where,
+        where: {
+          ...(showArchived ? {} : { isArchived: false }),
+          ...(schoolYearId ? { schoolYearId } : {}),
+          ...(createdAtRange ? { createdAt: createdAtRange } : {}),
+          ...(sectionId
+            ? {
+                students: {
+                  some: {
+                    sectionId,
+                  },
+                },
+              }
+            : {}),
+          ...(q
+            ? {
+                OR: [
+                  { id: { contains: q, mode: "insensitive" as const } },
+                  {
+                    schoolYear: {
+                      name: { contains: q, mode: "insensitive" as const },
+                    },
+                  },
+                  {
+                    createdByUser: {
+                      name: { contains: q, mode: "insensitive" as const },
+                    },
+                  },
+                  {
+                    createdByUser: {
+                      email: { contains: q, mode: "insensitive" as const },
+                    },
+                  },
+                ],
+              }
+            : {}),
+        },
         select: {
           createdStudents: true,
           updatedStudents: true,
@@ -195,6 +284,7 @@ export default async function StudentImportHistoryPage({
     if (dateFrom) sp.set("dateFrom", dateFrom);
     if (dateTo) sp.set("dateTo", dateTo);
     if (schoolYearId) sp.set("schoolYearId", schoolYearId);
+    if (sectionId) sp.set("sectionId", sectionId);
     sp.set("page", String(nextPage));
     return `/dashboard/admin/students/import-history?${sp.toString()}`;
   }
@@ -206,6 +296,7 @@ export default async function StudentImportHistoryPage({
     if (dateFrom) sp.set("dateFrom", dateFrom);
     if (dateTo) sp.set("dateTo", dateTo);
     if (schoolYearId) sp.set("schoolYearId", schoolYearId);
+    if (sectionId) sp.set("sectionId", sectionId);
     return `/dashboard/admin/students/import-history${
       sp.toString() ? `?${sp.toString()}` : ""
     }`;
@@ -218,6 +309,7 @@ export default async function StudentImportHistoryPage({
     if (dateFrom) sp.set("dateFrom", dateFrom);
     if (dateTo) sp.set("dateTo", dateTo);
     if (schoolYearId) sp.set("schoolYearId", schoolYearId);
+    if (sectionId) sp.set("sectionId", sectionId);
     return `/api/students/export-import-history${
       sp.toString() ? `?${sp.toString()}` : ""
     }`;
@@ -283,7 +375,7 @@ export default async function StudentImportHistoryPage({
           <TableToolbar>
             <form
               method="GET"
-              className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_180px_220px_auto]"
+              className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_180px_220px_220px_auto]"
             >
               <div>
                 <label className="mb-2 block text-sm font-medium">Search</label>
@@ -315,6 +407,22 @@ export default async function StudentImportHistoryPage({
                   {schoolYears.map((schoolYear) => (
                     <option key={schoolYear.id} value={schoolYear.id}>
                       {schoolYear.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">Section</label>
+                <select
+                  name="sectionId"
+                  defaultValue={sectionId}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">All sections</option>
+                  {sections.map((section) => (
+                    <option key={section.id} value={section.id}>
+                      {section.name}
                     </option>
                   ))}
                 </select>
@@ -404,7 +512,7 @@ export default async function StudentImportHistoryPage({
             </div>
           </div>
 
-          {q || dateFrom || dateTo || schoolYearId ? (
+          {q || dateFrom || dateTo || schoolYearId || sectionId ? (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
               {q ? (
                 <div>
@@ -425,6 +533,14 @@ export default async function StudentImportHistoryPage({
                   School year:
                   <span className="ml-2 font-medium">
                     {schoolYears.find((s) => s.id === schoolYearId)?.name ?? schoolYearId}
+                  </span>
+                </div>
+              ) : null}
+              {sectionId ? (
+                <div className="mt-1">
+                  Section:
+                  <span className="ml-2 font-medium">
+                    {sections.find((s) => s.id === sectionId)?.name ?? sectionId}
                   </span>
                 </div>
               ) : null}
