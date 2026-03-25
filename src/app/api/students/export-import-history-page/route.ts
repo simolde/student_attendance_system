@@ -1,0 +1,180 @@
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { hasRole, ROLES } from "@/lib/rbac";
+import { NextResponse } from "next/server";
+
+const PAGE_SIZE = 10;
+
+function csvEscape(value: string) {
+  const escaped = value.replace(/"/g, '""');
+  return `"${escaped}"`;
+}
+
+function formatManilaDateTime(date: Date) {
+  return new Intl.DateTimeFormat("en-PH", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function buildDateRange(dateFrom: string, dateTo: string) {
+  const createdAt: { gte?: Date; lte?: Date } = {};
+
+  if (dateFrom) {
+    createdAt.gte = new Date(`${dateFrom}T00:00:00.000+08:00`);
+  }
+
+  if (dateTo) {
+    createdAt.lte = new Date(`${dateTo}T23:59:59.999+08:00`);
+  }
+
+  return Object.keys(createdAt).length > 0 ? createdAt : undefined;
+}
+
+export async function GET(req: Request) {
+  const session = await auth();
+
+  if (!session?.user) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  if (!hasRole(session.user.role, [ROLES.SUPER_ADMIN, ROLES.ADMIN])) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const showArchived = searchParams.get("archived") === "1";
+  const q = searchParams.get("q")?.trim() ?? "";
+  const dateFrom = searchParams.get("dateFrom")?.trim() ?? "";
+  const dateTo = searchParams.get("dateTo")?.trim() ?? "";
+  const schoolYearId = searchParams.get("schoolYearId")?.trim() ?? "";
+  const sectionId = searchParams.get("sectionId")?.trim() ?? "";
+  const createdByUserId = searchParams.get("createdByUserId")?.trim() ?? "";
+  const page = Math.max(Number(searchParams.get("page") || "1"), 1);
+
+  const createdAtRange = buildDateRange(dateFrom, dateTo);
+
+  const where = {
+    ...(showArchived ? {} : { isArchived: false }),
+    ...(schoolYearId ? { schoolYearId } : {}),
+    ...(createdByUserId ? { createdByUserId } : {}),
+    ...(createdAtRange ? { createdAt: createdAtRange } : {}),
+    ...(sectionId
+      ? {
+          students: {
+            some: {
+              sectionId,
+            },
+          },
+        }
+      : {}),
+    ...(q
+      ? {
+          OR: [
+            { id: { contains: q, mode: "insensitive" as const } },
+            {
+              schoolYear: {
+                name: { contains: q, mode: "insensitive" as const },
+              },
+            },
+            {
+              createdByUser: {
+                name: { contains: q, mode: "insensitive" as const },
+              },
+            },
+            {
+              createdByUser: {
+                email: { contains: q, mode: "insensitive" as const },
+              },
+            },
+          ],
+        }
+      : {}),
+  };
+
+  const batches = await prisma.studentImportBatch.findMany({
+    where,
+    include: {
+      createdByUser: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+      schoolYear: {
+        select: {
+          name: true,
+        },
+      },
+      _count: {
+        select: {
+          students: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+  });
+
+  if (batches.length === 0) {
+    return new NextResponse("No import history found for this page", {
+      status: 404,
+    });
+  }
+
+  const header = [
+    "batch_id",
+    "status",
+    "school_year",
+    "imported_by",
+    "imported_by_email",
+    "imported_at",
+    "student_count",
+    "total_rows",
+    "created_users",
+    "created_students",
+    "created_enrollments",
+    "updated_users",
+    "updated_students",
+    "updated_enrollments",
+    "skipped",
+  ];
+
+  const rows = batches.map((batch) => [
+    batch.id,
+    batch.isArchived ? "ARCHIVED" : "ACTIVE",
+    batch.schoolYear?.name ?? "",
+    batch.createdByUser?.name ?? "",
+    batch.createdByUser?.email ?? "",
+    formatManilaDateTime(batch.createdAt),
+    String(batch._count.students),
+    String(batch.totalRows),
+    String(batch.createdUsers),
+    String(batch.createdStudents),
+    String(batch.createdEnrollments),
+    String(batch.updatedUsers),
+    String(batch.updatedStudents),
+    String(batch.updatedEnrollments),
+    String(batch.skipped),
+  ]);
+
+  const csv = [
+    header.map(csvEscape).join(","),
+    ...rows.map((row) => row.map((cell) => csvEscape(cell)).join(",")),
+  ].join("\n");
+
+  return new NextResponse(csv, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="student_import_history_page_${page}.csv"`,
+    },
+  });
+}
