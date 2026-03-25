@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, TriangleAlert } from "lucide-react";
+import StudentsPageActions from "./students-page-actions";
 
 const PAGE_SIZE = 10;
 
@@ -200,41 +201,13 @@ export default async function AdminStudentsPage({
         ]}
         actions={
           <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline">
-              <a href={buildPrintUrl()} target="_blank" rel="noreferrer">
-                Print View
-              </a>
-            </Button>
-
-            <Button asChild variant="outline">
-              <a href={buildPageExportUrl()}>
-                <Download className="mr-2 h-4 w-4" />
-                Export This Page
-              </a>
-            </Button>
-
-            {importBatchId ? (
-              <Button asChild variant="outline">
-                <a href={buildViewExportUrl()}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Export All Filtered
-                </a>
-              </Button>
-            ) : null}
-
-            {isArchivedBatchView ? (
-              <Button type="button" variant="outline" disabled>
-                <Download className="mr-2 h-4 w-4" />
-                Export Credentials Disabled
-              </Button>
-            ) : (
-              <Button asChild variant="outline">
-                <a href={buildExportUrl()}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Export Credentials
-                </a>
-              </Button>
-            )}
+            <StudentsPageActions
+              printViewHref={buildPrintUrl()}
+              exportThisPageHref={buildPageExportUrl()}
+              exportAllFilteredHref={importBatchId ? buildViewExportUrl() : undefined}
+              exportCredentialsHref={buildExportUrl()}
+              disableExportCredentials={isArchivedBatchView}
+            />
           </div>
         }
       />
