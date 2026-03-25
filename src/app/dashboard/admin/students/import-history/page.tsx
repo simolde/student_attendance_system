@@ -57,6 +57,7 @@ export default async function StudentImportHistoryPage({
     dateTo?: string;
     schoolYearId?: string;
     sectionId?: string;
+    createdByUserId?: string;
   }>;
 }) {
   const session = await auth();
@@ -76,181 +77,135 @@ export default async function StudentImportHistoryPage({
   const dateTo = params.dateTo?.trim() ?? "";
   const schoolYearId = params.schoolYearId?.trim() ?? "";
   const sectionId = params.sectionId?.trim() ?? "";
+  const createdByUserId = params.createdByUserId?.trim() ?? "";
   const page = Math.max(Number(params.page || "1"), 1);
 
   const createdAtRange = buildDateRange(dateFrom, dateTo);
 
-  const [schoolYears, sections, batches, totalBatches, allCounts, summaryRows] =
-    await Promise.all([
-      prisma.schoolYear.findMany({
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          name: true,
-        },
-      }),
-      prisma.section.findMany({
-        orderBy: { name: "asc" },
-        select: {
-          id: true,
-          name: true,
-          gradeLevel: true,
-        },
-      }),
-      prisma.studentImportBatch.findMany({
-        where: {
-          ...(showArchived ? {} : { isArchived: false }),
-          ...(schoolYearId ? { schoolYearId } : {}),
-          ...(createdAtRange ? { createdAt: createdAtRange } : {}),
-          ...(sectionId
-            ? {
-                students: {
-                  some: {
-                    sectionId,
-                  },
-                },
-              }
-            : {}),
-          ...(q
-            ? {
-                OR: [
-                  { id: { contains: q, mode: "insensitive" as const } },
-                  {
-                    schoolYear: {
-                      name: { contains: q, mode: "insensitive" as const },
-                    },
-                  },
-                  {
-                    createdByUser: {
-                      name: { contains: q, mode: "insensitive" as const },
-                    },
-                  },
-                  {
-                    createdByUser: {
-                      email: { contains: q, mode: "insensitive" as const },
-                    },
-                  },
-                ],
-              }
-            : {}),
-        },
-        include: {
-          createdByUser: {
-            select: {
-              name: true,
-              email: true,
+  const baseWhere = {
+    ...(showArchived ? {} : { isArchived: false }),
+    ...(schoolYearId ? { schoolYearId } : {}),
+    ...(createdByUserId ? { createdByUserId } : {}),
+    ...(createdAtRange ? { createdAt: createdAtRange } : {}),
+    ...(sectionId
+      ? {
+          students: {
+            some: {
+              sectionId,
             },
           },
-          schoolYear: {
-            select: {
-              name: true,
+        }
+      : {}),
+    ...(q
+      ? {
+          OR: [
+            { id: { contains: q, mode: "insensitive" as const } },
+            {
+              schoolYear: {
+                name: { contains: q, mode: "insensitive" as const },
+              },
             },
-          },
-          _count: {
-            select: {
-              students: true,
+            {
+              createdByUser: {
+                name: { contains: q, mode: "insensitive" as const },
+              },
             },
+            {
+              createdByUser: {
+                email: { contains: q, mode: "insensitive" as const },
+              },
+            },
+          ],
+        }
+      : {}),
+  };
+
+  const [
+    schoolYears,
+    sections,
+    importers,
+    batches,
+    totalBatches,
+    allCounts,
+    summaryRows,
+  ] = await Promise.all([
+    prisma.schoolYear.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+      },
+    }),
+    prisma.section.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        gradeLevel: true,
+      },
+    }),
+    prisma.user.findMany({
+      where: {
+        studentImportBatches: {
+          some: {},
+        },
+      },
+      orderBy: [{ name: "asc" }, { email: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    }),
+    prisma.studentImportBatch.findMany({
+      where: baseWhere,
+      include: {
+        createdByUser: {
+          select: {
+            name: true,
+            email: true,
           },
         },
-        orderBy: {
-          createdAt: "desc",
+        schoolYear: {
+          select: {
+            name: true,
+          },
         },
-        skip: (page - 1) * PAGE_SIZE,
-        take: PAGE_SIZE,
-      }),
-      prisma.studentImportBatch.count({
-        where: {
-          ...(showArchived ? {} : { isArchived: false }),
-          ...(schoolYearId ? { schoolYearId } : {}),
-          ...(createdAtRange ? { createdAt: createdAtRange } : {}),
-          ...(sectionId
-            ? {
-                students: {
-                  some: {
-                    sectionId,
-                  },
-                },
-              }
-            : {}),
-          ...(q
-            ? {
-                OR: [
-                  { id: { contains: q, mode: "insensitive" as const } },
-                  {
-                    schoolYear: {
-                      name: { contains: q, mode: "insensitive" as const },
-                    },
-                  },
-                  {
-                    createdByUser: {
-                      name: { contains: q, mode: "insensitive" as const },
-                    },
-                  },
-                  {
-                    createdByUser: {
-                      email: { contains: q, mode: "insensitive" as const },
-                    },
-                  },
-                ],
-              }
-            : {}),
-        },
-      }),
-      prisma.studentImportBatch.groupBy({
-        by: ["isArchived"],
         _count: {
-          _all: true,
-        },
-      }),
-      prisma.studentImportBatch.findMany({
-        where: {
-          ...(showArchived ? {} : { isArchived: false }),
-          ...(schoolYearId ? { schoolYearId } : {}),
-          ...(createdAtRange ? { createdAt: createdAtRange } : {}),
-          ...(sectionId
-            ? {
-                students: {
-                  some: {
-                    sectionId,
-                  },
-                },
-              }
-            : {}),
-          ...(q
-            ? {
-                OR: [
-                  { id: { contains: q, mode: "insensitive" as const } },
-                  {
-                    schoolYear: {
-                      name: { contains: q, mode: "insensitive" as const },
-                    },
-                  },
-                  {
-                    createdByUser: {
-                      name: { contains: q, mode: "insensitive" as const },
-                    },
-                  },
-                  {
-                    createdByUser: {
-                      email: { contains: q, mode: "insensitive" as const },
-                    },
-                  },
-                ],
-              }
-            : {}),
-        },
-        select: {
-          createdStudents: true,
-          updatedStudents: true,
-          skipped: true,
-          _count: {
-            select: {
-              students: true,
-            },
+          select: {
+            students: true,
           },
         },
-      }),
-    ]);
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.studentImportBatch.count({
+      where: baseWhere,
+    }),
+    prisma.studentImportBatch.groupBy({
+      by: ["isArchived"],
+      _count: {
+        _all: true,
+      },
+    }),
+    prisma.studentImportBatch.findMany({
+      where: baseWhere,
+      select: {
+        createdStudents: true,
+        updatedStudents: true,
+        skipped: true,
+        _count: {
+          select: {
+            students: true,
+          },
+        },
+      },
+    }),
+  ]);
 
   const totalPages = Math.max(Math.ceil(totalBatches / PAGE_SIZE), 1);
 
@@ -285,6 +240,7 @@ export default async function StudentImportHistoryPage({
     if (dateTo) sp.set("dateTo", dateTo);
     if (schoolYearId) sp.set("schoolYearId", schoolYearId);
     if (sectionId) sp.set("sectionId", sectionId);
+    if (createdByUserId) sp.set("createdByUserId", createdByUserId);
     sp.set("page", String(nextPage));
     return `/dashboard/admin/students/import-history?${sp.toString()}`;
   }
@@ -297,6 +253,7 @@ export default async function StudentImportHistoryPage({
     if (dateTo) sp.set("dateTo", dateTo);
     if (schoolYearId) sp.set("schoolYearId", schoolYearId);
     if (sectionId) sp.set("sectionId", sectionId);
+    if (createdByUserId) sp.set("createdByUserId", createdByUserId);
     return `/dashboard/admin/students/import-history${
       sp.toString() ? `?${sp.toString()}` : ""
     }`;
@@ -310,6 +267,7 @@ export default async function StudentImportHistoryPage({
     if (dateTo) sp.set("dateTo", dateTo);
     if (schoolYearId) sp.set("schoolYearId", schoolYearId);
     if (sectionId) sp.set("sectionId", sectionId);
+    if (createdByUserId) sp.set("createdByUserId", createdByUserId);
     return `/api/students/export-import-history${
       sp.toString() ? `?${sp.toString()}` : ""
     }`;
@@ -375,7 +333,7 @@ export default async function StudentImportHistoryPage({
           <TableToolbar>
             <form
               method="GET"
-              className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_180px_220px_220px_auto]"
+              className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_180px_220px_220px_220px_auto]"
             >
               <div>
                 <label className="mb-2 block text-sm font-medium">Search</label>
@@ -423,6 +381,24 @@ export default async function StudentImportHistoryPage({
                   {sections.map((section) => (
                     <option key={section.id} value={section.id}>
                       {section.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">Created By</label>
+                <select
+                  name="createdByUserId"
+                  defaultValue={createdByUserId}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">All importers</option>
+                  {importers.map((importer) => (
+                    <option key={importer.id} value={importer.id}>
+                      {importer.name
+                        ? `${importer.name} (${importer.email})`
+                        : importer.email}
                     </option>
                   ))}
                 </select>
@@ -512,7 +488,7 @@ export default async function StudentImportHistoryPage({
             </div>
           </div>
 
-          {q || dateFrom || dateTo || schoolYearId || sectionId ? (
+          {q || dateFrom || dateTo || schoolYearId || sectionId || createdByUserId ? (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
               {q ? (
                 <div>
@@ -541,6 +517,18 @@ export default async function StudentImportHistoryPage({
                   Section:
                   <span className="ml-2 font-medium">
                     {sections.find((s) => s.id === sectionId)?.name ?? sectionId}
+                  </span>
+                </div>
+              ) : null}
+              {createdByUserId ? (
+                <div className="mt-1">
+                  Created by:
+                  <span className="ml-2 font-medium">
+                    {importers.find((u) => u.id === createdByUserId)?.name
+                      ? `${importers.find((u) => u.id === createdByUserId)?.name} (${
+                          importers.find((u) => u.id === createdByUserId)?.email
+                        })`
+                      : importers.find((u) => u.id === createdByUserId)?.email ?? createdByUserId}
                   </span>
                 </div>
               ) : null}

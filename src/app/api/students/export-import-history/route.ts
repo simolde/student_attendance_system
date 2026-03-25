@@ -51,6 +51,7 @@ export async function GET(req: Request) {
   const dateTo = searchParams.get("dateTo")?.trim() ?? "";
   const schoolYearId = searchParams.get("schoolYearId")?.trim() ?? "";
   const sectionId = searchParams.get("sectionId")?.trim() ?? "";
+  const createdByUserId = searchParams.get("createdByUserId")?.trim() ?? "";
 
   const createdAtRange = buildDateRange(dateFrom, dateTo);
 
@@ -58,6 +59,7 @@ export async function GET(req: Request) {
     where: {
       ...(showArchived ? {} : { isArchived: false }),
       ...(schoolYearId ? { schoolYearId } : {}),
+      ...(createdByUserId ? { createdByUserId } : {}),
       ...(createdAtRange ? { createdAt: createdAtRange } : {}),
       ...(sectionId
         ? {
