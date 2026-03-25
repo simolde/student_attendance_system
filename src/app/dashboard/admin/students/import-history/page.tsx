@@ -195,6 +195,7 @@ export default async function StudentImportHistoryPage({
     prisma.studentImportBatch.findMany({
       where: baseWhere,
       select: {
+        isArchived: true,
         createdStudents: true,
         updatedStudents: true,
         skipped: true,
@@ -231,6 +232,12 @@ export default async function StudentImportHistoryPage({
     (sum, row) => sum + row.skipped,
     0
   );
+  const filteredActiveCount = summaryRows.filter(
+    (row) => row.isArchived === false
+  ).length;
+  const filteredArchivedCount = summaryRows.filter(
+    (row) => row.isArchived === true
+  ).length;
 
   function buildUrl(nextPage: number) {
     const sp = new URLSearchParams();
@@ -465,7 +472,7 @@ export default async function StudentImportHistoryPage({
             </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
               <p className="text-xs text-emerald-700">Created Students</p>
               <p className="mt-1 text-lg font-semibold text-emerald-950">
@@ -484,6 +491,20 @@ export default async function StudentImportHistoryPage({
               <p className="text-xs text-rose-700">Skipped Rows</p>
               <p className="mt-1 text-lg font-semibold text-rose-950">
                 {filteredSkipped}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-sky-200 bg-sky-50 p-4">
+              <p className="text-xs text-sky-700">Filtered Active</p>
+              <p className="mt-1 text-lg font-semibold text-sky-950">
+                {filteredActiveCount}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
+              <p className="text-xs text-violet-700">Filtered Archived</p>
+              <p className="mt-1 text-lg font-semibold text-violet-950">
+                {filteredArchivedCount}
               </p>
             </div>
           </div>
@@ -525,10 +546,9 @@ export default async function StudentImportHistoryPage({
                   Created by:
                   <span className="ml-2 font-medium">
                     {importers.find((u) => u.id === createdByUserId)?.name
-                      ? `${importers.find((u) => u.id === createdByUserId)?.name} (${
-                          importers.find((u) => u.id === createdByUserId)?.email
-                        })`
-                      : importers.find((u) => u.id === createdByUserId)?.email ?? createdByUserId}
+                      ? `${importers.find((u) => u.id === createdByUserId)?.name} (${importers.find((u) => u.id === createdByUserId)?.email})`
+                      : importers.find((u) => u.id === createdByUserId)?.email ??
+                        createdByUserId}
                   </span>
                 </div>
               ) : null}
