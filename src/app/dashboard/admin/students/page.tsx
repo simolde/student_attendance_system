@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, TriangleAlert } from "lucide-react";
 import StudentsPageActions from "./students-page-actions";
+import { buildStudentsWhere } from "@/lib/student-filters";
 
 const PAGE_SIZE = 10;
 
@@ -85,31 +86,12 @@ export default async function AdminStudentsPage({
 
   const isArchivedBatchView = Boolean(importBatchId && selectedBatch?.isArchived);
 
-  const rfidCondition =
-    rfidStatus === "WITH_RFID"
-      ? { NOT: { rfidUid: null as string | null } }
-      : rfidStatus === "WITHOUT_RFID"
-      ? { rfidUid: null as string | null }
-      : {};
-
-  const where = {
-    AND: [
-      sectionId ? { sectionId } : {},
-      importBatchId ? { importBatchId } : {},
-      rfidCondition,
-      q
-        ? {
-            OR: [
-              { studentNo: { contains: q, mode: "insensitive" as const } },
-              { rfidUid: { contains: q, mode: "insensitive" as const } },
-              { user: { name: { contains: q, mode: "insensitive" as const } } },
-              { user: { email: { contains: q, mode: "insensitive" as const } } },
-              { section: { name: { contains: q, mode: "insensitive" as const } } },
-            ],
-          }
-        : {},
-    ],
-  };
+  const where = buildStudentsWhere({
+    q,
+    sectionId,
+    importBatchId,
+    rfidStatus,
+  });
 
   const [students, totalStudents, summaryRows] = await Promise.all([
     prisma.student.findMany({

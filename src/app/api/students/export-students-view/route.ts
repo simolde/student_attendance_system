@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
+import { buildStudentsWhere } from "@/lib/student-filters";
 import { NextResponse } from "next/server";
 
 function csvEscape(value: string) {
@@ -45,31 +46,12 @@ export async function GET(req: Request) {
       })
     : null;
 
-  const rfidCondition =
-    rfidStatus === "WITH_RFID"
-      ? { NOT: { rfidUid: null as string | null } }
-      : rfidStatus === "WITHOUT_RFID"
-      ? { rfidUid: null as string | null }
-      : {};
-
-  const where = {
-    AND: [
-      sectionId ? { sectionId } : {},
-      importBatchId ? { importBatchId } : {},
-      rfidCondition,
-      q
-        ? {
-            OR: [
-              { studentNo: { contains: q, mode: "insensitive" as const } },
-              { rfidUid: { contains: q, mode: "insensitive" as const } },
-              { user: { name: { contains: q, mode: "insensitive" as const } } },
-              { user: { email: { contains: q, mode: "insensitive" as const } } },
-              { section: { name: { contains: q, mode: "insensitive" as const } } },
-            ],
-          }
-        : {},
-    ],
-  };
+  const where = buildStudentsWhere({
+    q,
+    sectionId,
+    importBatchId,
+    rfidStatus,
+  });
 
   const students = await prisma.student.findMany({
     where,

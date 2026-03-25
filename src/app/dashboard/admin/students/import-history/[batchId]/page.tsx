@@ -27,6 +27,7 @@ import {
 import { toggleImportBatchArchive } from "../actions";
 import CopyBatchIdButton from "@/components/copy-batch-id-button";
 import BatchDetailsActions from "./batch-details-actions";
+import { buildBatchStudentsWhere } from "@/lib/student-filters";
 
 const PAGE_SIZE = 20;
 
@@ -113,31 +114,12 @@ export default async function StudentImportBatchDetailsPage({
     },
   });
 
-  const rfidCondition =
-    rfidStatus === "WITH_RFID"
-      ? { NOT: { rfidUid: null as string | null } }
-      : rfidStatus === "WITHOUT_RFID"
-      ? { rfidUid: null as string | null }
-      : {};
-
-  const studentWhere = {
-    AND: [
-      { importBatchId: batchId },
-      sectionId ? { sectionId } : {},
-      rfidCondition,
-      q
-        ? {
-            OR: [
-              { studentNo: { contains: q, mode: "insensitive" as const } },
-              { rfidUid: { contains: q, mode: "insensitive" as const } },
-              { user: { name: { contains: q, mode: "insensitive" as const } } },
-              { user: { email: { contains: q, mode: "insensitive" as const } } },
-              { section: { name: { contains: q, mode: "insensitive" as const } } },
-            ],
-          }
-        : {},
-    ],
-  };
+  const studentWhere = buildBatchStudentsWhere({
+    batchId,
+    q,
+    sectionId,
+    rfidStatus,
+  });
 
   const [students, totalStudents, summaryRows] = await Promise.all([
     prisma.student.findMany({
