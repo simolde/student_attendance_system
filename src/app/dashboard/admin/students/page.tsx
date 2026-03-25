@@ -165,6 +165,16 @@ export default async function AdminStudentsPage({
     return `/api/students/export-students-view?${sp.toString()}`;
   }
 
+  function buildPageExportUrl() {
+    const sp = new URLSearchParams();
+    if (q) sp.set("q", q);
+    if (sectionId) sp.set("sectionId", sectionId);
+    if (importBatchId) sp.set("importBatchId", importBatchId);
+    if (rfidStatus) sp.set("rfidStatus", rfidStatus);
+    sp.set("page", String(page));
+    return `/api/students/export-students-view-page?${sp.toString()}`;
+  }
+
   const formatName = (name: string) =>
     name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -180,11 +190,18 @@ export default async function AdminStudentsPage({
         ]}
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <a href={buildPageExportUrl()}>
+                <Download className="mr-2 h-4 w-4" />
+                Export This Page
+              </a>
+            </Button>
+
             {importBatchId ? (
               <Button asChild variant="outline">
                 <a href={buildViewExportUrl()}>
                   <Download className="mr-2 h-4 w-4" />
-                  Export Students View
+                  Export All Filtered
                 </a>
               </Button>
             ) : null}
@@ -230,21 +247,17 @@ export default async function AdminStudentsPage({
             </div>
           ) : (
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {sections
-                .slice()
-                .sort((a, b) => a.id.localeCompare(b.id))
-                .map((section) => (
-                  <div
-                    key={section.id}
-                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-                  >
-                    <p className="font-medium text-slate-900">{section.name}</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {formatName(section.gradeLevel)}
-                    </p>
-                  </div>
-                )
-              )}
+              {sections.map((section) => (
+                <div
+                  key={section.id}
+                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                >
+                  <p className="font-medium text-slate-900">{section.name}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {formatName(section.gradeLevel)}
+                  </p>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
@@ -413,8 +426,7 @@ export default async function AdminStudentsPage({
                       <span className="font-medium">Export Latest Import</span>.
                       The general <span className="font-medium">Export Credentials</span>{" "}
                       button is disabled in this archived batch view. You can still
-                      use <span className="font-medium">Export Students View</span>{" "}
-                      to export the currently filtered student list.
+                      use the page/filter exports for the visible student list.
                     </p>
                   ) : (
                     <p>

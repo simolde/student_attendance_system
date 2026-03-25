@@ -194,6 +194,16 @@ export default async function StudentImportBatchDetailsPage({
     return `/api/students/export-batch-students?${qs.toString()}`;
   }
 
+  function buildExportStudentsPageUrl() {
+    const qs = new URLSearchParams();
+    qs.set("batchId", batch.id);
+    if (q) qs.set("q", q);
+    if (rfidStatus) qs.set("rfidStatus", rfidStatus);
+    if (sectionId) qs.set("sectionId", sectionId);
+    qs.set("page", String(page));
+    return `/api/students/export-batch-students-page?${qs.toString()}`;
+  }
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -213,9 +223,15 @@ export default async function StudentImportBatchDetailsPage({
           <div className="flex flex-wrap gap-2">
             <CopyBatchIdButton value={batch.id} />
             <Button asChild variant="outline">
+              <a href={buildExportStudentsPageUrl()}>
+                <Download className="mr-2 h-4 w-4" />
+                Export This Page
+              </a>
+            </Button>
+            <Button asChild variant="outline">
               <a href={buildExportStudentsUrl()}>
                 <Download className="mr-2 h-4 w-4" />
-                Export Students View
+                Export All Filtered
               </a>
             </Button>
             <Button asChild variant="outline">
@@ -522,32 +538,6 @@ export default async function StudentImportBatchDetailsPage({
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function SummaryItem({
-  label,
-  value,
-  mono = false,
-  extra,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-  extra?: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p
-        className={`mt-1 text-sm font-semibold text-slate-900 ${
-          mono ? "break-all font-mono" : ""
-        }`}
-      >
-        {value}
-      </p>
-      {extra ? <div className="mt-3">{extra}</div> : null}
     </div>
   );
 }
