@@ -541,3 +541,29 @@ export default async function StudentImportBatchDetailsPage({
     </div>
   );
 }
+
+function SummaryItem({
+  label,
+  value,
+  mono = false,
+  extra,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  extra?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p
+        className={`mt-1 text-sm font-semibold text-slate-900 ${
+          mono ? "break-all font-mono" : ""
+        }`}
+      >
+        {value}
+      </p>
+      {extra ? <div className="mt-3">{extra}</div> : null}
+    </div>
+  );
+}
