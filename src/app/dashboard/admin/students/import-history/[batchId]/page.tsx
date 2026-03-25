@@ -91,7 +91,7 @@ export default async function StudentImportBatchDetailsPage({
   });
 
   if (!batch) {
-    notFound();
+    return notFound();
   }
 
   const batchSections = await prisma.section.findMany({
