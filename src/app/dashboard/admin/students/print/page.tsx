@@ -1,8 +1,15 @@
 import { auth } from "@/auth";
-import { PRINT_PAGE_STYLES } from "@/lib/print-styles";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
+import { PRINT_PAGE_STYLES } from "@/lib/print-styles";
 import { redirect } from "next/navigation";
+import {
+  PrintPage,
+  PrintTitle,
+  PrintFilters,
+  PrintSummaryGrid,
+  PrintSummaryCard,
+} from "@/components/print/print-page";
 
 const PAGE_SIZE = 10;
 
@@ -121,110 +128,99 @@ export default async function PrintStudentsPage({
     sections.find((section) => section.id === sectionId)?.name ?? sectionId;
 
   return (
-    <html>
-      <head>
-        <title>Print Students Page</title>
-        <style>{PRINT_PAGE_STYLES}</style>
-      </head>
-      <body>
-        <div className="print-actions">
-          <button onClick={() => window.print()}>Print</button>
-        </div>
+    <PrintPage title="Print Students Page">
+      <style>{PRINT_PAGE_STYLES}</style>
 
-        <h1>Students Directory</h1>
-
-        <div className="meta">
-          <div>
-            <strong>Page:</strong> {page} of {totalPages}
-          </div>
-          <div>
-            <strong>Total matching students:</strong> {totalStudents}
-          </div>
-          <div>
-            <strong>Printed by:</strong>{" "}
-            {session.user.name ?? session.user.email ?? "Admin"}
-          </div>
-          {selectedBatch ? (
+      <PrintTitle
+        title="Students Directory"
+        meta={
+          <>
             <div>
-              <strong>Batch:</strong> {selectedBatch.id}{" "}
-              <span className={`badge ${selectedBatch.isArchived ? "archived" : "active"}`}>
-                {selectedBatch.isArchived ? "ARCHIVED" : "ACTIVE"}
-              </span>
+              <strong>Page:</strong> {page} of {totalPages}
             </div>
-          ) : null}
-        </div>
-
-        {q || sectionId || rfidStatus || importBatchId ? (
-          <div className="filters">
-            <div><strong>Applied Filters</strong></div>
-            {q ? <div>Search: {q}</div> : null}
-            {sectionId ? <div>Section: {sectionName}</div> : null}
-            {rfidStatus ? (
-              <div>
-                RFID Status:{" "}
-                {rfidStatus === "WITH_RFID"
-                  ? "With RFID"
-                  : rfidStatus === "WITHOUT_RFID"
-                  ? "Without RFID"
-                  : rfidStatus}
-              </div>
-            ) : null}
+            <div>
+              <strong>Total matching students:</strong> {totalStudents}
+            </div>
+            <div>
+              <strong>Printed by:</strong>{" "}
+              {session.user.name ?? session.user.email ?? "Admin"}
+            </div>
             {selectedBatch ? (
               <div>
-                School Year: {selectedBatch.schoolYear?.name ?? "-"}
+                <strong>Batch:</strong> {selectedBatch.id}{" "}
+                <span
+                  className={`badge ${
+                    selectedBatch.isArchived ? "archived" : "active"
+                  }`}
+                >
+                  {selectedBatch.isArchived ? "ARCHIVED" : "ACTIVE"}
+                </span>
               </div>
             ) : null}
-          </div>
-        ) : null}
+          </>
+        }
+      />
 
-        <div className="summary-grid cols-3">
-          <div className="summary-card">
-            <div className="label">Students on This Page</div>
-            <div className="value">{students.length}</div>
-          </div>
-          <div className="summary-card">
-            <div className="label">With RFID</div>
-            <div className="value">{withRfidCount}</div>
-          </div>
-          <div className="summary-card">
-            <div className="label">Without RFID</div>
-            <div className="value">{withoutRfidCount}</div>
-          </div>
-        </div>
+      {q || sectionId || rfidStatus || importBatchId ? (
+        <PrintFilters>
+          {q ? <div>Search: {q}</div> : null}
+          {sectionId ? <div>Section: {sectionName}</div> : null}
+          {rfidStatus ? (
+            <div>
+              RFID Status:{" "}
+              {rfidStatus === "WITH_RFID"
+                ? "With RFID"
+                : rfidStatus === "WITHOUT_RFID"
+                ? "Without RFID"
+                : rfidStatus}
+            </div>
+          ) : null}
+          {selectedBatch ? (
+            <div>School Year: {selectedBatch.schoolYear?.name ?? "-"}</div>
+          ) : null}
+        </PrintFilters>
+      ) : null}
 
-        <table>
-          <thead>
+      <PrintSummaryGrid columns={3}>
+        <PrintSummaryCard label="Students on This Page" value={students.length} />
+        <PrintSummaryCard label="With RFID" value={withRfidCount} />
+        <PrintSummaryCard label="Without RFID" value={withoutRfidCount} />
+      </PrintSummaryGrid>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Student No</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Section</th>
+            <th>Grade Level</th>
+            <th>RFID UID</th>
+            <th>RFID Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {students.length === 0 ? (
             <tr>
-              <th>Student No</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Section</th>
-              <th>Grade Level</th>
-              <th>RFID UID</th>
-              <th>RFID Status</th>
+              <td colSpan={7} className="muted">
+                No students found.
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {students.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="muted">No students found.</td>
+          ) : (
+            students.map((student) => (
+              <tr key={student.id}>
+                <td>{student.studentNo}</td>
+                <td>{student.user.name ?? "-"}</td>
+                <td>{student.user.email}</td>
+                <td>{student.section?.name ?? "-"}</td>
+                <td>{formatGradeLevel(student.section?.gradeLevel)}</td>
+                <td>{student.rfidUid ?? "-"}</td>
+                <td>{student.rfidUid ? "WITH_RFID" : "WITHOUT_RFID"}</td>
               </tr>
-            ) : (
-              students.map((student) => (
-                <tr key={student.id}>
-                  <td>{student.studentNo}</td>
-                  <td>{student.user.name ?? "-"}</td>
-                  <td>{student.user.email}</td>
-                  <td>{student.section?.name ?? "-"}</td>
-                  <td>{formatGradeLevel(student.section?.gradeLevel)}</td>
-                  <td>{student.rfidUid ?? "-"}</td>
-                  <td>{student.rfidUid ? "WITH_RFID" : "WITHOUT_RFID"}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </body>
-    </html>
+            ))
+          )}
+        </tbody>
+      </table>
+    </PrintPage>
   );
 }
