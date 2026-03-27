@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAudit } from "@/lib/audit";
+import { dateInputToUtcDate } from "@/lib/date";
 
 export type AttendanceFormState = {
   error?: string;
@@ -90,8 +91,7 @@ export async function saveAttendance(
       };
     }
 
-    // Store the attendance day explicitly as Asia/Manila midnight.
-    const attendanceDate = new Date(`${date}T00:00:00+08:00`);
+    const attendanceDate = dateInputToUtcDate(date);
 
     await prisma.$transaction(
       enrollments.map((enrollment) => {

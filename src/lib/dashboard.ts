@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
+import { dateInputToUtcDate, getManilaDateInputValue } from "@/lib/date";
 
 export async function getDashboardStats() {
-  const today = new Date();
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  const todayInput = getManilaDateInputValue();
+  const todayDate = dateInputToUtcDate(todayInput);
 
   const [
     totalUsers,
@@ -20,47 +20,32 @@ export async function getDashboardStats() {
     prisma.section.count(),
     prisma.attendance.count({
       where: {
-        date: {
-          gte: startOfDay,
-          lt: endOfDay,
-        },
+        date: todayDate,
         status: "PRESENT",
       },
     }),
     prisma.attendance.count({
       where: {
-        date: {
-          gte: startOfDay,
-          lt: endOfDay,
-        },
+        date: todayDate,
         status: "LATE",
       },
     }),
     prisma.attendance.count({
       where: {
-        date: {
-          gte: startOfDay,
-          lt: endOfDay,
-        },
+        date: todayDate,
         status: "ABSENT",
       },
     }),
     prisma.attendance.count({
       where: {
-        date: {
-          gte: startOfDay,
-          lt: endOfDay,
-        },
+        date: todayDate,
         status: "EXCUSED",
       },
     }),
     prisma.attendance.groupBy({
       by: ["studentId"],
       where: {
-        date: {
-          gte: startOfDay,
-          lt: endOfDay,
-        },
+        date: todayDate,
       },
       _count: {
         studentId: true,
@@ -87,16 +72,16 @@ export async function getDashboardStats() {
   }
 
   const attendanceStatusData = [
-    { name: "Present", value: presentToday },
-    { name: "Late", value: lateToday },
-    { name: "Absent", value: absentToday },
-    { name: "Excused", value: excusedToday },
+    { name: "Present", value: Number(presentToday) },
+    { name: "Late", value: Number(lateToday) },
+    { name: "Absent", value: Number(absentToday) },
+    { name: "Excused", value: Number(excusedToday) },
   ];
 
   const sectionAttendanceData = Array.from(sectionMap.entries()).map(
     ([name, total]) => ({
       name,
-      total,
+      total: Number(total),
     })
   );
 
@@ -108,7 +93,7 @@ export async function getDashboardStats() {
     lateToday,
     absentToday,
     excusedToday,
-    today: startOfDay.toISOString().slice(0, 10),
+    today: todayInput,
     attendanceStatusData,
     sectionAttendanceData,
   };

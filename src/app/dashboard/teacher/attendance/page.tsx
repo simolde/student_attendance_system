@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import PageHeader from "@/components/layout/page-header";
+import { getManilaDateInputValue } from "@/lib/date";
 import {
   Card,
   CardContent,
@@ -11,19 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import AttendanceForm from "./form";
-
-function getManilaDateInputValue() {
-  const now = new Date();
-  const manilaNow = new Date(
-    now.toLocaleString("en-US", { timeZone: "Asia/Manila" })
-  );
-
-  const year = manilaNow.getFullYear();
-  const month = String(manilaNow.getMonth() + 1).padStart(2, "0");
-  const day = String(manilaNow.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
 
 export default async function AttendancePage({
   searchParams,
