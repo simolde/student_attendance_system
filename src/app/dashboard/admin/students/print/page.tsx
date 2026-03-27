@@ -1,15 +1,14 @@
 import { auth } from "@/auth";
+import {
+  PrintFilters,
+  PrintPage,
+  PrintSummaryCard,
+  PrintSummaryGrid,
+  PrintTitle,
+} from "@/components/print/print-page";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
-import { PRINT_PAGE_STYLES } from "@/lib/print-styles";
 import { redirect } from "next/navigation";
-import {
-  PrintPage,
-  PrintTitle,
-  PrintFilters,
-  PrintSummaryGrid,
-  PrintSummaryCard,
-} from "@/components/print/print-page";
 
 const PAGE_SIZE = 10;
 
@@ -128,35 +127,21 @@ export default async function PrintStudentsPage({
     sections.find((section) => section.id === sectionId)?.name ?? sectionId;
 
   return (
-    <PrintPage title="Print Students Page">
-      <style>{PRINT_PAGE_STYLES}</style>
-
+    <PrintPage>
       <PrintTitle
-        title="Students Directory"
+        title="Student Import History"
         meta={
           <>
             <div>
               <strong>Page:</strong> {page} of {totalPages}
             </div>
             <div>
-              <strong>Total matching students:</strong> {totalStudents}
+              <strong>Total Students:</strong> {totalStudents}
             </div>
             <div>
               <strong>Printed by:</strong>{" "}
               {session.user.name ?? session.user.email ?? "Admin"}
             </div>
-            {selectedBatch ? (
-              <div>
-                <strong>Batch:</strong> {selectedBatch.id}{" "}
-                <span
-                  className={`badge ${
-                    selectedBatch.isArchived ? "archived" : "active"
-                  }`}
-                >
-                  {selectedBatch.isArchived ? "ARCHIVED" : "ACTIVE"}
-                </span>
-              </div>
-            ) : null}
           </>
         }
       />

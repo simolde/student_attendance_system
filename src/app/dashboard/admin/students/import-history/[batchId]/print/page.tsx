@@ -1,15 +1,23 @@
 import { auth } from "@/auth";
-import { PRINT_PAGE_STYLES } from "@/lib/print-styles";
+import {
+  PrintFilters,
+  PrintPage,
+  PrintSummaryCard,
+  PrintSummaryGrid,
+  PrintTitle,
+} from "@/components/print/print-page";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
-import { redirect, notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 25;
 
-function formatGradeLevel(value: string | null | undefined) {
-  if (!value) return "-";
-  return value.replace(/_/g, " ");
-}
+type SearchParams = Promise<{
+  q?: string;
+  page?: string;
+  sectionId?: string;
+  rfidStatus?: string;
+}>;
 
 function formatManilaDateTime(date: Date) {
   return new Intl.DateTimeFormat("en-PH", {
@@ -22,17 +30,12 @@ function formatManilaDateTime(date: Date) {
   }).format(date);
 }
 
-export default async function PrintBatchStudentsPage({
+export default async function PrintStudentImportBatchPage({
   params,
   searchParams,
 }: {
   params: Promise<{ batchId: string }>;
-  searchParams: Promise<{
-    q?: string;
-    rfidStatus?: string;
-    sectionId?: string;
-    page?: string;
-  }>;
+  searchParams: SearchParams;
 }) {
   const session = await auth();
 
@@ -44,18 +47,33 @@ export default async function PrintBatchStudentsPage({
     redirect("/unauthorized");
   }
 
-  const [{ batchId }, sp] = await Promise.all([params, searchParams]);
-  const q = sp.q?.trim() ?? "";
-  const rfidStatus = sp.rfidStatus?.trim() ?? "";
-  const sectionId = sp.sectionId?.trim() ?? "";
-  const page = Math.max(Number(sp.page || "1"), 1);
+  const { batchId } = await params;
+  const filters = await searchParams;
+
+  const q = filters.q?.trim() ?? "";
+  const sectionId = filters.sectionId?.trim() ?? "";
+  const rfidStatus = filters.rfidStatus?.trim() ?? "all";
+  const page = Math.max(Number(filters.page || "1"), 1);
 
   const batch = await prisma.studentImportBatch.findUnique({
     where: { id: batchId },
     include: {
       schoolYear: {
         select: {
+          id: true,
           name: true,
+        },
+      },
+      createdByUser: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      _count: {
+        select: {
+          students: true,
         },
       },
     },
@@ -65,185 +83,205 @@ export default async function PrintBatchStudentsPage({
     notFound();
   }
 
-  const batchSections = await prisma.section.findMany({
-    where: {
-      students: {
-        some: {
-          importBatchId: batchId,
-        },
-      },
-    },
-    orderBy: {
-      name: "asc",
-    },
-    select: {
-      id: true,
-      name: true,
-    },
-  });
-
-  const rfidCondition =
-    rfidStatus === "WITH_RFID"
-      ? { NOT: { rfidUid: null as string | null } }
-      : rfidStatus === "WITHOUT_RFID"
-      ? { rfidUid: null as string | null }
-      : {};
-
-  const where = {
-    AND: [
-      { importBatchId: batchId },
-      sectionId ? { sectionId } : {},
-      rfidCondition,
-      q
+  const studentWhere = {
+    importBatchId: batchId,
+    ...(sectionId ? { sectionId } : {}),
+    ...(rfidStatus === "with-rfid"
+      ? {
+          rfidUid: {
+            not: null,
+          },
+        }
+      : rfidStatus === "without-rfid"
         ? {
-            OR: [
-              { studentNo: { contains: q, mode: "insensitive" as const } },
-              { rfidUid: { contains: q, mode: "insensitive" as const } },
-              { user: { name: { contains: q, mode: "insensitive" as const } } },
-              { user: { email: { contains: q, mode: "insensitive" as const } } },
-              { section: { name: { contains: q, mode: "insensitive" as const } } },
-            ],
+            OR: [{ rfidUid: null }, { rfidUid: "" }],
           }
-        : {},
-    ],
+        : {}),
+    ...(q
+      ? {
+          OR: [
+            { id: { contains: q, mode: "insensitive" as const } },
+            { studentNo: { contains: q, mode: "insensitive" as const } },
+            { rfidUid: { contains: q, mode: "insensitive" as const } },
+            {
+              section: {
+                name: { contains: q, mode: "insensitive" as const },
+              },
+            },
+            {
+              user: {
+                name: { contains: q, mode: "insensitive" as const },
+              },
+            },
+            {
+              user: {
+                email: { contains: q, mode: "insensitive" as const },
+              },
+            },
+          ],
+        }
+      : {}),
   };
 
-  const [students, totalStudents, summaryRows] = await Promise.all([
+  const [sections, students, totalStudents] = await Promise.all([
+    prisma.section.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+      },
+    }),
     prisma.student.findMany({
-      where,
+      where: studentWhere,
       include: {
-        user: true,
-        section: true,
+        section: {
+          select: {
+            name: true,
+          },
+        },
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
       },
-      orderBy: {
-        studentNo: "asc",
-      },
+      orderBy: [{ studentNo: "asc" }, { createdAt: "asc" }],
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    prisma.student.count({ where }),
-    prisma.student.findMany({
-      where,
-      select: {
-        id: true,
-        rfidUid: true,
-      },
+    prisma.student.count({
+      where: studentWhere,
     }),
   ]);
 
   const totalPages = Math.max(Math.ceil(totalStudents / PAGE_SIZE), 1);
-  const withRfidCount = summaryRows.filter((student) => !!student.rfidUid).length;
-  const withoutRfidCount = summaryRows.filter((student) => !student.rfidUid).length;
+
   const sectionName =
-    batchSections.find((section) => section.id === sectionId)?.name ?? sectionId;
+    sections.find((section) => section.id === sectionId)?.name ?? sectionId;
+
+  const withRfidOnPage = students.filter(
+    (student) => student.rfidUid && student.rfidUid.trim() !== "",
+  ).length;
+
+  const withoutRfidOnPage = students.length - withRfidOnPage;
 
   return (
-    <html>
-      <head>
-        <title>Print Batch Students</title>
-        <style>{PRINT_PAGE_STYLES}</style>
-      </head>
-      <body>
-        <div className="print-actions">
-          <button onClick={() => window.print()}>Print</button>
-        </div>
+    <PrintPage>
+      <PrintTitle
+        title="Import Batch Details"
+        meta={
+          <>
+            <div>
+              <strong>Batch ID:</strong> {batch.id}
+            </div>
+            <div>
+              <strong>Status:</strong> {batch.isArchived ? "Archived" : "Active"}
+            </div>
+            <div>
+              <strong>School Year:</strong> {batch.schoolYear?.name ?? "-"}
+            </div>
+            <div>
+              <strong>Imported By:</strong>{" "}
+              {batch.createdByUser?.name ?? batch.createdByUser?.email ?? "-"}
+            </div>
+            <div>
+              <strong>Page:</strong> {page} of {totalPages}
+            </div>
+            <div>
+              <strong>Total matching students:</strong> {totalStudents}
+            </div>
+            <div>
+              <strong>Printed by:</strong>{" "}
+              {session.user.name ?? session.user.email ?? "Admin"}
+            </div>
+          </>
+        }
+      />
 
-        <h1>Batch Students</h1>
+      {q || sectionId || rfidStatus !== "all" ? (
+        <PrintFilters>
+          {q ? <div>Search: {q}</div> : null}
 
-        <div className="meta">
-          <div>
-            <strong>Batch ID:</strong> {batch.id}
-          </div>
-          <div>
-            <strong>Status:</strong>{" "}
-            <span className={`badge ${batch.isArchived ? "archived" : "active"}`}>
-              {batch.isArchived ? "ARCHIVED" : "ACTIVE"}
-            </span>
-          </div>
-          <div>
-            <strong>School Year:</strong> {batch.schoolYear?.name ?? "-"}
-          </div>
-          <div>
-            <strong>Imported At:</strong> {formatManilaDateTime(batch.createdAt)}
-          </div>
-          <div>
-            <strong>Page:</strong> {page} of {totalPages}
-          </div>
-          <div>
-            <strong>Total matching students:</strong> {totalStudents}
-          </div>
-          <div>
-            <strong>Printed by:</strong>{" "}
-            {session.user.name ?? session.user.email ?? "Admin"}
-          </div>
-        </div>
+          {sectionId ? <div>Section: {sectionName}</div> : null}
 
-        {q || rfidStatus || sectionId ? (
-          <div className="filters">
-            <div><strong>Applied Filters</strong></div>
-            {q ? <div>Search: {q}</div> : null}
-            {rfidStatus ? (
-              <div>
-                RFID Status:{" "}
-                {rfidStatus === "WITH_RFID"
-                  ? "With RFID"
-                  : rfidStatus === "WITHOUT_RFID"
+          {rfidStatus !== "all" ? (
+            <div>
+              RFID Status:{" "}
+              {rfidStatus === "with-rfid"
+                ? "With RFID"
+                : rfidStatus === "without-rfid"
                   ? "Without RFID"
                   : rfidStatus}
-              </div>
-            ) : null}
-            {sectionId ? <div>Section: {sectionName}</div> : null}
-          </div>
-        ) : null}
+            </div>
+          ) : null}
+        </PrintFilters>
+      ) : null}
 
-        <div className="summary-grid cols-3">
-          <div className="summary-card">
-            <div className="label">Students on This Page</div>
-            <div className="value">{students.length}</div>
-          </div>
-          <div className="summary-card">
-            <div className="label">With RFID</div>
-            <div className="value">{withRfidCount}</div>
-          </div>
-          <div className="summary-card">
-            <div className="label">Without RFID</div>
-            <div className="value">{withoutRfidCount}</div>
-          </div>
-        </div>
+      <PrintSummaryGrid columns={4}>
+        <PrintSummaryCard
+          label="Students on This Page"
+          value={students.length}
+        />
+        <PrintSummaryCard label="With RFID" value={withRfidOnPage} />
+        <PrintSummaryCard label="Without RFID" value={withoutRfidOnPage} />
+        <PrintSummaryCard
+          label="Total Matching Students"
+          value={totalStudents}
+        />
+      </PrintSummaryGrid>
 
-        <table>
-          <thead>
+      <PrintSummaryGrid columns={4}>
+        <PrintSummaryCard label="Batch Students" value={batch._count.students} />
+        <PrintSummaryCard label="Total Rows" value={batch.totalRows} />
+        <PrintSummaryCard
+          label="Created Students"
+          value={batch.createdStudents}
+        />
+        <PrintSummaryCard
+          label="Updated Students"
+          value={batch.updatedStudents}
+        />
+      </PrintSummaryGrid>
+
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student No</th>
+            <th>User</th>
+            <th>Email</th>
+            <th>Section</th>
+            <th>RFID UID</th>
+            <th>Created At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {students.length === 0 ? (
             <tr>
-              <th>Student No</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Section</th>
-              <th>Grade Level</th>
-              <th>RFID UID</th>
-              <th>RFID Status</th>
+              <td colSpan={7} className="muted">
+                No students found for this batch and filter selection.
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {students.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="muted">No students found.</td>
-              </tr>
-            ) : (
-              students.map((student) => (
+          ) : (
+            students.map((student, index) => {
+              const displayIndex = (page - 1) * PAGE_SIZE + index + 1;
+
+              return (
                 <tr key={student.id}>
+                  <td>{displayIndex}</td>
                   <td>{student.studentNo}</td>
-                  <td>{student.user.name ?? "-"}</td>
-                  <td>{student.user.email}</td>
+                  <td>{student.user?.name ?? "-"}</td>
+                  <td>{student.user?.email ?? "-"}</td>
                   <td>{student.section?.name ?? "-"}</td>
-                  <td>{formatGradeLevel(student.section?.gradeLevel)}</td>
-                  <td>{student.rfidUid ?? "-"}</td>
-                  <td>{student.rfidUid ? "WITH_RFID" : "WITHOUT_RFID"}</td>
+                  <td>{student.rfidUid?.trim() ? student.rfidUid : "-"}</td>
+                  <td>{formatManilaDateTime(student.createdAt)}</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </body>
-    </html>
+              );
+            })
+          )}
+        </tbody>
+      </table>
+    </PrintPage>
   );
 }

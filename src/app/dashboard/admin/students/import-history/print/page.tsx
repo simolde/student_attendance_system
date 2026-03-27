@@ -1,7 +1,13 @@
 import { auth } from "@/auth";
+import {
+  PrintFilters,
+  PrintPage,
+  PrintSummaryCard,
+  PrintSummaryGrid,
+  PrintTitle,
+} from "@/components/print/print-page";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
-import { PRINT_PAGE_STYLES } from "@/lib/print-styles";
 import { redirect } from "next/navigation";
 
 const PAGE_SIZE = 10;
@@ -167,130 +173,135 @@ export default async function PrintStudentImportHistoryPage({
     sections.find((s) => s.id === sectionId)?.name ?? sectionId;
   const importer = importers.find((u) => u.id === createdByUserId);
 
+  const pageBatchCount = batches.length;
+  const pageStudentCount = batches.reduce(
+    (sum, batch) => sum + batch._count.students,
+    0,
+  );
+  const pageCreatedStudents = batches.reduce(
+    (sum, batch) => sum + batch.createdStudents,
+    0,
+  );
+  const pageUpdatedStudents = batches.reduce(
+    (sum, batch) => sum + batch.updatedStudents,
+    0,
+  );
+
   return (
-    <html>
-      <head>
-        <title>Print Import History</title>
-        <style>{PRINT_PAGE_STYLES}</style>
-      </head>
-      <body>
-        <div className="print-actions">
-          <button onClick={() => window.print()}>Print</button>
-        </div>
-
-        <h1>Student Import History</h1>
-
-        <div className="meta">
-          <div>
-            <strong>View:</strong>{" "}
-            {showArchived ? "Active + Archived" : "Active Only"}
-          </div>
-          <div>
-            <strong>Page:</strong> {page} of {totalPages}
-          </div>
-          <div>
-            <strong>Total matching batches:</strong> {totalBatches}
-          </div>
-          <div>
-            <strong>Printed by:</strong>{" "}
-            {session.user.name ?? session.user.email ?? "Admin"}
-          </div>
-        </div>
-
-        {q || dateFrom || dateTo || schoolYearId || sectionId || createdByUserId ? (
-          <div className="filters">
-            <div><strong>Applied Filters</strong></div>
-            {q ? <div>Search: {q}</div> : null}
-            {dateFrom || dateTo ? (
-              <div>
-                Date range: {dateFrom || "Any"} → {dateTo || "Any"}
-              </div>
-            ) : null}
-            {schoolYearId ? <div>School year: {schoolYearName}</div> : null}
-            {sectionId ? <div>Section: {sectionName}</div> : null}
-            {createdByUserId ? (
-              <div>
-                Created by:{" "}
-                {importer?.name
-                  ? `${importer.name} (${importer.email})`
-                  : importer?.email ?? createdByUserId}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-
-        <div className="summary-grid cols-4">
-          <div className="summary-card">
-            <div className="label">Batches on This Page</div>
-            <div className="value">{batches.length}</div>
-          </div>
-          <div className="summary-card">
-            <div className="label">Students on This Page</div>
-            <div className="value">
-              {batches.reduce((sum, batch) => sum + batch._count.students, 0)}
+    <PrintPage>
+      <PrintTitle
+        title="Student Import History"
+        meta={
+          <>
+            <div>
+              <strong>View:</strong>{" "}
+              {showArchived ? "Active + Archived" : "Active Only"}
             </div>
-          </div>
-          <div className="summary-card">
-            <div className="label">Created Students</div>
-            <div className="value">
-              {batches.reduce((sum, batch) => sum + batch.createdStudents, 0)}
+            <div>
+              <strong>Page:</strong> {page} of {totalPages}
             </div>
-          </div>
-          <div className="summary-card">
-            <div className="label">Updated Students</div>
-            <div className="value">
-              {batches.reduce((sum, batch) => sum + batch.updatedStudents, 0)}
+            <div>
+              <strong>Total matching batches:</strong> {totalBatches}
             </div>
-          </div>
-        </div>
+            <div>
+              <strong>Printed by:</strong>{" "}
+              {session.user.name ?? session.user.email ?? "Admin"}
+            </div>
+          </>
+        }
+      />
 
-        <table>
-          <thead>
+      {q || dateFrom || dateTo || schoolYearId || sectionId || createdByUserId ? (
+        <PrintFilters>
+          {q ? <div>Search: {q}</div> : null}
+
+          {dateFrom || dateTo ? (
+            <div>
+              Date range: {dateFrom || "Any"} → {dateTo || "Any"}
+            </div>
+          ) : null}
+
+          {schoolYearId ? <div>School year: {schoolYearName}</div> : null}
+
+          {sectionId ? <div>Section: {sectionName}</div> : null}
+
+          {createdByUserId ? (
+            <div>
+              Created by:{" "}
+              {importer?.name
+                ? `${importer.name} (${importer.email})`
+                : importer?.email ?? createdByUserId}
+            </div>
+          ) : null}
+        </PrintFilters>
+      ) : null}
+
+      <PrintSummaryGrid columns={4}>
+        <PrintSummaryCard label="Batches on This Page" value={pageBatchCount} />
+        <PrintSummaryCard
+          label="Students on This Page"
+          value={pageStudentCount}
+        />
+        <PrintSummaryCard
+          label="Created Students"
+          value={pageCreatedStudents}
+        />
+        <PrintSummaryCard
+          label="Updated Students"
+          value={pageUpdatedStudents}
+        />
+      </PrintSummaryGrid>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Batch ID</th>
+            <th>Status</th>
+            <th>School Year</th>
+            <th>Imported By</th>
+            <th>Imported At</th>
+            <th>Students</th>
+            <th>Created</th>
+            <th>Updated</th>
+            <th>Skipped</th>
+          </tr>
+        </thead>
+        <tbody>
+          {batches.length === 0 ? (
             <tr>
-              <th>Batch ID</th>
-              <th>Status</th>
-              <th>School Year</th>
-              <th>Imported By</th>
-              <th>Imported At</th>
-              <th>Students</th>
-              <th>Created</th>
-              <th>Updated</th>
-              <th>Skipped</th>
+              <td colSpan={9} className="muted">
+                No import history found.
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {batches.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="muted">
-                  No import history found.
+          ) : (
+            batches.map((batch) => (
+              <tr key={batch.id}>
+                <td>{batch.id}</td>
+                <td>
+                  <span
+                    className={`badge ${
+                      batch.isArchived ? "archived" : "active"
+                    }`}
+                  >
+                    {batch.isArchived ? "ARCHIVED" : "ACTIVE"}
+                  </span>
                 </td>
+                <td>{batch.schoolYear?.name ?? "-"}</td>
+                <td>
+                  {batch.createdByUser?.name ??
+                    batch.createdByUser?.email ??
+                    "-"}
+                </td>
+                <td>{formatManilaDateTime(batch.createdAt)}</td>
+                <td>{batch._count.students}</td>
+                <td>{batch.createdStudents}</td>
+                <td>{batch.updatedStudents}</td>
+                <td>{batch.skipped}</td>
               </tr>
-            ) : (
-              batches.map((batch) => (
-                <tr key={batch.id}>
-                  <td>{batch.id}</td>
-                  <td>
-                    <span
-                      className={`badge ${
-                        batch.isArchived ? "archived" : "active"
-                      }`}
-                    >
-                      {batch.isArchived ? "ARCHIVED" : "ACTIVE"}
-                    </span>
-                  </td>
-                  <td>{batch.schoolYear?.name ?? "-"}</td>
-                  <td>{batch.createdByUser?.name ?? batch.createdByUser?.email ?? "-"}</td>
-                  <td>{formatManilaDateTime(batch.createdAt)}</td>
-                  <td>{batch._count.students}</td>
-                  <td>{batch.createdStudents}</td>
-                  <td>{batch.updatedStudents}</td>
-                  <td>{batch.skipped}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </body>
-    </html>
+            ))
+          )}
+        </tbody>
+      </table>
+    </PrintPage>
   );
 }

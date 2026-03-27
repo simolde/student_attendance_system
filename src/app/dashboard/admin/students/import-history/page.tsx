@@ -1,6 +1,12 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
+import {
+  buildImportHistoryExportUrl,
+  buildImportHistoryPageExportUrl,
+  buildImportHistoryPrintUrl,
+  buildImportHistoryUrl,
+} from "@/lib/student-url-builders";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import PageHeader from "@/components/layout/page-header";
@@ -15,11 +21,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { toggleImportBatchArchive } from "./actions";
 import CopyBatchIdButton from "@/components/copy-batch-id-button";
 import ExportActionsMenu from "@/components/export-actions-menu";
 import BatchCardActions from "./batch-card-actions";
-import { buildImportHistoryExportUrl, buildImportHistoryPageExportUrl, buildImportHistoryPrintUrl, buildImportHistoryUrl } from "@/lib/student-url-builders";
 
 const PAGE_SIZE = 10;
 
@@ -230,10 +234,7 @@ export default async function StudentImportHistoryPage({
     (sum, row) => sum + row.updatedStudents,
     0
   );
-  const filteredSkipped = summaryRows.reduce(
-    (sum, row) => sum + row.skipped,
-    0
-  );
+  const filteredSkipped = summaryRows.reduce((sum, row) => sum + row.skipped, 0);
   const filteredActiveCount = summaryRows.filter(
     (row) => row.isArchived === false
   ).length;
@@ -319,9 +320,22 @@ export default async function StudentImportHistoryPage({
           <div className="flex flex-wrap gap-2">
             <ExportActionsMenu
               items={[
-                { label: "Print View", href: buildPrintUrl(), icon: "print", newTab: true },
-                { label: "Export This Page", href: buildPageExportUrl(), icon: "csv" },
-                { label: "Export All Filtered", href: buildExportUrl(), icon: "csv" },
+                {
+                  label: "Print View",
+                  href: buildPrintUrl(),
+                  icon: "print",
+                  newTab: true,
+                },
+                {
+                  label: "Export This Page",
+                  href: buildPageExportUrl(),
+                  icon: "csv",
+                },
+                {
+                  label: "Export All Filtered",
+                  href: buildExportUrl(),
+                  icon: "csv",
+                },
               ]}
             />
 
@@ -387,7 +401,9 @@ export default async function StudentImportHistoryPage({
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">School Year</label>
+                <label className="mb-2 block text-sm font-medium">
+                  School Year
+                </label>
                 <select
                   name="schoolYearId"
                   defaultValue={schoolYearId}
@@ -419,7 +435,9 @@ export default async function StudentImportHistoryPage({
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">Created By</label>
+                <label className="mb-2 block text-sm font-medium">
+                  Created By
+                </label>
                 <select
                   name="createdByUserId"
                   defaultValue={createdByUserId}
@@ -554,7 +572,8 @@ export default async function StudentImportHistoryPage({
                 <div className="mt-1">
                   School year:
                   <span className="ml-2 font-medium">
-                    {schoolYears.find((s) => s.id === schoolYearId)?.name ?? schoolYearId}
+                    {schoolYears.find((s) => s.id === schoolYearId)?.name ??
+                      schoolYearId}
                   </span>
                 </div>
               ) : null}
@@ -624,7 +643,10 @@ export default async function StudentImportHistoryPage({
 
                     <div className="flex flex-wrap gap-2">
                       <CopyBatchIdButton value={batch.id} label="Copy Batch ID" />
-                      <BatchCardActions batchId={batch.id} isArchived={batch.isArchived} />
+                      <BatchCardActions
+                        batchId={batch.id}
+                        isArchived={batch.isArchived}
+                      />
                     </div>
                   </div>
                 ))}
