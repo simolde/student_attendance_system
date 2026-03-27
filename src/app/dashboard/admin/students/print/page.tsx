@@ -1,11 +1,5 @@
 import { auth } from "@/auth";
-import {
-  PrintFilters,
-  PrintPage,
-  PrintSummaryCard,
-  PrintSummaryGrid,
-  PrintTitle,
-} from "@/components/print/print-page";
+import PrintPage from "@/components/print/print-page";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
@@ -74,8 +68,8 @@ export default async function PrintStudentsPage({
     rfidStatus === "WITH_RFID"
       ? { NOT: { rfidUid: null as string | null } }
       : rfidStatus === "WITHOUT_RFID"
-      ? { rfidUid: null as string | null }
-      : {};
+        ? { rfidUid: null as string | null }
+        : {};
 
   const where = {
     AND: [
@@ -89,7 +83,11 @@ export default async function PrintStudentsPage({
               { rfidUid: { contains: q, mode: "insensitive" as const } },
               { user: { name: { contains: q, mode: "insensitive" as const } } },
               { user: { email: { contains: q, mode: "insensitive" as const } } },
-              { section: { name: { contains: q, mode: "insensitive" as const } } },
+              {
+                section: {
+                  name: { contains: q, mode: "insensitive" as const },
+                },
+              },
             ],
           }
         : {},
@@ -126,86 +124,99 @@ export default async function PrintStudentsPage({
   const sectionName =
     sections.find((section) => section.id === sectionId)?.name ?? sectionId;
 
+  const filterSummary = [
+    q ? `Search: ${q}` : null,
+    sectionId ? `Section: ${sectionName}` : null,
+    rfidStatus
+      ? `RFID Status: ${
+          rfidStatus === "WITH_RFID"
+            ? "With RFID"
+            : rfidStatus === "WITHOUT_RFID"
+              ? "Without RFID"
+              : rfidStatus
+        }`
+      : null,
+    selectedBatch ? `School Year: ${selectedBatch.schoolYear?.name ?? "-"}` : null,
+    importBatchId
+      ? `Import Batch: ${selectedBatch?.id ?? importBatchId}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" • ");
+
   return (
-    <PrintPage>
-      <PrintTitle
-        title="Student Import History"
-        meta={
-          <>
-            <div>
-              <strong>Page:</strong> {page} of {totalPages}
-            </div>
-            <div>
-              <strong>Total Students:</strong> {totalStudents}
-            </div>
-            <div>
-              <strong>Printed by:</strong>{" "}
-              {session.user.name ?? session.user.email ?? "Admin"}
-            </div>
-          </>
-        }
-      />
+    <PrintPage
+      title="Students"
+      subtitle={
+        [
+          `Page ${page} of ${totalPages}`,
+          `Total Students: ${totalStudents}`,
+          `Printed by: ${session.user.name ?? session.user.email ?? "Admin"}`,
+          filterSummary || null,
+        ]
+          .filter(Boolean)
+          .join(" • ")
+      }
+    >
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-lg border p-4">
+            <div className="text-sm text-muted-foreground">Students on This Page</div>
+            <div className="mt-1 text-2xl font-semibold">{students.length}</div>
+          </div>
 
-      {q || sectionId || rfidStatus || importBatchId ? (
-        <PrintFilters>
-          {q ? <div>Search: {q}</div> : null}
-          {sectionId ? <div>Section: {sectionName}</div> : null}
-          {rfidStatus ? (
-            <div>
-              RFID Status:{" "}
-              {rfidStatus === "WITH_RFID"
-                ? "With RFID"
-                : rfidStatus === "WITHOUT_RFID"
-                ? "Without RFID"
-                : rfidStatus}
-            </div>
-          ) : null}
-          {selectedBatch ? (
-            <div>School Year: {selectedBatch.schoolYear?.name ?? "-"}</div>
-          ) : null}
-        </PrintFilters>
-      ) : null}
+          <div className="rounded-lg border p-4">
+            <div className="text-sm text-muted-foreground">With RFID</div>
+            <div className="mt-1 text-2xl font-semibold">{withRfidCount}</div>
+          </div>
 
-      <PrintSummaryGrid columns={3}>
-        <PrintSummaryCard label="Students on This Page" value={students.length} />
-        <PrintSummaryCard label="With RFID" value={withRfidCount} />
-        <PrintSummaryCard label="Without RFID" value={withoutRfidCount} />
-      </PrintSummaryGrid>
+          <div className="rounded-lg border p-4">
+            <div className="text-sm text-muted-foreground">Without RFID</div>
+            <div className="mt-1 text-2xl font-semibold">{withoutRfidCount}</div>
+          </div>
+        </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Student No</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Section</th>
-            <th>Grade Level</th>
-            <th>RFID UID</th>
-            <th>RFID Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {students.length === 0 ? (
-            <tr>
-              <td colSpan={7} className="muted">
-                No students found.
-              </td>
-            </tr>
-          ) : (
-            students.map((student) => (
-              <tr key={student.id}>
-                <td>{student.studentNo}</td>
-                <td>{student.user.name ?? "-"}</td>
-                <td>{student.user.email}</td>
-                <td>{student.section?.name ?? "-"}</td>
-                <td>{formatGradeLevel(student.section?.gradeLevel)}</td>
-                <td>{student.rfidUid ?? "-"}</td>
-                <td>{student.rfidUid ? "WITH_RFID" : "WITHOUT_RFID"}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="px-3 py-2 text-left font-semibold">Student No</th>
+                <th className="px-3 py-2 text-left font-semibold">Name</th>
+                <th className="px-3 py-2 text-left font-semibold">Email</th>
+                <th className="px-3 py-2 text-left font-semibold">Section</th>
+                <th className="px-3 py-2 text-left font-semibold">Grade Level</th>
+                <th className="px-3 py-2 text-left font-semibold">RFID UID</th>
+                <th className="px-3 py-2 text-left font-semibold">RFID Status</th>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {students.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">
+                    No students found.
+                  </td>
+                </tr>
+              ) : (
+                students.map((student) => (
+                  <tr key={student.id} className="border-b">
+                    <td className="px-3 py-2">{student.studentNo}</td>
+                    <td className="px-3 py-2">{student.user.name ?? "-"}</td>
+                    <td className="px-3 py-2">{student.user.email}</td>
+                    <td className="px-3 py-2">{student.section?.name ?? "-"}</td>
+                    <td className="px-3 py-2">
+                      {formatGradeLevel(student.section?.gradeLevel)}
+                    </td>
+                    <td className="px-3 py-2">{student.rfidUid ?? "-"}</td>
+                    <td className="px-3 py-2">
+                      {student.rfidUid ? "WITH_RFID" : "WITHOUT_RFID"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </PrintPage>
   );
 }

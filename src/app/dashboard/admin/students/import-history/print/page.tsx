@@ -1,54 +1,28 @@
 import { auth } from "@/auth";
-import {
-  PrintFilters,
-  PrintPage,
-  PrintSummaryCard,
-  PrintSummaryGrid,
-  PrintTitle,
-} from "@/components/print/print-page";
+import PrintPage from "@/components/print/print-page";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 
 const PAGE_SIZE = 10;
 
-function formatManilaDateTime(date: Date) {
+function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-PH", {
-    timeZone: "Asia/Manila",
     year: "numeric",
     month: "short",
     day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
-function buildDateRange(dateFrom: string, dateTo: string) {
-  const createdAt: { gte?: Date; lte?: Date } = {};
-
-  if (dateFrom) {
-    createdAt.gte = new Date(`${dateFrom}T00:00:00.000+08:00`);
-  }
-
-  if (dateTo) {
-    createdAt.lte = new Date(`${dateTo}T23:59:59.999+08:00`);
-  }
-
-  return Object.keys(createdAt).length > 0 ? createdAt : undefined;
+  }).format(value);
 }
 
 export default async function PrintStudentImportHistoryPage({
   searchParams,
 }: {
   searchParams: Promise<{
-    archived?: string;
     q?: string;
-    page?: string;
-    dateFrom?: string;
-    dateTo?: string;
     schoolYearId?: string;
-    sectionId?: string;
     createdByUserId?: string;
+    archived?: string;
+    page?: string;
   }>;
 }) {
   const session = await auth();
@@ -62,246 +36,215 @@ export default async function PrintStudentImportHistoryPage({
   }
 
   const params = await searchParams;
-  const showArchived = params.archived === "1";
   const q = params.q?.trim() ?? "";
-  const dateFrom = params.dateFrom?.trim() ?? "";
-  const dateTo = params.dateTo?.trim() ?? "";
   const schoolYearId = params.schoolYearId?.trim() ?? "";
-  const sectionId = params.sectionId?.trim() ?? "";
   const createdByUserId = params.createdByUserId?.trim() ?? "";
+  const archived = params.archived?.trim() ?? "";
   const page = Math.max(Number(params.page || "1"), 1);
 
-  const createdAtRange = buildDateRange(dateFrom, dateTo);
+  const archivedFilter =
+    archived === "archived"
+      ? true
+      : archived === "active"
+        ? false
+        : undefined;
 
-  const baseWhere = {
-    ...(showArchived ? {} : { isArchived: false }),
-    ...(schoolYearId ? { schoolYearId } : {}),
-    ...(createdByUserId ? { createdByUserId } : {}),
-    ...(createdAtRange ? { createdAt: createdAtRange } : {}),
-    ...(sectionId
-      ? {
-          students: {
-            some: {
-              sectionId,
-            },
-          },
-        }
-      : {}),
-    ...(q
-      ? {
-          OR: [
-            { id: { contains: q, mode: "insensitive" as const } },
-            {
-              schoolYear: {
-                name: { contains: q, mode: "insensitive" as const },
+  const [schoolYears, users] = await Promise.all([
+    prisma.schoolYear.findMany({
+      orderBy: { name: "desc" },
+      select: {
+        id: true,
+        name: true,
+      },
+    }),
+    prisma.user.findMany({
+      where: {
+        role: {
+          in: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+      },
+      orderBy: [{ name: "asc" }, { email: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    }),
+  ]);
+
+  const where = {
+    AND: [
+      schoolYearId ? { schoolYearId } : {},
+      createdByUserId ? { createdByUserId } : {},
+      typeof archivedFilter === "boolean"
+        ? { isArchived: archivedFilter }
+        : {},
+      q
+        ? {
+            OR: [
+              { id: { contains: q, mode: "insensitive" as const } },
+              {
+                schoolYear: {
+                  name: { contains: q, mode: "insensitive" as const },
+                },
               },
-            },
-            {
-              createdByUser: {
-                name: { contains: q, mode: "insensitive" as const },
+              {
+                createdByUser: {
+                  name: { contains: q, mode: "insensitive" as const },
+                },
               },
-            },
-            {
-              createdByUser: {
-                email: { contains: q, mode: "insensitive" as const },
+              {
+                createdByUser: {
+                  email: { contains: q, mode: "insensitive" as const },
+                },
               },
-            },
-          ],
-        }
-      : {}),
+            ],
+          }
+        : {},
+    ],
   };
 
-  const [schoolYears, sections, importers, batches, totalBatches] =
-    await Promise.all([
-      prisma.schoolYear.findMany({
-        orderBy: { createdAt: "desc" },
-        select: { id: true, name: true },
-      }),
-      prisma.section.findMany({
-        orderBy: { name: "asc" },
-        select: { id: true, name: true },
-      }),
-      prisma.user.findMany({
-        where: {
-          studentImportBatches: {
-            some: {},
+  const [batches, totalBatches, summaryRows] = await Promise.all([
+    prisma.studentImportBatch.findMany({
+      where,
+      include: {
+        schoolYear: {
+          select: {
+            name: true,
           },
         },
-        orderBy: [{ name: "asc" }, { email: "asc" }],
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      }),
-      prisma.studentImportBatch.findMany({
-        where: baseWhere,
-        include: {
-          createdByUser: {
-            select: {
-              name: true,
-              email: true,
-            },
-          },
-          schoolYear: {
-            select: {
-              name: true,
-            },
-          },
-          _count: {
-            select: {
-              students: true,
-            },
+        createdByUser: {
+          select: {
+            name: true,
+            email: true,
           },
         },
-        orderBy: {
-          createdAt: "desc",
+        _count: {
+          select: {
+            students: true,
+          },
         },
-        skip: (page - 1) * PAGE_SIZE,
-        take: PAGE_SIZE,
-      }),
-      prisma.studentImportBatch.count({
-        where: baseWhere,
-      }),
-    ]);
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.studentImportBatch.count({ where }),
+    prisma.studentImportBatch.findMany({
+      where,
+      select: {
+        id: true,
+        isArchived: true,
+      },
+    }),
+  ]);
 
   const totalPages = Math.max(Math.ceil(totalBatches / PAGE_SIZE), 1);
+  const activeCount = summaryRows.filter((batch) => !batch.isArchived).length;
+  const archivedCount = summaryRows.filter((batch) => batch.isArchived).length;
 
   const schoolYearName =
-    schoolYears.find((s) => s.id === schoolYearId)?.name ?? schoolYearId;
-  const sectionName =
-    sections.find((s) => s.id === sectionId)?.name ?? sectionId;
-  const importer = importers.find((u) => u.id === createdByUserId);
+    schoolYears.find((item) => item.id === schoolYearId)?.name ?? schoolYearId;
 
-  const pageBatchCount = batches.length;
-  const pageStudentCount = batches.reduce(
-    (sum, batch) => sum + batch._count.students,
-    0,
-  );
-  const pageCreatedStudents = batches.reduce(
-    (sum, batch) => sum + batch.createdStudents,
-    0,
-  );
-  const pageUpdatedStudents = batches.reduce(
-    (sum, batch) => sum + batch.updatedStudents,
-    0,
-  );
+  const createdByName =
+    users.find((item) => item.id === createdByUserId)?.name ??
+    users.find((item) => item.id === createdByUserId)?.email ??
+    createdByUserId;
+
+  const filterSummary = [
+    q ? `Search: ${q}` : null,
+    schoolYearId ? `School Year: ${schoolYearName}` : null,
+    createdByUserId ? `Created By: ${createdByName}` : null,
+    archived
+      ? `Status: ${
+          archived === "archived"
+            ? "Archived"
+            : archived === "active"
+              ? "Active"
+              : archived
+        }`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" • ");
 
   return (
-    <PrintPage>
-      <PrintTitle
-        title="Student Import History"
-        meta={
-          <>
-            <div>
-              <strong>View:</strong>{" "}
-              {showArchived ? "Active + Archived" : "Active Only"}
-            </div>
-            <div>
-              <strong>Page:</strong> {page} of {totalPages}
-            </div>
-            <div>
-              <strong>Total matching batches:</strong> {totalBatches}
-            </div>
-            <div>
-              <strong>Printed by:</strong>{" "}
-              {session.user.name ?? session.user.email ?? "Admin"}
-            </div>
-          </>
-        }
-      />
+    <PrintPage
+      title="Student Import History"
+      subtitle={
+        [
+          `Page ${page} of ${totalPages}`,
+          `Total Batches: ${totalBatches}`,
+          `Printed by: ${session.user.name ?? session.user.email ?? "Admin"}`,
+          filterSummary || null,
+        ]
+          .filter(Boolean)
+          .join(" • ")
+      }
+    >
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-lg border p-4">
+            <div className="text-sm text-muted-foreground">Batches on This Page</div>
+            <div className="mt-1 text-2xl font-semibold">{batches.length}</div>
+          </div>
 
-      {q || dateFrom || dateTo || schoolYearId || sectionId || createdByUserId ? (
-        <PrintFilters>
-          {q ? <div>Search: {q}</div> : null}
+          <div className="rounded-lg border p-4">
+            <div className="text-sm text-muted-foreground">Active Batches</div>
+            <div className="mt-1 text-2xl font-semibold">{activeCount}</div>
+          </div>
 
-          {dateFrom || dateTo ? (
-            <div>
-              Date range: {dateFrom || "Any"} → {dateTo || "Any"}
-            </div>
-          ) : null}
+          <div className="rounded-lg border p-4">
+            <div className="text-sm text-muted-foreground">Archived Batches</div>
+            <div className="mt-1 text-2xl font-semibold">{archivedCount}</div>
+          </div>
+        </div>
 
-          {schoolYearId ? <div>School year: {schoolYearName}</div> : null}
-
-          {sectionId ? <div>Section: {sectionName}</div> : null}
-
-          {createdByUserId ? (
-            <div>
-              Created by:{" "}
-              {importer?.name
-                ? `${importer.name} (${importer.email})`
-                : importer?.email ?? createdByUserId}
-            </div>
-          ) : null}
-        </PrintFilters>
-      ) : null}
-
-      <PrintSummaryGrid columns={4}>
-        <PrintSummaryCard label="Batches on This Page" value={pageBatchCount} />
-        <PrintSummaryCard
-          label="Students on This Page"
-          value={pageStudentCount}
-        />
-        <PrintSummaryCard
-          label="Created Students"
-          value={pageCreatedStudents}
-        />
-        <PrintSummaryCard
-          label="Updated Students"
-          value={pageUpdatedStudents}
-        />
-      </PrintSummaryGrid>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Batch ID</th>
-            <th>Status</th>
-            <th>School Year</th>
-            <th>Imported By</th>
-            <th>Imported At</th>
-            <th>Students</th>
-            <th>Created</th>
-            <th>Updated</th>
-            <th>Skipped</th>
-          </tr>
-        </thead>
-        <tbody>
-          {batches.length === 0 ? (
-            <tr>
-              <td colSpan={9} className="muted">
-                No import history found.
-              </td>
-            </tr>
-          ) : (
-            batches.map((batch) => (
-              <tr key={batch.id}>
-                <td>{batch.id}</td>
-                <td>
-                  <span
-                    className={`badge ${
-                      batch.isArchived ? "archived" : "active"
-                    }`}
-                  >
-                    {batch.isArchived ? "ARCHIVED" : "ACTIVE"}
-                  </span>
-                </td>
-                <td>{batch.schoolYear?.name ?? "-"}</td>
-                <td>
-                  {batch.createdByUser?.name ??
-                    batch.createdByUser?.email ??
-                    "-"}
-                </td>
-                <td>{formatManilaDateTime(batch.createdAt)}</td>
-                <td>{batch._count.students}</td>
-                <td>{batch.createdStudents}</td>
-                <td>{batch.updatedStudents}</td>
-                <td>{batch.skipped}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="px-3 py-2 text-left font-semibold">Batch ID</th>
+                <th className="px-3 py-2 text-left font-semibold">School Year</th>
+                <th className="px-3 py-2 text-left font-semibold">Created By</th>
+                <th className="px-3 py-2 text-left font-semibold">Created At</th>
+                <th className="px-3 py-2 text-left font-semibold">Rows</th>
+                <th className="px-3 py-2 text-left font-semibold">Students</th>
+                <th className="px-3 py-2 text-left font-semibold">Status</th>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {batches.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">
+                    No import batches found.
+                  </td>
+                </tr>
+              ) : (
+                batches.map((batch) => (
+                  <tr key={batch.id} className="border-b">
+                    <td className="px-3 py-2">{batch.id}</td>
+                    <td className="px-3 py-2">{batch.schoolYear?.name ?? "-"}</td>
+                    <td className="px-3 py-2">
+                      {batch.createdByUser?.name ??
+                        batch.createdByUser?.email ??
+                        "-"}
+                    </td>
+                    <td className="px-3 py-2">{formatDate(batch.createdAt)}</td>
+                    <td className="px-3 py-2">{batch.totalRows}</td>
+                    <td className="px-3 py-2">{batch._count.students}</td>
+                    <td className="px-3 py-2">
+                      {batch.isArchived ? "ARCHIVED" : "ACTIVE"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </PrintPage>
   );
 }

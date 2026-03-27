@@ -1,82 +1,40 @@
-import { ReactNode } from "react";
-import { PrintButton } from "@/components/print/print-button";
-import { PRINT_PAGE_STYLES } from "@/lib/print-styles";
+import type { ReactNode } from "react";
+import PrintButton from "./print-button";
 
-export function PrintPage({
-  children,
-}: {
+type PrintPageProps = {
+  title: string;
+  subtitle?: string;
   children: ReactNode;
-}) {
-  return (
-    <div className="print-screen-shell">
-      <style suppressHydrationWarning>{PRINT_PAGE_STYLES}</style>
+  actions?: ReactNode;
+};
 
-      <div className="print-topbar print:hidden">
-        <div className="print-topbar__inner">
-          <div className="print-topbar__text">
-            <span className="print-topbar__eyebrow">Print Preview</span>
-            <h2 className="print-topbar__title">Student Attendance Report</h2>
+export default function PrintPage({
+  title,
+  subtitle,
+  children,
+  actions,
+}: PrintPageProps) {
+  return (
+    <div className="min-h-screen bg-muted/30 print:min-h-0 print:bg-white">
+      <div className="mx-auto w-full max-w-300 p-4 sm:p-6 lg:p-8 print:max-w-none print:p-0">
+        <div className="mb-6 flex items-start justify-between gap-4 print:hidden">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+            {subtitle ? (
+              <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+            ) : null}
           </div>
 
-          <PrintButton />
+          <div className="flex items-center gap-2">
+            {actions}
+            <PrintButton />
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-xl border bg-background shadow-sm print:rounded-none print:border-0 print:shadow-none">
+          <div className="p-4 sm:p-6 print:p-0">{children}</div>
         </div>
       </div>
-
-      <div className="print-paper">{children}</div>
     </div>
-  );
-}
-
-export function PrintTitle({
-  title,
-  meta,
-}: {
-  title: string;
-  meta?: ReactNode;
-}) {
-  return (
-    <header className="print-header">
-      <div className="print-header__brand">Student Attendance System</div>
-      <h1 className="print-header__title">{title}</h1>
-      {meta ? <div className="meta">{meta}</div> : null}
-    </header>
-  );
-}
-
-export function PrintFilters({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  return (
-    <section className="filters">
-      <div className="filters__title">Applied Filters</div>
-      <div className="filters__content">{children}</div>
-    </section>
-  );
-}
-
-export function PrintSummaryGrid({
-  columns = 3,
-  children,
-}: {
-  columns?: 3 | 4;
-  children: ReactNode;
-}) {
-  return <section className={`summary-grid cols-${columns}`}>{children}</section>;
-}
-
-export function PrintSummaryCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: ReactNode;
-}) {
-  return (
-    <article className="summary-card">
-      <div className="label">{label}</div>
-      <div className="value">{value}</div>
-    </article>
   );
 }
