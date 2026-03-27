@@ -1,11 +1,12 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
+import { buildBatchStudentsWhere } from "@/lib/student-filters";
 import { NextResponse } from "next/server";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 
 function formatManilaDateTime(date: Date) {
   return new Intl.DateTimeFormat("en-PH", {
@@ -18,18 +19,9 @@ function formatManilaDateTime(date: Date) {
   }).format(date);
 }
 
-function buildDateRange(dateFrom: string, dateTo: string) {
-  const createdAt: { gte?: Date; lte?: Date } = {};
-
-  if (dateFrom) {
-    createdAt.gte = new Date(`${dateFrom}T00:00:00.000+08:00`);
-  }
-
-  if (dateTo) {
-    createdAt.lte = new Date(`${dateTo}T23:59:59.999+08:00`);
-  }
-
-  return Object.keys(createdAt).length > 0 ? createdAt : undefined;
+function formatGradeLevel(value: string | null | undefined) {
+  if (!value) return "-";
+  return value.replace(/_/g, " ");
 }
 
 export async function GET(req: Request) {
@@ -44,67 +36,36 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const showArchived = searchParams.get("archived") === "1";
+
+  const batchId = searchParams.get("batchId")?.trim();
   const q = searchParams.get("q")?.trim() ?? "";
-  const dateFrom = searchParams.get("dateFrom")?.trim() ?? "";
-  const dateTo = searchParams.get("dateTo")?.trim() ?? "";
-  const schoolYearId = searchParams.get("schoolYearId")?.trim() ?? "";
+  const rfidStatus = searchParams.get("rfidStatus")?.trim() ?? "";
   const sectionId = searchParams.get("sectionId")?.trim() ?? "";
-  const createdByUserId = searchParams.get("createdByUserId")?.trim() ?? "";
   const page = Math.max(Number(searchParams.get("page") || "1"), 1);
 
-  const createdAtRange = buildDateRange(dateFrom, dateTo);
+  if (!batchId) {
+    return new NextResponse("Missing batchId", { status: 400 });
+  }
 
-  const where = {
-    ...(showArchived ? {} : { isArchived: false }),
-    ...(schoolYearId ? { schoolYearId } : {}),
-    ...(createdByUserId ? { createdByUserId } : {}),
-    ...(createdAtRange ? { createdAt: createdAtRange } : {}),
-    ...(sectionId
-      ? {
-          students: {
-            some: {
-              sectionId,
-            },
-          },
-        }
-      : {}),
-    ...(q
-      ? {
-          OR: [
-            { id: { contains: q, mode: "insensitive" as const } },
-            {
-              schoolYear: {
-                name: { contains: q, mode: "insensitive" as const },
-              },
-            },
-            {
-              createdByUser: {
-                name: { contains: q, mode: "insensitive" as const },
-              },
-            },
-            {
-              createdByUser: {
-                email: { contains: q, mode: "insensitive" as const },
-              },
-            },
-          ],
-        }
-      : {}),
-  };
-
-  const batches = await prisma.studentImportBatch.findMany({
-    where,
-    include: {
+  const batch = await prisma.studentImportBatch.findUnique({
+    where: { id: batchId },
+    select: {
+      id: true,
+      isArchived: true,
+      createdAt: true,
+      totalRows: true,
+      createdStudents: true,
+      updatedStudents: true,
+      skipped: true,
+      schoolYear: {
+        select: {
+          name: true,
+        },
+      },
       createdByUser: {
         select: {
           name: true,
           email: true,
-        },
-      },
-      schoolYear: {
-        select: {
-          name: true,
         },
       },
       _count: {
@@ -113,18 +74,44 @@ export async function GET(req: Request) {
         },
       },
     },
-    orderBy: {
-      createdAt: "desc",
-    },
-    skip: (page - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
   });
 
-  if (batches.length === 0) {
-    return new NextResponse("No import history found for this page", {
+  if (!batch) {
+    return new NextResponse("Import batch not found", { status: 404 });
+  }
+
+  const where = buildBatchStudentsWhere({
+    batchId,
+    q,
+    sectionId,
+    rfidStatus,
+  });
+
+  const [students, totalStudents] = await Promise.all([
+    prisma.student.findMany({
+      where,
+      include: {
+        user: true,
+        section: true,
+      },
+      orderBy: [{ studentNo: "asc" }, { createdAt: "asc" }],
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.student.count({
+      where,
+    }),
+  ]);
+
+  if (students.length === 0) {
+    return new NextResponse("No students found for this batch page", {
       status: 404,
     });
   }
+
+  const totalPages = Math.max(Math.ceil(totalStudents / PAGE_SIZE), 1);
+  const withRfid = students.filter((student) => !!student.rfidUid?.trim()).length;
+  const withoutRfid = students.length - withRfid;
 
   const doc = new jsPDF({
     orientation: "landscape",
@@ -133,49 +120,79 @@ export async function GET(req: Request) {
   });
 
   doc.setFontSize(16);
-  doc.text("Student Import History - Current Page", 14, 14);
+  doc.text("Import Batch Details - Current Page", 14, 14);
 
   doc.setFontSize(10);
-  doc.text(`Page: ${page}`, 14, 21);
+  doc.text(`Batch ID: ${batch.id}`, 14, 21);
+  doc.text(`Status: ${batch.isArchived ? "ARCHIVED" : "ACTIVE"}`, 14, 27);
+  doc.text(`School Year: ${batch.schoolYear?.name ?? "-"}`, 14, 33);
   doc.text(
-    `View: ${showArchived ? "Active + Archived" : "Active Only"}`,
+    `Imported By: ${batch.createdByUser?.name ?? batch.createdByUser?.email ?? "-"}`,
     14,
-    27
+    39,
   );
+  doc.text(`Imported At: ${formatManilaDateTime(batch.createdAt)}`, 14, 45);
 
-  let filterY = 33;
-  if (q) {
-    doc.text(`Search: ${q}`, 14, filterY);
+  doc.text(`Page: ${page} of ${totalPages}`, 110, 21);
+  doc.text(`Total Matching Students: ${totalStudents}`, 110, 27);
+  doc.text(`Students on Page: ${students.length}`, 110, 33);
+  doc.text(`With RFID: ${withRfid}`, 110, 39);
+  doc.text(`Without RFID: ${withoutRfid}`, 110, 45);
+
+  let filterY = 53;
+
+  if (q || sectionId || rfidStatus) {
+    doc.setFontSize(10);
+    doc.text("Applied Filters:", 14, filterY);
     filterY += 6;
-  }
-  if (dateFrom || dateTo) {
-    doc.text(`Date Range: ${dateFrom || "Any"} -> ${dateTo || "Any"}`, 14, filterY);
-    filterY += 6;
+
+    if (q) {
+      doc.text(`Search: ${q}`, 18, filterY);
+      filterY += 6;
+    }
+
+    if (sectionId) {
+      doc.text(`Section ID: ${sectionId}`, 18, filterY);
+      filterY += 6;
+    }
+
+    if (rfidStatus) {
+      doc.text(
+        `RFID Status: ${
+          rfidStatus === "with-rfid"
+            ? "With RFID"
+            : rfidStatus === "without-rfid"
+              ? "Without RFID"
+              : rfidStatus
+        }`,
+        18,
+        filterY,
+      );
+      filterY += 6;
+    }
   }
 
   autoTable(doc, {
     startY: filterY + 2,
     head: [[
-      "Batch ID",
-      "Status",
-      "School Year",
-      "Imported By",
-      "Imported At",
-      "Students",
-      "Created",
-      "Updated",
-      "Skipped",
+      "#",
+      "Student No",
+      "Full Name",
+      "Email",
+      "Section",
+      "Grade Level",
+      "RFID UID",
+      "Created At",
     ]],
-    body: batches.map((batch) => [
-      batch.id,
-      batch.isArchived ? "ARCHIVED" : "ACTIVE",
-      batch.schoolYear?.name ?? "-",
-      batch.createdByUser?.name ?? batch.createdByUser?.email ?? "-",
-      formatManilaDateTime(batch.createdAt),
-      String(batch._count.students),
-      String(batch.createdStudents),
-      String(batch.updatedStudents),
-      String(batch.skipped),
+    body: students.map((student, index) => [
+      String((page - 1) * PAGE_SIZE + index + 1),
+      student.studentNo,
+      student.user?.name ?? "-",
+      student.user?.email ?? "-",
+      student.section?.name ?? "-",
+      formatGradeLevel(student.section?.gradeLevel),
+      student.rfidUid ?? "No RFID",
+      formatManilaDateTime(student.createdAt),
     ]),
     styles: {
       fontSize: 8,
@@ -186,18 +203,26 @@ export async function GET(req: Request) {
       fillColor: [37, 99, 235],
     },
     columnStyles: {
-      0: { cellWidth: 45 },
-      1: { cellWidth: 20 },
-      2: { cellWidth: 28 },
-      3: { cellWidth: 38 },
-      4: { cellWidth: 32 },
-      5: { cellWidth: 18 },
-      6: { cellWidth: 18 },
-      7: { cellWidth: 18 },
-      8: { cellWidth: 18 },
+      0: { cellWidth: 12 },
+      1: { cellWidth: 28 },
+      2: { cellWidth: 45 },
+      3: { cellWidth: 48 },
+      4: { cellWidth: 28 },
+      5: { cellWidth: 24 },
+      6: { cellWidth: 32 },
+      7: { cellWidth: 30 },
     },
     margin: { left: 10, right: 10 },
   });
+
+  const finalY = (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 170;
+
+  doc.setFontSize(9);
+  doc.text(
+    `Batch Students: ${batch._count.students}   |   Total Rows: ${batch.totalRows}   |   Created Students: ${batch.createdStudents}   |   Updated Students: ${batch.updatedStudents}   |   Skipped: ${batch.skipped}`,
+    14,
+    Math.min(finalY + 10, 190),
+  );
 
   const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
 
@@ -205,7 +230,7 @@ export async function GET(req: Request) {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="student_import_history_page_${page}.pdf"`,
+      "Content-Disposition": `attachment; filename="batch_students_${batch.id}_page_${page}.pdf"`,
     },
   });
 }
