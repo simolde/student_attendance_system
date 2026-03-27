@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
+import BatchDetailsActions from "./batch-details-actions";
 
 const PAGE_SIZE = 20;
 
@@ -306,7 +307,9 @@ export default async function AdminStudentImportBatchDetailsPage({
   });
   
   const exportPagePdfHref = buildPagePdfHref(batchId, {
-    ...baseValues,
+    q,
+    sectionId,
+    rfidStatus,
     page,
   });
 
@@ -372,31 +375,14 @@ export default async function AdminStudentImportBatchDetailsPage({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Link
-              href={printPageHref}
-              className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-            >
-              Print Current Page
-            </Link>
-            <Link
-              href={exportPageHref}
-              className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-            >
-              Export CSV (Page)
-            </Link>
-            <Link
-              href={exportFilteredHref}
-              className="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-            >
-              Export CSV (Filtered)
-            </Link>
-            <Link
-              href={exportPagePdfHref}
-              target="_blank"
-              className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-            >
-              Export PDF (Page)
-            </Link>
+            <BatchDetailsActions
+              batchId={batch.id}
+              isArchived={batch.isArchived}
+              exportThisPageHref={exportPageHref}
+              exportAllFilteredHref={exportFilteredHref}
+              exportPagePdfHref={exportPagePdfHref}
+              printViewHref={printPageHref}
+            />
           </div>
         </div>
       </div>
