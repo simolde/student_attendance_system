@@ -100,6 +100,7 @@ function buildExportHref(
 ) {
   const params = new URLSearchParams();
 
+  params.set("batchId", batchId);
   params.set("scope", scope);
 
   if (values.q?.trim()) params.set("q", values.q.trim());
@@ -113,7 +114,34 @@ function buildExportHref(
     params.set("page", String(values.page));
   }
 
-  return `/dashboard/admin/students/import-history/${batchId}/export/csv?${params.toString()}`;
+  return `/api/students/export-batch-students?${params.toString()}`;
+}
+
+function buildPagePdfHref(
+  batchId: string,
+  values: {
+    q?: string;
+    page?: string | number;
+    sectionId?: string;
+    rfidStatus?: string;
+  },
+) {
+  const params = new URLSearchParams();
+
+  params.set("batchId", batchId);
+
+  if (values.q?.trim()) params.set("q", values.q.trim());
+  if (values.sectionId && values.sectionId !== "all") {
+    params.set("sectionId", values.sectionId);
+  }
+  if (values.rfidStatus && values.rfidStatus !== "all") {
+    params.set("rfidStatus", values.rfidStatus);
+  }
+  if (values.page) {
+    params.set("page", String(values.page));
+  }
+
+  return `/api/students/export-batch-students-page-pdf?${params.toString()}`;
 }
 
 export default async function AdminStudentImportBatchDetailsPage({
@@ -276,6 +304,11 @@ export default async function AdminStudentImportBatchDetailsPage({
     ...baseValues,
     page,
   });
+  
+  const exportPagePdfHref = buildPagePdfHref(batchId, {
+    ...baseValues,
+    page,
+  });
 
   return (
     <div className="space-y-6">
@@ -356,6 +389,13 @@ export default async function AdminStudentImportBatchDetailsPage({
               className="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
             >
               Export CSV (Filtered)
+            </Link>
+            <Link
+              href={exportPagePdfHref}
+              target="_blank"
+              className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              Export PDF (Page)
             </Link>
           </div>
         </div>
