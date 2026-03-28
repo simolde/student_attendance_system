@@ -5,35 +5,33 @@ import { hasRole, ROLES } from "@/lib/rbac";
 import DashboardTopbar from "@/components/layout/dashboard-topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Users,
-  ShieldCheck,
-  UserCheck,
-  UserX,
+  School,
   Search,
   Filter,
-  Mail,
+  GraduationCap,
+  Layers3,
+  Users,
 } from "lucide-react";
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 12;
 
-function buildUsersQuery(params: {
+function buildSectionsQuery(params: {
   q?: string;
-  role?: string;
-  status?: string;
+  gradeLevel?: string;
   page?: string | number;
 }) {
   const search = new URLSearchParams();
 
   if (params.q) search.set("q", params.q);
-  if (params.role) search.set("role", params.role);
-  if (params.status) search.set("status", params.status);
+  if (params.gradeLevel) search.set("gradeLevel", params.gradeLevel);
   if (params.page) search.set("page", String(params.page));
 
-  return `/dashboard/admin/users?${search.toString()}`;
+  return `/dashboard/admin/sections?${search.toString()}`;
 }
 
-function formatRole(role: string) {
-  return role.replaceAll("_", " ");
+function formatGradeLevel(value: string | null | undefined) {
+  if (!value) return "-";
+  return value.replaceAll("_", " ");
 }
 
 function formatDateTime(value: Date) {
@@ -48,30 +46,30 @@ function formatDateTime(value: Date) {
   }).format(value);
 }
 
-function getRoleBadgeClass(role: string) {
-  switch (role) {
-    case "SUPER_ADMIN":
-      return "border-violet-200 bg-violet-50 text-violet-700";
-    case "ADMIN":
-      return "border-blue-200 bg-blue-50 text-blue-700";
-    case "TEACHER":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
-    case "STAFF":
-      return "border-amber-200 bg-amber-50 text-amber-700";
-    case "STUDENT":
-      return "border-slate-200 bg-slate-50 text-slate-700";
-    default:
-      return "border-slate-200 bg-slate-50 text-slate-700";
-  }
-}
+const gradeOptions = [
+  "PRE_NURSERY",
+  "NURSERY",
+  "KINDER",
+  "GRADE_1",
+  "GRADE_2",
+  "GRADE_3",
+  "GRADE_4",
+  "GRADE_5",
+  "GRADE_6",
+  "GRADE_7",
+  "GRADE_8",
+  "GRADE_9",
+  "GRADE_10",
+  "GRADE_11",
+  "GRADE_12",
+];
 
-export default async function UsersPage({
+export default async function SectionsPage({
   searchParams,
 }: {
   searchParams: Promise<{
     q?: string;
-    role?: string;
-    status?: string;
+    gradeLevel?: string;
     page?: string;
   }>;
 }) {
@@ -88,68 +86,55 @@ export default async function UsersPage({
   const params = await searchParams;
 
   const q = params.q?.trim() ?? "";
-  const role = params.role?.trim() ?? "";
-  const status = params.status?.trim() ?? "";
+  const gradeLevel = params.gradeLevel?.trim() ?? "";
   const page = Math.max(Number(params.page || "1"), 1);
 
   const where = {
     AND: [
-      role ? { role: role as "SUPER_ADMIN" | "ADMIN" | "TEACHER" | "STAFF" | "STUDENT" } : {},
-      status === "ACTIVE"
-        ? { isActive: true }
-        : status === "INACTIVE"
-          ? { isActive: false }
-          : {},
+      gradeLevel ? { gradeLevel: gradeLevel as (typeof gradeOptions)[number] } : {},
       q
         ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" as const } },
-              { email: { contains: q, mode: "insensitive" as const } },
-            ],
+            name: {
+              contains: q,
+              mode: "insensitive" as const,
+            },
           }
         : {},
     ],
   };
 
-  const [totalCount, users, summaryRows] = await Promise.all([
-    prisma.user.count({ where }),
-    prisma.user.findMany({
+  const [totalCount, sections, summaryRows] = await Promise.all([
+    prisma.section.count({ where }),
+    prisma.section.findMany({
       where,
-      orderBy: [{ createdAt: "desc" }],
+      include: {
+        _count: {
+          select: {
+            students: true,
+            enrollments: true,
+            rules: true,
+          },
+        },
+      },
+      orderBy: [{ gradeLevel: "asc" }, { name: "asc" }],
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isActive: true,
-        mustChangePassword: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     }),
-    prisma.user.findMany({
+    prisma.section.findMany({
       select: {
-        id: true,
-        isActive: true,
-        role: true,
+        gradeLevel: true,
       },
     }),
   ]);
 
   const totalPages = Math.max(Math.ceil(totalCount / PAGE_SIZE), 1);
-  const activeCount = summaryRows.filter((item) => item.isActive).length;
-  const inactiveCount = summaryRows.filter((item) => !item.isActive).length;
-  const adminCount = summaryRows.filter((item) =>
-    item.role === "SUPER_ADMIN" || item.role === "ADMIN"
-  ).length;
+  const uniqueGradeLevels = new Set(summaryRows.map((item) => item.gradeLevel)).size;
 
   return (
     <div className="portal-shell space-y-6">
       <DashboardTopbar
-        title="Users"
-        subtitle="Manage system users, roles, and account access status."
+        title="Sections"
+        subtitle="Manage section records, grade levels, and class groupings."
         userName={session.user.name ?? session.user.email}
       />
 
@@ -159,16 +144,16 @@ export default async function UsersPage({
           <div className="relative grid gap-6 px-6 py-8 md:px-8 md:py-10 xl:grid-cols-[1.45fr_0.95fr]">
             <div className="space-y-4 text-white">
               <div className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
-                User Access Management
+                Class Section Management
               </div>
 
               <div className="space-y-3">
                 <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-                  Manage system accounts and roles
+                  Organize sections by grade and class grouping
                 </h1>
                 <p className="max-w-2xl text-sm leading-6 text-blue-50/90 md:text-base">
-                  Review active users, monitor role assignments, and keep account
-                  access aligned with your school attendance system.
+                  Review section records, track linked students and enrollments,
+                  and keep your attendance structure organized.
                 </p>
               </div>
             </div>
@@ -176,9 +161,9 @@ export default async function UsersPage({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
                 <div className="flex items-center gap-2 text-blue-100">
-                  <Users className="h-4 w-4" />
+                  <School className="h-4 w-4" />
                   <span className="text-xs font-medium uppercase tracking-[0.16em]">
-                    Total Users
+                    Total Sections
                   </span>
                 </div>
                 <div className="mt-2 text-lg font-semibold">{summaryRows.length}</div>
@@ -186,32 +171,22 @@ export default async function UsersPage({
 
               <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
                 <div className="flex items-center gap-2 text-blue-100">
-                  <UserCheck className="h-4 w-4" />
+                  <Layers3 className="h-4 w-4" />
                   <span className="text-xs font-medium uppercase tracking-[0.16em]">
-                    Active
+                    Grade Levels
                   </span>
                 </div>
-                <div className="mt-2 text-lg font-semibold">{activeCount}</div>
+                <div className="mt-2 text-lg font-semibold">{uniqueGradeLevels}</div>
               </div>
 
-              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur sm:col-span-2">
                 <div className="flex items-center gap-2 text-blue-100">
-                  <UserX className="h-4 w-4" />
+                  <GraduationCap className="h-4 w-4" />
                   <span className="text-xs font-medium uppercase tracking-[0.16em]">
-                    Inactive
+                    Current Results
                   </span>
                 </div>
-                <div className="mt-2 text-lg font-semibold">{inactiveCount}</div>
-              </div>
-
-              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
-                <div className="flex items-center gap-2 text-blue-100">
-                  <ShieldCheck className="h-4 w-4" />
-                  <span className="text-xs font-medium uppercase tracking-[0.16em]">
-                    Admin Accounts
-                  </span>
-                </div>
-                <div className="mt-2 text-lg font-semibold">{adminCount}</div>
+                <div className="mt-2 text-lg font-semibold">{totalCount}</div>
               </div>
             </div>
           </div>
@@ -225,52 +200,42 @@ export default async function UsersPage({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div className="relative xl:col-span-2">
+          <form className="grid gap-4 md:grid-cols-[1fr_240px_auto]">
+            <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 name="q"
                 defaultValue={q}
-                placeholder="Search user name or email"
+                placeholder="Search section name"
                 className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm shadow-sm outline-none transition focus:border-blue-300"
               />
             </div>
 
             <select
-              name="role"
-              defaultValue={role}
+              name="gradeLevel"
+              defaultValue={gradeLevel}
               className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-300"
             >
-              <option value="">All roles</option>
-              <option value="SUPER_ADMIN">Super Admin</option>
-              <option value="ADMIN">Admin</option>
-              <option value="TEACHER">Teacher</option>
-              <option value="STAFF">Staff</option>
-              <option value="STUDENT">Student</option>
+              <option value="">All grade levels</option>
+              {gradeOptions.map((option) => (
+                <option key={option} value={option}>
+                  {formatGradeLevel(option)}
+                </option>
+              ))}
             </select>
 
-            <select
-              name="status"
-              defaultValue={status}
-              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-300"
-            >
-              <option value="">All status</option>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-            </select>
-
-            <div className="flex gap-2 md:col-span-2 xl:col-span-4">
+            <div className="flex gap-2">
               <button
                 type="submit"
                 className="inline-flex h-11 items-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground"
               >
                 <Filter className="mr-2 h-4 w-4" />
-                Apply Filters
+                Apply
               </button>
 
               <a
-                href="/dashboard/admin/users"
+                href="/dashboard/admin/sections"
                 className="inline-flex h-11 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700"
               >
                 Reset
@@ -283,7 +248,7 @@ export default async function UsersPage({
       <Card className="portal-card">
         <CardHeader className="pb-3">
           <CardTitle className="text-xl font-semibold text-slate-900">
-            User Records
+            Section Records
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -292,65 +257,51 @@ export default async function UsersPage({
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="bg-slate-50/80">
-                    <th className="px-4 py-3 text-left font-medium text-slate-700">Name</th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-700">Email</th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-700">Role</th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-700">Status</th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-700">Password Change</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Section Name</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Grade Level</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Students</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Enrollments</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Rules</th>
                     <th className="px-4 py-3 text-left font-medium text-slate-700">Created</th>
                     <th className="px-4 py-3 text-left font-medium text-slate-700">Updated</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {users.length === 0 ? (
+                  {sections.length === 0 ? (
                     <tr>
                       <td
                         colSpan={7}
                         className="px-4 py-10 text-center text-sm text-muted-foreground"
                       >
-                        No users found.
+                        No sections found.
                       </td>
                     </tr>
                   ) : (
-                    users.map((user) => (
-                      <tr key={user.id} className="border-t border-slate-100">
+                    sections.map((section) => (
+                      <tr key={section.id} className="border-t border-slate-100">
                         <td className="px-4 py-4 font-medium text-slate-900">
-                          {user.name ?? "-"}
+                          {section.name}
+                        </td>
+                        <td className="px-4 py-4 text-slate-700">
+                          {formatGradeLevel(section.gradeLevel)}
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2 text-slate-700">
-                            <Mail className="h-4 w-4 text-slate-400" />
-                            <span>{user.email}</span>
+                            <Users className="h-4 w-4 text-slate-400" />
+                            <span>{section._count.students}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getRoleBadgeClass(
-                              user.role
-                            )}`}
-                          >
-                            {formatRole(user.role)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${
-                              user.isActive
-                                ? "border-green-200 bg-green-50 text-green-700"
-                                : "border-slate-200 bg-slate-50 text-slate-700"
-                            }`}
-                          >
-                            {user.isActive ? "ACTIVE" : "INACTIVE"}
-                          </span>
+                        <td className="px-4 py-4 text-slate-700">
+                          {section._count.enrollments}
                         </td>
                         <td className="px-4 py-4 text-slate-700">
-                          {user.mustChangePassword ? "Required" : "Not Required"}
+                          {section._count.rules}
                         </td>
                         <td className="px-4 py-4 text-slate-700">
-                          {formatDateTime(user.createdAt)}
+                          {formatDateTime(section.createdAt)}
                         </td>
                         <td className="px-4 py-4 text-slate-700">
-                          {formatDateTime(user.updatedAt)}
+                          {formatDateTime(section.updatedAt)}
                         </td>
                       </tr>
                     ))
@@ -367,10 +318,9 @@ export default async function UsersPage({
 
             <div className="flex items-center gap-2">
               <a
-                href={buildUsersQuery({
+                href={buildSectionsQuery({
                   q,
-                  role,
-                  status,
+                  gradeLevel,
                   page: Math.max(page - 1, 1),
                 })}
                 className={`inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 font-medium text-slate-700 ${
@@ -381,10 +331,9 @@ export default async function UsersPage({
               </a>
 
               <a
-                href={buildUsersQuery({
+                href={buildSectionsQuery({
                   q,
-                  role,
-                  status,
+                  gradeLevel,
                   page: Math.min(page + 1, totalPages),
                 })}
                 className={`inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 font-medium text-slate-700 ${
