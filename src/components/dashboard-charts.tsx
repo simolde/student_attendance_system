@@ -30,7 +30,7 @@ type SectionAttendanceData = {
   total: number;
 };
 
-const PIE_COLORS = ["#22c55e", "#f59e0b", "#ef4444", "#3b82f6", "#8b5cf6"];
+const PIE_COLORS = ["#2563eb", "#f59e0b", "#ef4444", "#06b6d4", "#8b5cf6"];
 
 function hasPieData(data: AttendanceStatusData[]) {
   return data.some((item) => Number(item.value) > 0);
@@ -52,9 +52,11 @@ export default function DashboardCharts({
 
   return (
     <div className="grid gap-6 xl:grid-cols-2">
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle>Attendance Status Overview</CardTitle>
+      <Card className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg text-slate-900">
+            Attendance Status Overview
+          </CardTitle>
           <CardDescription>
             Distribution of attendance records by status.
           </CardDescription>
@@ -63,16 +65,18 @@ export default function DashboardCharts({
         <CardContent>
           {showPie ? (
             <div className="min-w-0 w-full overflow-x-auto">
-              <PieChart width={420} height={300}>
+              <PieChart width={420} height={320}>
                 <Pie
                   data={attendanceStatusData}
                   dataKey="value"
                   nameKey="name"
                   cx="50%"
-                  cy="45%"
-                  innerRadius={60}
-                  outerRadius={95}
+                  cy="44%"
+                  innerRadius={68}
+                  outerRadius={102}
                   paddingAngle={3}
+                  stroke="#ffffff"
+                  strokeWidth={4}
                 >
                   {attendanceStatusData.map((entry, index) => (
                     <Cell
@@ -86,16 +90,18 @@ export default function DashboardCharts({
               </PieChart>
             </div>
           ) : (
-            <div className="flex h-[300px] items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+            <div className="flex h-[320px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 text-sm text-muted-foreground">
               No attendance status data available.
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle>Attendance by Section</CardTitle>
+      <Card className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg text-slate-900">
+            Attendance by Section
+          </CardTitle>
           <CardDescription>
             Compare total attendance records across sections.
           </CardDescription>
@@ -105,27 +111,33 @@ export default function DashboardCharts({
           {showBar ? (
             <div className="min-w-0 w-full overflow-x-auto">
               <BarChart
-                width={520}
-                height={300}
+                width={560}
+                height={320}
                 data={sectionAttendanceData}
                 margin={{ top: 10, right: 10, bottom: 10, left: 0 }}
               >
-                <CartesianGrid vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                 <XAxis
                   dataKey="name"
                   interval={0}
-                  angle={-20}
+                  angle={-18}
                   textAnchor="end"
-                  height={60}
+                  height={62}
+                  tick={{ fontSize: 12, fill: "#64748b" }}
                 />
-                <YAxis allowDecimals={false} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#64748b" }} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="total" fill="#3b82f6" radius={[6, 6, 0, 0]} name="Total" />
+                <Bar
+                  dataKey="total"
+                  fill="#2563eb"
+                  radius={[10, 10, 0, 0]}
+                  name="Total"
+                />
               </BarChart>
             </div>
           ) : (
-            <div className="flex h-75 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+            <div className="flex h-[320px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 text-sm text-muted-foreground">
               No section attendance data available.
             </div>
           )}
