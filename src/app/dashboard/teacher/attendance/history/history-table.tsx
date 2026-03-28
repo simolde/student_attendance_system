@@ -1,10 +1,10 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import {
-  updateAttendanceRecord,
   deleteAttendanceRecord,
   type AttendanceUpdateState,
+  updateAttendanceRecord,
 } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ type AttendanceRow = {
   id: string;
   date: string;
   status: "PRESENT" | "LATE" | "ABSENT" | "EXCUSED";
+  source: "MANUAL" | "RFID" | "IMPORT";
   remarks: string | null;
   student: {
     studentNo: string;
@@ -37,6 +38,34 @@ type AttendanceRow = {
     } | null;
   };
 };
+
+function getStatusBadgeClass(status: AttendanceRow["status"]) {
+  switch (status) {
+    case "PRESENT":
+      return "border-green-200 bg-green-50 text-green-700";
+    case "LATE":
+      return "border-amber-200 bg-amber-50 text-amber-700";
+    case "ABSENT":
+      return "border-red-200 bg-red-50 text-red-700";
+    case "EXCUSED":
+      return "border-blue-200 bg-blue-50 text-blue-700";
+    default:
+      return "border-slate-200 bg-slate-50 text-slate-700";
+  }
+}
+
+function getSourceBadgeClass(source: AttendanceRow["source"]) {
+  switch (source) {
+    case "MANUAL":
+      return "border-slate-200 bg-slate-50 text-slate-700";
+    case "RFID":
+      return "border-violet-200 bg-violet-50 text-violet-700";
+    case "IMPORT":
+      return "border-cyan-200 bg-cyan-50 text-cyan-700";
+    default:
+      return "border-slate-200 bg-slate-50 text-slate-700";
+  }
+}
 
 function AttendanceEditRow({ record }: { record: AttendanceRow }) {
   const [status, setStatus] = useState(record.status);
@@ -62,28 +91,66 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
     if (deleteState?.success) toast.success(deleteState.success);
   }, [deleteState]);
 
+  const isDirty = useMemo(() => {
+    return status !== record.status || remarks !== (record.remarks ?? "");
+  }, [status, remarks, record.status, record.remarks]);
+
   return (
     <TableRow className="align-top">
       <TableCell className="font-medium text-slate-900">
         {record.student.studentNo}
       </TableCell>
-      <TableCell>{record.student.user.name ?? record.student.user.email}</TableCell>
+
+      <TableCell>
+        <div className="space-y-0.5">
+          <div className="font-medium text-slate-900">
+            {record.student.user.name ?? "-"}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {record.student.user.email}
+          </div>
+        </div>
+      </TableCell>
+
       <TableCell>{record.student.section?.name ?? "-"}</TableCell>
-      <TableCell>{(record.date)}</TableCell>
+
+      <TableCell>{record.date}</TableCell>
+
+      <TableCell>
+        <span
+          className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getSourceBadgeClass(
+            record.source
+          )}`}
+        >
+          {record.source}
+        </span>
+      </TableCell>
 
       <TableCell>
         <select
           value={status}
           onChange={(e) =>
-            setStatus(e.target.value as "PRESENT" | "LATE" | "ABSENT" | "EXCUSED")
+            setStatus(
+              e.target.value as "PRESENT" | "LATE" | "ABSENT" | "EXCUSED"
+            )
           }
-          className="h-10 rounded-md border bg-background px-3 text-sm"
+          className="h-10 w-full rounded-md border bg-background px-3 text-sm"
         >
           <option value="PRESENT">PRESENT</option>
           <option value="LATE">LATE</option>
           <option value="ABSENT">ABSENT</option>
           <option value="EXCUSED">EXCUSED</option>
         </select>
+
+        <div className="mt-2">
+          <span
+            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusBadgeClass(
+              status
+            )}`}
+          >
+            {status}
+          </span>
+        </div>
       </TableCell>
 
       <TableCell>
@@ -91,18 +158,23 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
           value={remarks}
           onChange={(e) => setRemarks(e.target.value)}
           placeholder="Optional remarks"
-          className="h-10"
+          className="h-10 min-w-[180px]"
         />
       </TableCell>
 
       <TableCell>
-        <div className="flex flex-col gap-2">
+        <div className="flex min-w-[120px] flex-col gap-2">
           <form action={updateAction}>
             <input type="hidden" name="attendanceId" value={record.id} />
             <input type="hidden" name="status" value={status} />
             <input type="hidden" name="remarks" value={remarks} />
 
-            <Button type="submit" size="sm" disabled={updatePending} className="w-full">
+            <Button
+              type="submit"
+              size="sm"
+              disabled={updatePending || !isDirty}
+              className="w-full"
+            >
               {updatePending ? "Saving..." : "Save"}
             </Button>
           </form>
@@ -114,7 +186,7 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
           <ConfirmActionDialog
             formId={`delete-attendance-${record.id}`}
             title="Delete attendance record?"
-            description="This action will permanently remove this attendance record."
+            description="This will permanently remove the attendance record."
             actionLabel={deletePending ? "Deleting..." : "Delete"}
             trigger={
               <Button
@@ -145,19 +217,31 @@ export default function AttendanceHistoryTable({
         <TableHeader>
           <TableRow className="bg-slate-50/80">
             <TableHead>Student No</TableHead>
-            <TableHead>Name</TableHead>
+            <TableHead>Student</TableHead>
             <TableHead>Section</TableHead>
             <TableHead>Date</TableHead>
+            <TableHead>Source</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Remarks</TableHead>
-            <TableHead className="w-35">Action</TableHead>
+            <TableHead className="w-35">Actions</TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
-          {records.map((record) => (
-            <AttendanceEditRow key={record.id} record={record} />
-          ))}
+          {records.length === 0 ? (
+            <TableRow>
+              <TableCell
+                colSpan={8}
+                className="py-10 text-center text-sm text-muted-foreground"
+              >
+                No attendance records found.
+              </TableCell>
+            </TableRow>
+          ) : (
+            records.map((record) => (
+              <AttendanceEditRow key={record.id} record={record} />
+            ))
+          )}
         </TableBody>
       </Table>
     </div>

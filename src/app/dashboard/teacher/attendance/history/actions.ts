@@ -45,7 +45,7 @@ async function ensureAuthorized() {
 }
 
 export async function updateAttendanceRecord(
-  prevState: AttendanceUpdateState,
+  _prevState: AttendanceUpdateState,
   formData: FormData
 ): Promise<AttendanceUpdateState> {
   const session = await ensureAuthorized();
@@ -114,7 +114,7 @@ export async function updateAttendanceRecord(
 }
 
 export async function deleteAttendanceRecord(
-  prevState: AttendanceUpdateState,
+  _prevState: AttendanceUpdateState,
   formData: FormData
 ): Promise<AttendanceUpdateState> {
   const session = await ensureAuthorized();

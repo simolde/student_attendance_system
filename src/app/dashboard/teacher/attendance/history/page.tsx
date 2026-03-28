@@ -1,18 +1,24 @@
 import { auth } from "@/auth";
 import PageHeader from "@/components/layout/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { getManilaDateInputValue, dateInputToUtcDate } from "@/lib/date";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import AttendanceHistoryTable from "./history-table";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 15;
 
 function buildHistoryQuery(params: {
   q?: string;
   sectionId?: string;
   status?: string;
+  source?: string;
   date?: string;
   page?: string | number;
 }) {
@@ -21,41 +27,15 @@ function buildHistoryQuery(params: {
   if (params.q) search.set("q", params.q);
   if (params.sectionId) search.set("sectionId", params.sectionId);
   if (params.status) search.set("status", params.status);
+  if (params.source) search.set("source", params.source);
   if (params.date) search.set("date", params.date);
   if (params.page) search.set("page", String(params.page));
 
   return `/dashboard/teacher/attendance/history?${search.toString()}`;
 }
 
-function getStatusBadgeClass(status: string) {
-  switch (status) {
-    case "PRESENT":
-      return "bg-green-100 text-green-700 border-green-200";
-    case "LATE":
-      return "bg-amber-100 text-amber-700 border-amber-200";
-    case "ABSENT":
-      return "bg-red-100 text-red-700 border-red-200";
-    case "EXCUSED":
-      return "bg-blue-100 text-blue-700 border-blue-200";
-    default:
-      return "bg-slate-100 text-slate-700 border-slate-200";
-  }
-}
-
-function getSourceBadgeClass(source: string) {
-  switch (source) {
-    case "MANUAL":
-      return "bg-slate-100 text-slate-700 border-slate-200";
-    case "RFID":
-      return "bg-violet-100 text-violet-700 border-violet-200";
-    case "IMPORT":
-      return "bg-cyan-100 text-cyan-700 border-cyan-200";
-    default:
-      return "bg-slate-100 text-slate-700 border-slate-200";
-  }
-}
-
 type AttendanceStatusFilter = "PRESENT" | "LATE" | "ABSENT" | "EXCUSED";
+type AttendanceSourceFilter = "MANUAL" | "RFID" | "IMPORT";
 
 export default async function AttendanceHistoryPage({
   searchParams,
@@ -64,13 +44,16 @@ export default async function AttendanceHistoryPage({
     q?: string;
     sectionId?: string;
     status?: string;
+    source?: string;
     date?: string;
     page?: string;
   }>;
 }) {
   const session = await auth();
 
-  if (!session?.user) redirect("/login");
+  if (!session?.user) {
+    redirect("/login");
+  }
 
   if (
     !hasRole(session.user.role, [
@@ -88,6 +71,7 @@ export default async function AttendanceHistoryPage({
   const q = params.q?.trim() ?? "";
   const sectionId = params.sectionId?.trim() ?? "";
   const status = params.status?.trim() ?? "";
+  const source = params.source?.trim() ?? "";
   const dateInput = params.date?.trim() ?? getManilaDateInputValue();
   const page = Math.max(Number(params.page || "1"), 1);
 
@@ -98,6 +82,7 @@ export default async function AttendanceHistoryPage({
       { date: selectedDate },
       sectionId ? { student: { sectionId } } : {},
       status ? { status: status as AttendanceStatusFilter } : {},
+      source ? { source: source as AttendanceSourceFilter } : {},
       q
         ? {
             OR: [
@@ -120,6 +105,13 @@ export default async function AttendanceHistoryPage({
                   },
                 },
               },
+              {
+                student: {
+                  section: {
+                    name: { contains: q, mode: "insensitive" as const },
+                  },
+                },
+              },
             ],
           }
         : {},
@@ -129,7 +121,10 @@ export default async function AttendanceHistoryPage({
   const [sections, totalCount, rows] = await Promise.all([
     prisma.section.findMany({
       orderBy: { name: "asc" },
-      select: { id: true, name: true, gradeLevel: true },
+      select: {
+        id: true,
+        name: true,
+      },
     }),
     prisma.attendance.count({ where }),
     prisma.attendance.findMany({
@@ -142,7 +137,10 @@ export default async function AttendanceHistoryPage({
           },
         },
       },
-      orderBy: [{ student: { studentNo: "asc" } }, { createdAt: "desc" }],
+      orderBy: [
+        { student: { studentNo: "asc" } },
+        { createdAt: "desc" },
+      ],
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
@@ -150,11 +148,31 @@ export default async function AttendanceHistoryPage({
 
   const totalPages = Math.max(Math.ceil(totalCount / PAGE_SIZE), 1);
 
+  const records = rows.map((row) => ({
+    id: row.id,
+    date: dateInput,
+    status: row.status,
+    source: row.source,
+    remarks: row.remarks,
+    student: {
+      studentNo: row.student.studentNo,
+      user: {
+        name: row.student.user.name,
+        email: row.student.user.email,
+      },
+      section: row.student.section
+        ? {
+            name: row.student.section.name,
+          }
+        : null,
+    },
+  }));
+
   return (
     <div className="space-y-8">
       <PageHeader
         title="Attendance History"
-        description="Review saved attendance records by date, section, and status."
+        description="Review, update, and delete attendance records."
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Teacher", href: "/dashboard/teacher" },
@@ -169,12 +187,12 @@ export default async function AttendanceHistoryPage({
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <form className="grid gap-4 md:grid-cols-4">
+          <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <input
               type="text"
               name="q"
               defaultValue={q}
-              placeholder="Search student no, name, email"
+              placeholder="Search student no, name, email, section"
               className="h-10 rounded-md border px-3 text-sm"
             />
 
@@ -203,6 +221,17 @@ export default async function AttendanceHistoryPage({
               <option value="EXCUSED">Excused</option>
             </select>
 
+            <select
+              name="source"
+              defaultValue={source}
+              className="h-10 rounded-md border px-3 text-sm"
+            >
+              <option value="">All sources</option>
+              <option value="MANUAL">Manual</option>
+              <option value="RFID">RFID</option>
+              <option value="IMPORT">Import</option>
+            </select>
+
             <input
               type="date"
               name="date"
@@ -210,91 +239,43 @@ export default async function AttendanceHistoryPage({
               className="h-10 rounded-md border px-3 text-sm"
             />
 
-            <div className="flex gap-2 md:col-span-4">
+            <div className="flex gap-2 md:col-span-2 xl:col-span-5">
               <button
                 type="submit"
-                className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm text-primary-foreground"
+                className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
               >
                 Apply Filters
               </button>
 
               <a
                 href="/dashboard/teacher/attendance/history"
-                className="inline-flex h-10 items-center rounded-md border px-4 text-sm"
+                className="inline-flex h-10 items-center rounded-md border px-4 text-sm font-medium"
               >
                 Reset
               </a>
             </div>
           </form>
 
-          <div className="overflow-x-auto rounded-md border">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="border-b bg-muted/40">
-                  <th className="px-3 py-2 text-left font-medium">Date</th>
-                  <th className="px-3 py-2 text-left font-medium">Student No</th>
-                  <th className="px-3 py-2 text-left font-medium">Student</th>
-                  <th className="px-3 py-2 text-left font-medium">Section</th>
-                  <th className="px-3 py-2 text-left font-medium">Status</th>
-                  <th className="px-3 py-2 text-left font-medium">Source</th>
-                  <th className="px-3 py-2 text-left font-medium">Remarks</th>
-                  <th className="px-3 py-2 text-left font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={8}
-                      className="px-3 py-8 text-center text-muted-foreground"
-                    >
-                      No attendance records found.
-                    </td>
-                  </tr>
-                ) : (
-                  rows.map((row) => (
-                    <tr key={row.id} className="border-b">
-                      <td className="px-3 py-2">{dateInput}</td>
-                      <td className="px-3 py-2">{row.student.studentNo}</td>
-                      <td className="px-3 py-2">
-                        {row.student.user.name ?? "-"}
-                      </td>
-                      <td className="px-3 py-2">
-                        {row.student.section?.name ?? "-"}
-                      </td>
-                      <td className="px-3 py-2">
-                        <span
-                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeClass(
-                            row.status
-                          )}`}
-                        >
-                          {row.status}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2">
-                        <span
-                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${getSourceBadgeClass(
-                            row.source
-                          )}`}
-                        >
-                          {row.source}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2">{row.remarks ?? "-"}</td>
-                      <td className="px-3 py-2">
-                        <Link
-                          href={`/dashboard/teacher/attendance/history/edit/${row.id}`}
-                          className="inline-flex h-8 items-center rounded-md border px-3 text-xs font-medium hover:bg-muted"
-                        >
-                          Edit
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border p-4">
+              <div className="text-sm text-muted-foreground">Selected Date</div>
+              <div className="mt-1 text-lg font-semibold">{dateInput}</div>
+            </div>
+
+            <div className="rounded-xl border p-4">
+              <div className="text-sm text-muted-foreground">Records Found</div>
+              <div className="mt-1 text-lg font-semibold">{totalCount}</div>
+            </div>
+
+            <div className="rounded-xl border p-4">
+              <div className="text-sm text-muted-foreground">Current Page</div>
+              <div className="mt-1 text-lg font-semibold">
+                {page} / {totalPages}
+              </div>
+            </div>
           </div>
+
+          <AttendanceHistoryTable records={records} />
 
           <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -307,6 +288,7 @@ export default async function AttendanceHistoryPage({
                   q,
                   sectionId,
                   status,
+                  source,
                   date: dateInput,
                   page: Math.max(page - 1, 1),
                 })}
@@ -322,6 +304,7 @@ export default async function AttendanceHistoryPage({
                   q,
                   sectionId,
                   status,
+                  source,
                   date: dateInput,
                   page: Math.min(page + 1, totalPages),
                 })}
