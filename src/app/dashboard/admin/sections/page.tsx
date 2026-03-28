@@ -122,6 +122,7 @@ export default async function SectionsPage({
     }),
     prisma.section.findMany({
       select: {
+        id: true,
         gradeLevel: true,
       },
     }),
