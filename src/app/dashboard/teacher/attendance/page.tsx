@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import PageHeader from "@/components/layout/page-header";
-import { getManilaDateInputValue } from "@/lib/date";
 import {
   Card,
   CardContent,
@@ -12,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import AttendanceForm from "./form";
+import { getManilaDateInputValue } from "@/lib/date";
 
 export default async function AttendancePage({
   searchParams,
