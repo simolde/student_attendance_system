@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ResponsiveContainer,
   PieChart,
   Pie,
   Tooltip,
@@ -51,7 +52,7 @@ export default function DashboardCharts({
   const showBar = hasBarData(sectionAttendanceData);
 
   return (
-    <div className="grid gap-6 xl:grid-cols-2">
+    <div className="grid gap-6 2xl:grid-cols-2">
       <Card className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg text-slate-900">
@@ -64,33 +65,35 @@ export default function DashboardCharts({
 
         <CardContent>
           {showPie ? (
-            <div className="min-w-0 w-full overflow-x-auto">
-              <PieChart width={420} height={320}>
-                <Pie
-                  data={attendanceStatusData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="44%"
-                  innerRadius={68}
-                  outerRadius={102}
-                  paddingAngle={3}
-                  stroke="#ffffff"
-                  strokeWidth={4}
-                >
-                  {attendanceStatusData.map((entry, index) => (
-                    <Cell
-                      key={`pie-cell-${entry.name}`}
-                      fill={PIE_COLORS[index % PIE_COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend verticalAlign="bottom" height={36} />
-              </PieChart>
+            <div className="h-85 w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart margin={{ top: 10, right: 10, bottom: 30, left: 10 }}>
+                  <Pie
+                    data={attendanceStatusData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="45%"
+                    innerRadius={68}
+                    outerRadius={102}
+                    paddingAngle={3}
+                    stroke="#ffffff"
+                    strokeWidth={4}
+                  >
+                    {attendanceStatusData.map((entry, index) => (
+                      <Cell
+                        key={`pie-cell-${entry.name}`}
+                        fill={PIE_COLORS[index % PIE_COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           ) : (
-            <div className="flex h-[320px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 text-sm text-muted-foreground">
+            <div className="flex h-85 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 text-sm text-muted-foreground">
               No attendance status data available.
             </div>
           )}
@@ -109,35 +112,43 @@ export default function DashboardCharts({
 
         <CardContent>
           {showBar ? (
-            <div className="min-w-0 w-full overflow-x-auto">
-              <BarChart
-                width={560}
-                height={320}
-                data={sectionAttendanceData}
-                margin={{ top: 10, right: 10, bottom: 10, left: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis
-                  dataKey="name"
-                  interval={0}
-                  angle={-18}
-                  textAnchor="end"
-                  height={62}
-                  tick={{ fontSize: 12, fill: "#64748b" }}
-                />
-                <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#64748b" }} />
-                <Tooltip />
-                <Legend />
-                <Bar
-                  dataKey="total"
-                  fill="#2563eb"
-                  radius={[10, 10, 0, 0]}
-                  name="Total"
-                />
-              </BarChart>
+            <div className="h-85 w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={sectionAttendanceData}
+                  margin={{ top: 10, right: 10, bottom: 20, left: -10 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="#e5e7eb"
+                  />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 12, fill: "#64748b" }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fontSize: 12, fill: "#64748b" }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip />
+                  <Legend />
+                  <Bar
+                    dataKey="total"
+                    fill="#2563eb"
+                    radius={[10, 10, 0, 0]}
+                    name="Total"
+                    maxBarSize={56}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           ) : (
-            <div className="flex h-[320px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 text-sm text-muted-foreground">
+            <div className="flex h-85 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 text-sm text-muted-foreground">
               No section attendance data available.
             </div>
           )}

@@ -242,7 +242,7 @@ export default async function DashboardPage() {
             </div>
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-[1.55fr_0.95fr]">
+          <section className="grid gap-6 2xl:grid-cols-[1.7fr_0.9fr]">
             <Card className="portal-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xl font-semibold text-slate-900">
