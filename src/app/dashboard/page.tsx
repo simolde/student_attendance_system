@@ -20,6 +20,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import DashboardTopbar from "@/components/layout/dashboard-topbar";
 
 function formatRole(role: string) {
   return role.replaceAll("_", " ");
@@ -45,6 +46,11 @@ export default async function DashboardPage() {
 
   return (
     <div className="portal-shell space-y-8">
+      <DashboardTopbar
+        title="Dashboard"
+        subtitle="Monitor attendance, records, and school activity."
+        userName={displayName}
+      />
       <section className="portal-card overflow-hidden border-0 p-0">
         <div className="portal-hero relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_28%)]" />

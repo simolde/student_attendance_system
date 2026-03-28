@@ -1,204 +1,153 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
   GraduationCap,
-  ClipboardCheck,
-  History,
-  UserCircle2,
-  KeyRound,
-  FileText,
-  Shield,
+  ClipboardList,
+  Bell,
+  Settings,
+  ScrollText,
   School,
-  FileSpreadsheet,
   Radio,
-  RadioTower,
-  CreditCard,
-  MonitorPlay,
-  AlarmClock,
+  Cpu,
+  ShieldCheck,
 } from "lucide-react";
-import { hasRole, ROLES } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
-import { useDashboardLayout } from "./dashboard-context";
-import DashboardUserMenu from "./dashboard-user-menu";
-import { SidebarItem, SidebarSectionLabel } from "./dashboard-sidebar-item";
 
-type NavItem = {
-  href: string;
+type SidebarItem = {
   label: string;
+  href: string;
   icon: React.ComponentType<{ className?: string }>;
 };
 
-function SidebarContent({
-  role,
-  collapsed,
-  onNavigate,
-}: {
-  role: string;
-  collapsed: boolean;
-  onNavigate?: () => void;
-}) {
-  const dashboardLinks: NavItem[] = [
-    { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  ];
+const mainItems: SidebarItem[] = [
+  {
+    label: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Attendance",
+    href: "/dashboard/teacher/attendance",
+    icon: ClipboardList,
+  },
+  {
+    label: "Attendance History",
+    href: "/dashboard/teacher/attendance/history",
+    icon: ScrollText,
+  },
+  {
+    label: "Students",
+    href: "/dashboard/admin/students",
+    icon: GraduationCap,
+  },
+  {
+    label: "Users",
+    href: "/dashboard/admin/users",
+    icon: Users,
+  },
+  {
+    label: "School Years",
+    href: "/dashboard/admin/school-years",
+    icon: School,
+  },
+  {
+    label: "RFID Devices",
+    href: "/dashboard/admin/rfid-devices",
+    icon: Cpu,
+  },
+  {
+    label: "RFID Logs",
+    href: "/dashboard/admin/rfid-logs",
+    icon: Radio,
+  },
+  {
+    label: "Announcements",
+    href: "/dashboard/announcements",
+    icon: Bell,
+  },
+  {
+    label: "Settings",
+    href: "/dashboard/settings",
+    icon: Settings,
+  },
+];
 
-  const adminLinks: NavItem[] = hasRole(role, [ROLES.SUPER_ADMIN, ROLES.ADMIN])
-    ? [
-        { href: "/dashboard/admin/users", label: "User Management", icon: Users },
-        { href: "/dashboard/admin/students", label: "Student Management", icon: GraduationCap },
-        { href: "/dashboard/admin/audit-logs", label: "Audit Logs", icon: FileText },
-        { href: "/dashboard/admin/school-years", label: "School Years", icon: School },
-        { href: "/dashboard/admin/students/import", label: "Import Students", icon: FileSpreadsheet },
-        { href: "/dashboard/admin/rfid-logs", label: "RFID Logs", icon: Radio },
-        { href: "/dashboard/admin/rfid-devices", label: "RFID Devices", icon: RadioTower },
-        { href: "/dashboard/admin/students/rfid", label: "Student RFID", icon: CreditCard },
-        { href: "/dashboard/admin/rfid-monitor", label: "RFID Monitor", icon: MonitorPlay },
-        { href: "/dashboard/admin/attendance-rules", label: "Attendance Rules", icon: AlarmClock },
-        { href: "/dashboard/admin/students/import-history", label: "Import History", icon: History },
-      ]
-    : [];
-
-  const teacherLinks: NavItem[] = hasRole(role, [
-    ROLES.SUPER_ADMIN,
-    ROLES.ADMIN,
-    ROLES.TEACHER,
-    ROLES.STAFF,
-  ])
-    ? [
-        { href: "/dashboard/teacher/attendance", label: "Attendance", icon: ClipboardCheck },
-        { href: "/dashboard/teacher/attendance/history", label: "Attendance History", icon: History },
-      ]
-    : [];
-
-  const studentLinks: NavItem[] = hasRole(role, [ROLES.STUDENT])
-    ? [
-        { href: "/dashboard/student/attendance", label: "My Attendance", icon: ClipboardCheck },
-        { href: "/dashboard/student/profile", label: "My Profile", icon: UserCircle2 },
-      ]
-    : [];
-
-  const accountLinks: NavItem[] = [
-    { href: "/dashboard/account", label: "My Account", icon: UserCircle2 },
-    { href: "/dashboard/change-password", label: "Change Password", icon: KeyRound },
-  ];
-
-  const groups = [
-    { label: "Dashboard", items: dashboardLinks },
-    { label: "Admin", items: adminLinks },
-    { label: "Teacher", items: teacherLinks },
-    { label: "Student", items: studentLinks },
-    { label: "Account", items: accountLinks },
-  ];
+export default function DashboardSidebar() {
+  const pathname = usePathname();
 
   return (
-    <>
-      <div className="border-b border-white/10 px-3 py-4">
-        <div
-          className={cn(
-            "flex items-center",
-            collapsed ? "justify-center" : "gap-3"
-          )}
-        >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10">
-            <Shield className="h-5 w-5 text-white" />
+    <aside className="hidden xl:flex xl:w-[280px] xl:flex-col xl:border-r xl:border-white/10 xl:bg-[#0d1b42] xl:text-white">
+      <div className="border-b border-white/10 px-6 py-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
+            <ShieldCheck className="h-6 w-6 text-white" />
           </div>
 
-          {!collapsed && (
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-white">
-                Student Attendance
-              </p>
-              <p className="truncate text-xs text-slate-400">
-                Management System
-              </p>
-            </div>
-          )}
+          <div>
+            <h2 className="text-base font-semibold tracking-tight">
+              Student Attendance
+            </h2>
+            <p className="text-sm text-blue-100/75">
+              School Management Portal
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 py-3">
-        {groups.map((group) =>
-          group.items.length > 0 ? (
-            <div key={group.label} className="space-y-1">
-              <SidebarSectionLabel label={group.label} collapsed={collapsed} />
-              {group.items.map((item) => (
-                <SidebarItem
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  icon={item.icon}
-                  collapsed={collapsed}
-                  onNavigate={onNavigate}
-                />
-              ))}
-            </div>
-          ) : null
-        )}
-      </div>
-    </>
-  );
-}
+      <nav className="flex-1 space-y-8 overflow-y-auto px-4 py-6">
+        <div className="space-y-2">
+          <div className="px-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-100/50">
+            Navigation
+          </div>
 
-export default function DashboardSidebar({
-  role,
-  userName,
-  userEmail,
-  userImage,
-}: {
-  role: string;
-  userName: string;
-  userEmail: string;
-  userImage: string | null;
-}) {
-  const { collapsed, mobileOpen, setMobileOpen } = useDashboardLayout();
+          {mainItems.map((item) => {
+            const Icon = item.icon;
+            const isActive =
+              pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-  return (
-    <>
-      <aside
-        className={cn(
-          "hidden border-r border-white/10 bg-[#0f172a] md:sticky md:top-0 md:flex md:h-screen md:flex-col",
-          collapsed ? "md:w-20" : "md:w-72"
-        )}
-      >
-        <SidebarContent role={role} collapsed={collapsed} />
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition",
+                  isActive
+                    ? "bg-white/12 text-white shadow-[0_10px_24px_rgba(0,0,0,0.16)]"
+                    : "text-blue-100/80 hover:bg-white/8 hover:text-white"
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-xl transition",
+                    isActive
+                      ? "bg-white/14 text-white"
+                      : "bg-white/5 text-blue-100/75 group-hover:bg-white/10 group-hover:text-white"
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
 
-        <div className="border-t border-white/10 p-2">
-          <DashboardUserMenu
-            userName={userName}
-            userEmail={userEmail}
-            role={role}
-            imageUrl={userImage}
-            collapsed={collapsed}
-          />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </div>
-      </aside>
+      </nav>
 
-      {mobileOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40 bg-black/50 md:hidden"
-            onClick={() => setMobileOpen(false)}
-          />
-
-          <aside className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/10 bg-[#0f172a] md:hidden">
-            <SidebarContent
-              role={role}
-              collapsed={false}
-              onNavigate={() => setMobileOpen(false)}
-            />
-
-            <div className="border-t border-white/10 p-2">
-              <DashboardUserMenu
-                userName={userName}
-                userEmail={userEmail}
-                role={role}
-                imageUrl={userImage}
-              />
-            </div>
-          </aside>
-        </>
-      )}
-    </>
+      <div className="border-t border-white/10 px-4 py-4">
+        <div className="rounded-2xl bg-white/8 p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-blue-100/55">
+            Portal Theme
+          </p>
+          <p className="mt-2 text-sm text-blue-50/85">
+            UltraTech-inspired desktop school portal
+          </p>
+        </div>
+      </div>
+    </aside>
   );
 }

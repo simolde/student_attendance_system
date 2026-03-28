@@ -1,27 +1,10 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
 import DashboardShell from "@/components/layout/dashboard-shell";
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
-  const session = await auth();
-
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  return (
-    <DashboardShell
-      userName={session.user.name ?? session.user.email ?? "User"}
-      userEmail={session.user.email ?? ""}
-      userImage={session.user.image ?? null}
-      role={session.user.role}
-      mustChangePassword={session.user.mustChangePassword ?? false}
-    >
-      {children}
-    </DashboardShell>
-  );
+  return <DashboardShell>{children}</DashboardShell>;
 }
