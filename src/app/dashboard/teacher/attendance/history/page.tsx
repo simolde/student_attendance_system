@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
 import { getManilaDateInputValue, dateInputToUtcDate } from "@/lib/date";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 const PAGE_SIZE = 20;
 
@@ -96,11 +97,7 @@ export default async function AttendanceHistoryPage({
     AND: [
       { date: selectedDate },
       sectionId ? { student: { sectionId } } : {},
-      status
-        ? {
-            status: status as AttendanceStatusFilter,
-          }
-        : {},
+      status ? { status: status as AttendanceStatusFilter } : {},
       q
         ? {
             OR: [
@@ -241,13 +238,14 @@ export default async function AttendanceHistoryPage({
                   <th className="px-3 py-2 text-left font-medium">Status</th>
                   <th className="px-3 py-2 text-left font-medium">Source</th>
                   <th className="px-3 py-2 text-left font-medium">Remarks</th>
+                  <th className="px-3 py-2 text-left font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-3 py-8 text-center text-muted-foreground"
                     >
                       No attendance records found.
@@ -283,6 +281,14 @@ export default async function AttendanceHistoryPage({
                         </span>
                       </td>
                       <td className="px-3 py-2">{row.remarks ?? "-"}</td>
+                      <td className="px-3 py-2">
+                        <Link
+                          href={`/dashboard/teacher/attendance/history/edit/${row.id}`}
+                          className="inline-flex h-8 items-center rounded-md border px-3 text-xs font-medium hover:bg-muted"
+                        >
+                          Edit
+                        </Link>
+                      </td>
                     </tr>
                   ))
                 )}
