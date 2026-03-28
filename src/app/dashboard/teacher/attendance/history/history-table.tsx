@@ -27,6 +27,8 @@ type AttendanceRow = {
   status: "PRESENT" | "LATE" | "ABSENT" | "EXCUSED";
   source: "MANUAL" | "RFID" | "IMPORT";
   remarks: string | null;
+  timeIn: string | null;
+  timeOut: string | null;
   student: {
     studentNo: string;
     user: {
@@ -46,9 +48,9 @@ function getStatusBadgeClass(status: AttendanceRow["status"]) {
     case "LATE":
       return "border-amber-200 bg-amber-50 text-amber-700";
     case "ABSENT":
-      return "border-red-200 bg-red-50 text-red-700";
+      return "border-rose-200 bg-rose-50 text-rose-700";
     case "EXCUSED":
-      return "border-blue-200 bg-blue-50 text-blue-700";
+      return "border-sky-200 bg-sky-50 text-sky-700";
     default:
       return "border-slate-200 bg-slate-50 text-slate-700";
   }
@@ -65,6 +67,10 @@ function getSourceBadgeClass(source: AttendanceRow["source"]) {
     default:
       return "border-slate-200 bg-slate-50 text-slate-700";
   }
+}
+
+function formatTime(value: string | null) {
+  return value ?? "-";
 }
 
 function AttendanceEditRow({ record }: { record: AttendanceRow }) {
@@ -106,15 +112,14 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
           <div className="font-medium text-slate-900">
             {record.student.user.name ?? "-"}
           </div>
-          <div className="text-xs text-muted-foreground">
-            {record.student.user.email}
-          </div>
+          <div className="text-xs text-slate-500">{record.student.user.email}</div>
         </div>
       </TableCell>
 
       <TableCell>{record.student.section?.name ?? "-"}</TableCell>
-
       <TableCell>{record.date}</TableCell>
+      <TableCell>{formatTime(record.timeIn)}</TableCell>
+      <TableCell>{formatTime(record.timeOut)}</TableCell>
 
       <TableCell>
         <span
@@ -134,7 +139,7 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
               e.target.value as "PRESENT" | "LATE" | "ABSENT" | "EXCUSED"
             )
           }
-          className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-blue-300"
         >
           <option value="PRESENT">PRESENT</option>
           <option value="LATE">LATE</option>
@@ -158,12 +163,12 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
           value={remarks}
           onChange={(e) => setRemarks(e.target.value)}
           placeholder="Optional remarks"
-          className="h-10 min-w-45"
+          className="h-10 min-w-[180px] rounded-xl"
         />
       </TableCell>
 
       <TableCell>
-        <div className="flex min-w-30 flex-col gap-2">
+        <div className="flex min-w-[120px] flex-col gap-2">
           <form action={updateAction}>
             <input type="hidden" name="attendanceId" value={record.id} />
             <input type="hidden" name="status" value={status} />
@@ -173,7 +178,7 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
               type="submit"
               size="sm"
               disabled={updatePending || !isDirty}
-              className="w-full"
+              className="w-full rounded-xl"
             >
               {updatePending ? "Saving..." : "Save"}
             </Button>
@@ -194,7 +199,7 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
                 size="sm"
                 variant="destructive"
                 disabled={deletePending}
-                className="w-full"
+                className="w-full rounded-xl"
               >
                 Delete
               </Button>
@@ -212,38 +217,42 @@ export default function AttendanceHistoryTable({
   records: AttendanceRow[];
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-slate-50/80">
-            <TableHead>Student No</TableHead>
-            <TableHead>Student</TableHead>
-            <TableHead>Section</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Source</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Remarks</TableHead>
-            <TableHead className="w-35">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-
-        <TableBody>
-          {records.length === 0 ? (
-            <TableRow>
-              <TableCell
-                colSpan={8}
-                className="py-10 text-center text-sm text-muted-foreground"
-              >
-                No attendance records found.
-              </TableCell>
+    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-50/80">
+              <TableHead>Student No</TableHead>
+              <TableHead>Student</TableHead>
+              <TableHead>Section</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Time In</TableHead>
+              <TableHead>Time Out</TableHead>
+              <TableHead>Source</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Remarks</TableHead>
+              <TableHead className="w-[140px]">Actions</TableHead>
             </TableRow>
-          ) : (
-            records.map((record) => (
-              <AttendanceEditRow key={record.id} record={record} />
-            ))
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+
+          <TableBody>
+            {records.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={10}
+                  className="py-10 text-center text-sm text-muted-foreground"
+                >
+                  No attendance records found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              records.map((record) => (
+                <AttendanceEditRow key={record.id} record={record} />
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

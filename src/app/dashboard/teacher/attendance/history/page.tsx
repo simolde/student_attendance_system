@@ -1,16 +1,16 @@
 import { auth } from "@/auth";
-import PageHeader from "@/components/layout/page-header";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
-import { getManilaDateInputValue, dateInputToUtcDate } from "@/lib/date";
-import { redirect } from "next/navigation";
+import { dateInputToUtcDate, getManilaDateInputValue } from "@/lib/date";
 import AttendanceHistoryTable from "./history-table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  CalendarDays,
+  ClipboardList,
+  Filter,
+  Search,
+} from "lucide-react";
 
 const PAGE_SIZE = 15;
 
@@ -36,6 +36,21 @@ function buildHistoryQuery(params: {
 
 type AttendanceStatusFilter = "PRESENT" | "LATE" | "ABSENT" | "EXCUSED";
 type AttendanceSourceFilter = "MANUAL" | "RFID" | "IMPORT";
+
+function countStatus(records: { status: AttendanceStatusFilter }[], status: AttendanceStatusFilter) {
+  return records.filter((item) => item.status === status).length;
+}
+
+function formatTimeForDisplay(date: Date | null) {
+  if (!date) return null;
+
+  return new Intl.DateTimeFormat("en-PH", {
+    timeZone: "Asia/Manila",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+}
 
 export default async function AttendanceHistoryPage({
   searchParams,
@@ -118,7 +133,7 @@ export default async function AttendanceHistoryPage({
     ],
   };
 
-  const [sections, totalCount, rows] = await Promise.all([
+  const [sections, totalCount, rows, allRowsForSummary] = await Promise.all([
     prisma.section.findMany({
       orderBy: { name: "asc" },
       select: {
@@ -137,12 +152,15 @@ export default async function AttendanceHistoryPage({
           },
         },
       },
-      orderBy: [
-        { student: { studentNo: "asc" } },
-        { createdAt: "desc" },
-      ],
+      orderBy: [{ student: { studentNo: "asc" } }, { createdAt: "desc" }],
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
+    }),
+    prisma.attendance.findMany({
+      where,
+      select: {
+        status: true,
+      },
     }),
   ]);
 
@@ -154,6 +172,8 @@ export default async function AttendanceHistoryPage({
     status: row.status,
     source: row.source,
     remarks: row.remarks,
+    timeIn: formatTimeForDisplay(row.timeIn),
+    timeOut: formatTimeForDisplay(row.timeOut),
     student: {
       studentNo: row.student.studentNo,
       user: {
@@ -168,38 +188,119 @@ export default async function AttendanceHistoryPage({
     },
   }));
 
+  const presentCount = countStatus(allRowsForSummary, "PRESENT");
+  const lateCount = countStatus(allRowsForSummary, "LATE");
+  const absentCount = countStatus(allRowsForSummary, "ABSENT");
+  const excusedCount = countStatus(allRowsForSummary, "EXCUSED");
+
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Attendance History"
-        description="Review, update, and delete attendance records."
-        breadcrumbs={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Teacher", href: "/dashboard/teacher" },
-          { label: "Attendance", href: "/dashboard/teacher/attendance" },
-          { label: "History" },
-        ]}
-      />
+    <div className="portal-shell space-y-8">
+      <section className="portal-card overflow-hidden border-0 p-0">
+        <div className="portal-hero relative">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_28%)]" />
+          <div className="relative grid gap-6 px-6 py-8 md:px-8 md:py-10 xl:grid-cols-[1.45fr_0.95fr]">
+            <div className="space-y-4 text-white">
+              <div className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
+                Attendance History
+              </div>
 
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle>Attendance Records</CardTitle>
+              <div className="space-y-3">
+                <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+                  Review and manage attendance records
+                </h1>
+                <p className="max-w-2xl text-sm leading-6 text-blue-50/90 md:text-base">
+                  Filter records by date, section, status, and source. Update or
+                  remove entries directly from the history table.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
+                <div className="flex items-center gap-2 text-blue-100">
+                  <CalendarDays className="h-4 w-4" />
+                  <span className="text-xs font-medium uppercase tracking-[0.16em]">
+                    Selected Date
+                  </span>
+                </div>
+                <div className="mt-2 text-lg font-semibold">{dateInput}</div>
+              </div>
+
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
+                <div className="flex items-center gap-2 text-blue-100">
+                  <ClipboardList className="h-4 w-4" />
+                  <span className="text-xs font-medium uppercase tracking-[0.16em]">
+                    Records Found
+                  </span>
+                </div>
+                <div className="mt-2 text-lg font-semibold">{totalCount}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <Card className="portal-card">
+          <CardContent className="p-5">
+            <div className="text-sm text-slate-500">Present</div>
+            <div className="mt-2 text-3xl font-bold text-slate-900">
+              {presentCount}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="portal-card">
+          <CardContent className="p-5">
+            <div className="text-sm text-slate-500">Late</div>
+            <div className="mt-2 text-3xl font-bold text-amber-600">
+              {lateCount}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="portal-card">
+          <CardContent className="p-5">
+            <div className="text-sm text-slate-500">Absent</div>
+            <div className="mt-2 text-3xl font-bold text-rose-600">
+              {absentCount}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="portal-card">
+          <CardContent className="p-5">
+            <div className="text-sm text-slate-500">Excused</div>
+            <div className="mt-2 text-3xl font-bold text-sky-600">
+              {excusedCount}
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <Card className="portal-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-xl font-semibold text-slate-900">
+            Filters
+          </CardTitle>
         </CardHeader>
-
-        <CardContent className="space-y-6">
+        <CardContent>
           <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <input
-              type="text"
-              name="q"
-              defaultValue={q}
-              placeholder="Search student no, name, email, section"
-              className="h-10 rounded-md border px-3 text-sm"
-            />
+            <div className="relative xl:col-span-2">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                name="q"
+                defaultValue={q}
+                placeholder="Search student no, name, email, section"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm shadow-sm outline-none transition focus:border-blue-300"
+              />
+            </div>
 
             <select
               name="sectionId"
               defaultValue={sectionId}
-              className="h-10 rounded-md border px-3 text-sm"
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-300"
             >
               <option value="">All sections</option>
               {sections.map((section) => (
@@ -212,7 +313,7 @@ export default async function AttendanceHistoryPage({
             <select
               name="status"
               defaultValue={status}
-              className="h-10 rounded-md border px-3 text-sm"
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-300"
             >
               <option value="">All status</option>
               <option value="PRESENT">Present</option>
@@ -224,7 +325,7 @@ export default async function AttendanceHistoryPage({
             <select
               name="source"
               defaultValue={source}
-              className="h-10 rounded-md border px-3 text-sm"
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-300"
             >
               <option value="">All sources</option>
               <option value="MANUAL">Manual</option>
@@ -236,49 +337,40 @@ export default async function AttendanceHistoryPage({
               type="date"
               name="date"
               defaultValue={dateInput}
-              className="h-10 rounded-md border px-3 text-sm"
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-300"
             />
 
             <div className="flex gap-2 md:col-span-2 xl:col-span-5">
               <button
                 type="submit"
-                className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+                className="inline-flex h-11 items-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground"
               >
+                <Filter className="mr-2 h-4 w-4" />
                 Apply Filters
               </button>
 
               <a
                 href="/dashboard/teacher/attendance/history"
-                className="inline-flex h-10 items-center rounded-md border px-4 text-sm font-medium"
+                className="inline-flex h-11 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700"
               >
                 Reset
               </a>
             </div>
           </form>
+        </CardContent>
+      </Card>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border p-4">
-              <div className="text-sm text-muted-foreground">Selected Date</div>
-              <div className="mt-1 text-lg font-semibold">{dateInput}</div>
-            </div>
-
-            <div className="rounded-xl border p-4">
-              <div className="text-sm text-muted-foreground">Records Found</div>
-              <div className="mt-1 text-lg font-semibold">{totalCount}</div>
-            </div>
-
-            <div className="rounded-xl border p-4">
-              <div className="text-sm text-muted-foreground">Current Page</div>
-              <div className="mt-1 text-lg font-semibold">
-                {page} / {totalPages}
-              </div>
-            </div>
-          </div>
-
+      <Card className="portal-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-xl font-semibold text-slate-900">
+            Attendance Records
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
           <AttendanceHistoryTable records={records} />
 
           <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-            <div>
+            <div className="text-slate-600">
               Page {page} of {totalPages} • Total {totalCount}
             </div>
 
@@ -292,7 +384,7 @@ export default async function AttendanceHistoryPage({
                   date: dateInput,
                   page: Math.max(page - 1, 1),
                 })}
-                className={`inline-flex h-9 items-center rounded-md border px-3 ${
+                className={`inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 font-medium text-slate-700 ${
                   page <= 1 ? "pointer-events-none opacity-50" : ""
                 }`}
               >
@@ -308,7 +400,7 @@ export default async function AttendanceHistoryPage({
                   date: dateInput,
                   page: Math.min(page + 1, totalPages),
                 })}
-                className={`inline-flex h-9 items-center rounded-md border px-3 ${
+                className={`inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 font-medium text-slate-700 ${
                   page >= totalPages ? "pointer-events-none opacity-50" : ""
                 }`}
               >
