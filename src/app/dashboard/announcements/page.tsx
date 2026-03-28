@@ -206,7 +206,7 @@ export default async function AnnouncementsPage({
         <div className="grid gap-5">
           {filteredAnnouncements.length === 0 ? (
             <Card className="portal-card">
-              <CardContent className="flex min-h-[220px] items-center justify-center p-8 text-center">
+              <CardContent className="flex min-h-55 items-center justify-center p-8 text-center">
                 <div className="space-y-2">
                   <p className="text-base font-semibold text-slate-900">
                     No announcements found

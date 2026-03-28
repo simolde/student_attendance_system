@@ -80,7 +80,7 @@ export default function DashboardSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden xl:flex xl:w-[280px] xl:flex-col xl:border-r xl:border-white/10 xl:bg-[#0d1b42] xl:text-white">
+    <aside className="hidden xl:flex xl:w-70 xl:flex-col xl:border-r xl:border-white/10 xl:bg-[#0d1b42] xl:text-white">
       <div className="border-b border-white/10 px-6 py-6">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
