@@ -1,18 +1,21 @@
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
-import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { hasRole, ROLES } from "@/lib/rbac";
+import DashboardTopbar from "@/components/layout/dashboard-topbar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+  UserCircle2,
+  Mail,
+  ShieldCheck,
+  CalendarDays,
+  GraduationCap,
+} from "lucide-react";
 
-export default async function StudentProfilePage() {
+function formatRole(role: string) {
+  return role.replaceAll("_", " ");
+}
+
+export default async function StudentProfileDedicatedPage() {
   const session = await auth();
 
   if (!session?.user) {
@@ -23,110 +26,131 @@ export default async function StudentProfilePage() {
     redirect("/unauthorized");
   }
 
-  const student = await prisma.student.findUnique({
-    where: {
-      userId: session.user.id,
-    },
-    include: {
-      user: true,
-      section: true,
-    },
-  });
-
-  if (!student) {
-    return (
-      <div className="p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Student Profile Not Found</CardTitle>
-            <CardDescription>
-              Your account does not have a linked student profile yet.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
+  const displayName = session.user.name ?? session.user.email ?? "Student";
 
   return (
-    <div className="p-6 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">My Profile</h1>
-        <p className="mt-2 text-muted-foreground">
-          View your student account details.
-        </p>
-      </div>
+    <div className="portal-shell space-y-6">
+      <DashboardTopbar
+        title="Student Profile"
+        subtitle="View your student identity and portal account details."
+        userName={displayName}
+      />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardDescription>Full Name</CardDescription>
-            <CardTitle>{student.user.name ?? "-"}</CardTitle>
-          </CardHeader>
-        </Card>
+      <section className="portal-card overflow-hidden border-0 p-0">
+        <div className="portal-hero relative">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_28%)]" />
+          <div className="relative grid gap-6 px-6 py-8 text-white md:px-8 md:py-10 xl:grid-cols-[1.45fr_0.95fr]">
+            <div className="space-y-4">
+              <div className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
+                Student Account Identity
+              </div>
 
-        <Card>
-          <CardHeader>
-            <CardDescription>Email</CardDescription>
-            <CardTitle className="text-lg">{student.user.email}</CardTitle>
-          </CardHeader>
-        </Card>
+              <div className="space-y-3">
+                <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+                  Your student account profile
+                </h1>
+                <p className="max-w-2xl text-sm leading-6 text-blue-50/90 md:text-base">
+                  Review your account identity, access role, and student portal
+                  information in one place.
+                </p>
+              </div>
+            </div>
 
-        <Card>
-          <CardHeader>
-            <CardDescription>Student Number</CardDescription>
-            <CardTitle>{student.studentNo}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardDescription>Section</CardDescription>
-            <CardTitle>{student.section?.name ?? "-"}</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Information</CardTitle>
-          <CardDescription>
-            Your current account role and status.
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="flex flex-col gap-4 md:flex-row md:items-center">
-          <div>
-            <p className="mb-2 text-sm text-muted-foreground">Role</p>
-            <Badge variant="secondary">{student.user.role}</Badge>
+            <div className="rounded-3xl border border-white/20 bg-white/12 p-5 backdrop-blur-md">
+              <div className="flex items-center gap-3">
+                <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-white/15">
+                  <UserCircle2 className="h-8 w-8" />
+                </div>
+                <div>
+                  <div className="text-lg font-semibold">{displayName}</div>
+                  <div className="text-sm text-blue-100/80">
+                    {session.user.email ?? "-"}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+      </section>
 
-          <div>
-            <p className="mb-2 text-sm text-muted-foreground">Status</p>
-            {student.user.isActive ? (
-              <Badge>Active</Badge>
-            ) : (
-              <Badge variant="destructive">Inactive</Badge>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <Card className="portal-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xl font-semibold text-slate-900">
+              Student Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 pt-0 md:grid-cols-2">
+            <div className="portal-card-soft p-4">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-500">
+                <UserCircle2 className="h-3.5 w-3.5" />
+                Full Name
+              </div>
+              <div className="mt-2 text-sm font-semibold text-slate-900">
+                {session.user.name ?? "-"}
+              </div>
+            </div>
 
-      <div className="flex flex-wrap gap-3">
-        <Link
-          href="/dashboard/student"
-          className="inline-block rounded-md border px-4 py-2 text-sm hover:bg-accent"
-        >
-          Back to Student Dashboard
-        </Link>
+            <div className="portal-card-soft p-4">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-500">
+                <Mail className="h-3.5 w-3.5" />
+                Email
+              </div>
+              <div className="mt-2 text-sm font-semibold text-slate-900">
+                {session.user.email ?? "-"}
+              </div>
+            </div>
 
-        <Link
-          href="/dashboard/student/attendance"
-          className="inline-block rounded-md border px-4 py-2 text-sm hover:bg-accent"
-        >
-          Go to My Attendance
-        </Link>
-      </div>
+            <div className="portal-card-soft p-4">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-500">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Role
+              </div>
+              <div className="mt-2 text-sm font-semibold text-slate-900">
+                {formatRole(session.user.role)}
+              </div>
+            </div>
+
+            <div className="portal-card-soft p-4">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-500">
+                <GraduationCap className="h-3.5 w-3.5" />
+                Portal Access
+              </div>
+              <div className="mt-2 text-sm font-semibold text-slate-900">
+                Student Access Enabled
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="portal-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xl font-semibold text-slate-900">
+              Profile Notes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-0">
+            <div className="portal-card-soft p-4">
+              <div className="text-sm font-semibold text-slate-900">
+                Student Account
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Your profile is connected to your attendance, announcements, and portal settings.
+              </p>
+            </div>
+
+            <div className="portal-card-soft p-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                <CalendarDays className="h-4 w-4 text-slate-600" />
+                Access Summary
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Additional student information like section and school year can be connected here later.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }
