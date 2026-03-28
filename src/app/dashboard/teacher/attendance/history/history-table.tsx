@@ -158,12 +158,12 @@ function AttendanceEditRow({ record }: { record: AttendanceRow }) {
           value={remarks}
           onChange={(e) => setRemarks(e.target.value)}
           placeholder="Optional remarks"
-          className="h-10 min-w-[180px]"
+          className="h-10 min-w-45"
         />
       </TableCell>
 
       <TableCell>
-        <div className="flex min-w-[120px] flex-col gap-2">
+        <div className="flex min-w-30 flex-col gap-2">
           <form action={updateAction}>
             <input type="hidden" name="attendanceId" value={record.id} />
             <input type="hidden" name="status" value={status} />
