@@ -1,69 +1,61 @@
 import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
+import DashboardTopbar from "@/components/layout/dashboard-topbar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  buildImportHistoryExportUrl,
-  buildImportHistoryPageExportUrl,
-  buildImportHistoryPrintUrl,
-  buildImportHistoryUrl,
-} from "@/lib/student-url-builders";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import PageHeader from "@/components/layout/page-header";
-import TableToolbar from "@/components/layout/table-toolbar";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import CopyBatchIdButton from "@/components/copy-batch-id-button";
-import ExportActionsMenu from "@/components/export-actions-menu";
-import BatchCardActions from "./batch-card-actions";
+  History,
+  Search,
+  Filter,
+  Archive,
+  CheckCircle2,
+  RefreshCcw,
+  SkipForward,
+  School,
+} from "lucide-react";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
 
-function formatManilaDateTime(date: Date) {
+function buildImportHistoryQuery(params: {
+  q?: string;
+  schoolYearId?: string;
+  createdByUserId?: string;
+  archived?: string;
+  page?: string | number;
+}) {
+  const search = new URLSearchParams();
+
+  if (params.q) search.set("q", params.q);
+  if (params.schoolYearId) search.set("schoolYearId", params.schoolYearId);
+  if (params.createdByUserId) search.set("createdByUserId", params.createdByUserId);
+  if (params.archived) search.set("archived", params.archived);
+  if (params.page) search.set("page", String(params.page));
+
+  return `/dashboard/admin/students/import-history?${search.toString()}`;
+}
+
+function formatDateTime(value: Date) {
   return new Intl.DateTimeFormat("en-PH", {
     timeZone: "Asia/Manila",
     year: "numeric",
     month: "short",
     day: "2-digit",
-    hour: "2-digit",
+    hour: "numeric",
     minute: "2-digit",
-  }).format(date);
-}
-
-function buildDateRange(dateFrom: string, dateTo: string) {
-  const createdAt: { gte?: Date; lte?: Date } = {};
-
-  if (dateFrom) {
-    createdAt.gte = new Date(`${dateFrom}T00:00:00.000+08:00`);
-  }
-
-  if (dateTo) {
-    createdAt.lte = new Date(`${dateTo}T23:59:59.999+08:00`);
-  }
-
-  return Object.keys(createdAt).length > 0 ? createdAt : undefined;
+    hour12: true,
+  }).format(value);
 }
 
 export default async function StudentImportHistoryPage({
   searchParams,
 }: {
   searchParams: Promise<{
-    archived?: string;
     q?: string;
-    page?: string;
-    dateFrom?: string;
-    dateTo?: string;
     schoolYearId?: string;
-    sectionId?: string;
     createdByUserId?: string;
+    archived?: string;
+    page?: string;
   }>;
 }) {
   const session = await auth();
@@ -77,83 +69,62 @@ export default async function StudentImportHistoryPage({
   }
 
   const params = await searchParams;
-  const showArchived = params.archived === "1";
+
   const q = params.q?.trim() ?? "";
-  const dateFrom = params.dateFrom?.trim() ?? "";
-  const dateTo = params.dateTo?.trim() ?? "";
   const schoolYearId = params.schoolYearId?.trim() ?? "";
-  const sectionId = params.sectionId?.trim() ?? "";
   const createdByUserId = params.createdByUserId?.trim() ?? "";
+  const archived = params.archived?.trim() ?? "";
   const page = Math.max(Number(params.page || "1"), 1);
 
-  const createdAtRange = buildDateRange(dateFrom, dateTo);
+  const archivedFilter =
+    archived === "archived"
+      ? true
+      : archived === "active"
+        ? false
+        : undefined;
 
-  const baseWhere = {
-    ...(showArchived ? {} : { isArchived: false }),
-    ...(schoolYearId ? { schoolYearId } : {}),
-    ...(createdByUserId ? { createdByUserId } : {}),
-    ...(createdAtRange ? { createdAt: createdAtRange } : {}),
-    ...(sectionId
-      ? {
-          students: {
-            some: {
-              sectionId,
-            },
-          },
-        }
-      : {}),
-    ...(q
-      ? {
-          OR: [
-            { id: { contains: q, mode: "insensitive" as const } },
-            {
-              schoolYear: {
-                name: { contains: q, mode: "insensitive" as const },
+  const where = {
+    AND: [
+      schoolYearId ? { schoolYearId } : {},
+      createdByUserId ? { createdByUserId } : {},
+      typeof archivedFilter === "boolean" ? { isArchived: archivedFilter } : {},
+      q
+        ? {
+            OR: [
+              { id: { contains: q, mode: "insensitive" as const } },
+              {
+                schoolYear: {
+                  name: { contains: q, mode: "insensitive" as const },
+                },
               },
-            },
-            {
-              createdByUser: {
-                name: { contains: q, mode: "insensitive" as const },
+              {
+                createdByUser: {
+                  name: { contains: q, mode: "insensitive" as const },
+                },
               },
-            },
-            {
-              createdByUser: {
-                email: { contains: q, mode: "insensitive" as const },
+              {
+                createdByUser: {
+                  email: { contains: q, mode: "insensitive" as const },
+                },
               },
-            },
-          ],
-        }
-      : {}),
+            ],
+          }
+        : {},
+    ],
   };
 
-  const [
-    schoolYears,
-    sections,
-    importers,
-    batches,
-    totalBatches,
-    allCounts,
-    summaryRows,
-  ] = await Promise.all([
+  const [schoolYears, admins, totalCount, batches, summaryRows] = await Promise.all([
     prisma.schoolYear.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: { name: "desc" },
       select: {
         id: true,
         name: true,
-      },
-    }),
-    prisma.section.findMany({
-      orderBy: { name: "asc" },
-      select: {
-        id: true,
-        name: true,
-        gradeLevel: true,
       },
     }),
     prisma.user.findMany({
       where: {
-        studentImportBatches: {
-          some: {},
+        role: {
+          in: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
         },
       },
       orderBy: [{ name: "asc" }, { email: "asc" }],
@@ -163,18 +134,19 @@ export default async function StudentImportHistoryPage({
         email: true,
       },
     }),
+    prisma.studentImportBatch.count({ where }),
     prisma.studentImportBatch.findMany({
-      where: baseWhere,
+      where,
       include: {
+        schoolYear: {
+          select: {
+            name: true,
+          },
+        },
         createdByUser: {
           select: {
             name: true,
             email: true,
-          },
-        },
-        schoolYear: {
-          select: {
-            name: true,
           },
         },
         _count: {
@@ -189,484 +161,329 @@ export default async function StudentImportHistoryPage({
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    prisma.studentImportBatch.count({
-      where: baseWhere,
-    }),
-    prisma.studentImportBatch.groupBy({
-      by: ["isArchived"],
-      _count: {
-        _all: true,
-      },
-    }),
     prisma.studentImportBatch.findMany({
-      where: baseWhere,
+      where,
       select: {
+        id: true,
         isArchived: true,
         createdStudents: true,
         updatedStudents: true,
         skipped: true,
-        _count: {
-          select: {
-            students: true,
-          },
-        },
       },
     }),
   ]);
 
-  const totalPages = Math.max(Math.ceil(totalBatches / PAGE_SIZE), 1);
-
-  const activeCount =
-    allCounts.find((row) => row.isArchived === false)?._count._all ?? 0;
-  const archivedCount =
-    allCounts.find((row) => row.isArchived === true)?._count._all ?? 0;
-
-  const filteredBatchCount = summaryRows.length;
-  const filteredStudentCount = summaryRows.reduce(
-    (sum, row) => sum + row._count.students,
-    0
-  );
-  const filteredCreatedStudents = summaryRows.reduce(
-    (sum, row) => sum + row.createdStudents,
-    0
-  );
-  const filteredUpdatedStudents = summaryRows.reduce(
-    (sum, row) => sum + row.updatedStudents,
-    0
-  );
-  const filteredSkipped = summaryRows.reduce((sum, row) => sum + row.skipped, 0);
-  const filteredActiveCount = summaryRows.filter(
-    (row) => row.isArchived === false
-  ).length;
-  const filteredArchivedCount = summaryRows.filter(
-    (row) => row.isArchived === true
-  ).length;
-
-  function buildUrl(nextPage: number) {
-    return buildImportHistoryUrl({
-      archived: showArchived ? "1" : "",
-      q,
-      dateFrom,
-      dateTo,
-      schoolYearId,
-      sectionId,
-      createdByUserId,
-      page: nextPage,
-    });
-  }
-
-  function buildBaseUrl(archived: boolean) {
-    return buildImportHistoryUrl({
-      archived: archived ? "1" : "",
-      q,
-      dateFrom,
-      dateTo,
-      schoolYearId,
-      sectionId,
-      createdByUserId,
-    });
-  }
-
-  function buildExportUrl() {
-    return buildImportHistoryExportUrl({
-      archived: showArchived ? "1" : "",
-      q,
-      dateFrom,
-      dateTo,
-      schoolYearId,
-      sectionId,
-      createdByUserId,
-    });
-  }
-
-  function buildPageExportUrl() {
-    return buildImportHistoryPageExportUrl({
-      archived: showArchived ? "1" : "",
-      q,
-      dateFrom,
-      dateTo,
-      schoolYearId,
-      sectionId,
-      createdByUserId,
-      page,
-    });
-  }
-
-  function buildPrintUrl() {
-    return buildImportHistoryPrintUrl({
-      archived: showArchived ? "1" : "",
-      q,
-      dateFrom,
-      dateTo,
-      schoolYearId,
-      sectionId,
-      createdByUserId,
-      page,
-    });
-  }
+  const totalPages = Math.max(Math.ceil(totalCount / PAGE_SIZE), 1);
+  const activeCount = summaryRows.filter((row) => !row.isArchived).length;
+  const archivedCount = summaryRows.filter((row) => row.isArchived).length;
+  const createdStudentsCount = summaryRows.reduce((sum, row) => sum + row.createdStudents, 0);
+  const updatedStudentsCount = summaryRows.reduce((sum, row) => sum + row.updatedStudents, 0);
+  const skippedCount = summaryRows.reduce((sum, row) => sum + row.skipped, 0);
 
   return (
-    <div className="space-y-8">
-      <PageHeader
+    <div className="portal-shell space-y-6">
+      <DashboardTopbar
         title="Student Import History"
-        description="Review past student import batches and export credentials again when needed."
-        breadcrumbs={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Admin", href: "/dashboard/admin" },
-          { label: "Student Management", href: "/dashboard/admin/students" },
-          { label: "Import History" },
-        ]}
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <ExportActionsMenu
-              items={[
-                {
-                  label: "Print View",
-                  href: buildPrintUrl(),
-                  icon: "print",
-                  newTab: true,
-                },
-                {
-                  label: "Export This Page",
-                  href: buildPageExportUrl(),
-                  icon: "csv",
-                },
-                {
-                  label: "Export All Filtered",
-                  href: buildExportUrl(),
-                  icon: "csv",
-                },
-              ]}
-            />
-
-            <Button asChild variant={showArchived ? "outline" : "default"}>
-              <Link href={buildBaseUrl(false)}>
-                Active Batches
-                <span className="ml-2 rounded-md bg-white/20 px-2 py-0.5 text-xs">
-                  {activeCount}
-                </span>
-              </Link>
-            </Button>
-
-            <Button asChild variant={showArchived ? "default" : "outline"}>
-              <Link href={buildBaseUrl(true)}>
-                All Batches
-                <span className="ml-2 rounded-md bg-white/20 px-2 py-0.5 text-xs">
-                  {activeCount + archivedCount}
-                </span>
-              </Link>
-            </Button>
-          </div>
-        }
+        subtitle="Review student import batches, results, and archive status."
+        userName={session.user.name ?? session.user.email}
       />
 
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Import Batches
-            {showArchived ? (
-              <Badge variant="secondary">Showing Active + Archived</Badge>
-            ) : (
-              <Badge>Showing Active Only</Badge>
-            )}
+      <section className="portal-card overflow-hidden border-0 p-0">
+        <div className="portal-hero relative">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_28%)]" />
+          <div className="relative grid gap-6 px-6 py-8 md:px-8 md:py-10 xl:grid-cols-[1.45fr_0.95fr]">
+            <div className="space-y-4 text-white">
+              <div className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
+                Student Import Tracking
+              </div>
+
+              <div className="space-y-3">
+                <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+                  Review student import results and batch history
+                </h1>
+                <p className="max-w-2xl text-sm leading-6 text-blue-50/90 md:text-base">
+                  Monitor created and updated records, skipped rows, archive status,
+                  and who performed each student import batch.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
+                <div className="flex items-center gap-2 text-blue-100">
+                  <History className="h-4 w-4" />
+                  <span className="text-xs font-medium uppercase tracking-[0.16em]">
+                    Total Batches
+                  </span>
+                </div>
+                <div className="mt-2 text-lg font-semibold">{totalCount}</div>
+              </div>
+
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
+                <div className="flex items-center gap-2 text-blue-100">
+                  <Archive className="h-4 w-4" />
+                  <span className="text-xs font-medium uppercase tracking-[0.16em]">
+                    Archived
+                  </span>
+                </div>
+                <div className="mt-2 text-lg font-semibold">{archivedCount}</div>
+              </div>
+
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
+                <div className="flex items-center gap-2 text-blue-100">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span className="text-xs font-medium uppercase tracking-[0.16em]">
+                    Created Students
+                  </span>
+                </div>
+                <div className="mt-2 text-lg font-semibold">{createdStudentsCount}</div>
+              </div>
+
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
+                <div className="flex items-center gap-2 text-blue-100">
+                  <RefreshCcw className="h-4 w-4" />
+                  <span className="text-xs font-medium uppercase tracking-[0.16em]">
+                    Updated Students
+                  </span>
+                </div>
+                <div className="mt-2 text-lg font-semibold">{updatedStudentsCount}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <Card className="portal-card">
+          <CardContent className="p-5">
+            <div className="text-sm text-slate-500">Active Batches</div>
+            <div className="mt-2 text-3xl font-bold text-slate-900">{activeCount}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="portal-card">
+          <CardContent className="p-5">
+            <div className="text-sm text-slate-500">Archived Batches</div>
+            <div className="mt-2 text-3xl font-bold text-slate-900">{archivedCount}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="portal-card">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <SkipForward className="h-4 w-4 text-amber-600" />
+              Skipped Rows
+            </div>
+            <div className="mt-2 text-3xl font-bold text-slate-900">{skippedCount}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="portal-card">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <School className="h-4 w-4 text-sky-600" />
+              School Years
+            </div>
+            <div className="mt-2 text-3xl font-bold text-slate-900">{schoolYears.length}</div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <Card className="portal-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-xl font-semibold text-slate-900">
+            Filters
           </CardTitle>
-          <CardDescription>
-            Page {page} of {totalPages} • {totalBatches} matching batches
-          </CardDescription>
         </CardHeader>
-
-        <CardContent className="space-y-6">
-          <TableToolbar>
-            <form
-              method="GET"
-              className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_180px_220px_220px_220px_auto]"
-            >
-              <div>
-                <label className="mb-2 block text-sm font-medium">Search</label>
-                <Input
-                  name="q"
-                  defaultValue={q}
-                  placeholder="Batch ID, school year, importer name or email"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">From</label>
-                <Input name="dateFrom" type="date" defaultValue={dateFrom} />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">To</label>
-                <Input name="dateTo" type="date" defaultValue={dateTo} />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  School Year
-                </label>
-                <select
-                  name="schoolYearId"
-                  defaultValue={schoolYearId}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">All school years</option>
-                  {schoolYears.map((schoolYear) => (
-                    <option key={schoolYear.id} value={schoolYear.id}>
-                      {schoolYear.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">Section</label>
-                <select
-                  name="sectionId"
-                  defaultValue={sectionId}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">All sections</option>
-                  {sections.map((section) => (
-                    <option key={section.id} value={section.id}>
-                      {section.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  Created By
-                </label>
-                <select
-                  name="createdByUserId"
-                  defaultValue={createdByUserId}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">All importers</option>
-                  {importers.map((importer) => (
-                    <option key={importer.id} value={importer.id}>
-                      {importer.name
-                        ? `${importer.name} (${importer.email})`
-                        : importer.email}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
+        <CardContent>
+          <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="relative xl:col-span-2">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
-                type="hidden"
-                name="archived"
-                value={showArchived ? "1" : ""}
+                type="text"
+                name="q"
+                defaultValue={q}
+                placeholder="Search batch ID, school year, or admin"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm shadow-sm outline-none transition focus:border-blue-300"
               />
-              <input type="hidden" name="page" value="1" />
-
-              <div className="flex items-end gap-2">
-                <Button type="submit">Apply</Button>
-                <Button type="button" variant="outline" asChild>
-                  <Link
-                    href={
-                      showArchived
-                        ? "/dashboard/admin/students/import-history?archived=1"
-                        : "/dashboard/admin/students/import-history"
-                    }
-                  >
-                    Reset
-                  </Link>
-                </Button>
-              </div>
-            </form>
-          </TableToolbar>
-
-          <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs text-slate-500">Active Batches</p>
-              <p className="mt-1 text-lg font-semibold text-slate-900">
-                {activeCount}
-              </p>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs text-slate-500">Archived Batches</p>
-              <p className="mt-1 text-lg font-semibold text-slate-900">
-                {archivedCount}
-              </p>
-            </div>
+            <select
+              name="schoolYearId"
+              defaultValue={schoolYearId}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-300"
+            >
+              <option value="">All school years</option>
+              {schoolYears.map((schoolYear) => (
+                <option key={schoolYear.id} value={schoolYear.id}>
+                  {schoolYear.name}
+                </option>
+              ))}
+            </select>
 
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-              <p className="text-xs text-blue-600">Filtered Batches</p>
-              <p className="mt-1 text-lg font-semibold text-blue-950">
-                {filteredBatchCount}
-              </p>
-            </div>
+            <select
+              name="createdByUserId"
+              defaultValue={createdByUserId}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-300"
+            >
+              <option value="">All admins</option>
+              {admins.map((admin) => (
+                <option key={admin.id} value={admin.id}>
+                  {admin.name ?? admin.email}
+                </option>
+              ))}
+            </select>
 
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-              <p className="text-xs text-blue-600">Filtered Students</p>
-              <p className="mt-1 text-lg font-semibold text-blue-950">
-                {filteredStudentCount}
-              </p>
-            </div>
+            <select
+              name="archived"
+              defaultValue={archived}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-300"
+            >
+              <option value="">All status</option>
+              <option value="active">Active</option>
+              <option value="archived">Archived</option>
+            </select>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs text-slate-500">Current View</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
-                {showArchived ? "Active + Archived" : "Active Only"}
-              </p>
+            <div className="flex gap-2 md:col-span-2 xl:col-span-4">
+              <button
+                type="submit"
+                className="inline-flex h-11 items-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground"
+              >
+                <Filter className="mr-2 h-4 w-4" />
+                Apply Filters
+              </button>
+
+              <a
+                href="/dashboard/admin/students/import-history"
+                className="inline-flex h-11 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700"
+              >
+                Reset
+              </a>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card className="portal-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-xl font-semibold text-slate-900">
+            Import Batch Records
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-slate-50/80">
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Batch ID</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">School Year</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Created By</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Rows</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Created</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Updated</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Skipped</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Students</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Status</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Created At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {batches.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={10}
+                        className="px-4 py-10 text-center text-sm text-muted-foreground"
+                      >
+                        No import batches found.
+                      </td>
+                    </tr>
+                  ) : (
+                    batches.map((batch) => (
+                      <tr key={batch.id} className="border-t border-slate-100">
+                        <td className="px-4 py-4 font-medium text-slate-900">
+                          {batch.id}
+                        </td>
+                        <td className="px-4 py-4 text-slate-700">
+                          {batch.schoolYear?.name ?? "-"}
+                        </td>
+                        <td className="px-4 py-4 text-slate-700">
+                          {batch.createdByUser?.name ?? batch.createdByUser?.email ?? "-"}
+                        </td>
+                        <td className="px-4 py-4 text-slate-700">
+                          {batch.totalRows}
+                        </td>
+                        <td className="px-4 py-4 text-slate-700">
+                          {batch.createdStudents}
+                        </td>
+                        <td className="px-4 py-4 text-slate-700">
+                          {batch.updatedStudents}
+                        </td>
+                        <td className="px-4 py-4 text-slate-700">
+                          {batch.skipped}
+                        </td>
+                        <td className="px-4 py-4 text-slate-700">
+                          {batch._count.students}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span
+                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${
+                              batch.isArchived
+                                ? "border-slate-200 bg-slate-50 text-slate-700"
+                                : "border-green-200 bg-green-50 text-green-700"
+                            }`}
+                          >
+                            {batch.isArchived ? "ARCHIVED" : "ACTIVE"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-slate-700">
+                          {formatDateTime(batch.createdAt)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-              <p className="text-xs text-emerald-700">Created Students</p>
-              <p className="mt-1 text-lg font-semibold text-emerald-950">
-                {filteredCreatedStudents}
-              </p>
+          <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-slate-600">
+              Page {page} of {totalPages} • Total {totalCount}
             </div>
 
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-xs text-amber-700">Updated Students</p>
-              <p className="mt-1 text-lg font-semibold text-amber-950">
-                {filteredUpdatedStudents}
-              </p>
-            </div>
+            <div className="flex items-center gap-2">
+              <a
+                href={buildImportHistoryQuery({
+                  q,
+                  schoolYearId,
+                  createdByUserId,
+                  archived,
+                  page: Math.max(page - 1, 1),
+                })}
+                className={`inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 font-medium text-slate-700 ${
+                  page <= 1 ? "pointer-events-none opacity-50" : ""
+                }`}
+              >
+                Previous
+              </a>
 
-            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
-              <p className="text-xs text-rose-700">Skipped Rows</p>
-              <p className="mt-1 text-lg font-semibold text-rose-950">
-                {filteredSkipped}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-sky-200 bg-sky-50 p-4">
-              <p className="text-xs text-sky-700">Filtered Active</p>
-              <p className="mt-1 text-lg font-semibold text-sky-950">
-                {filteredActiveCount}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
-              <p className="text-xs text-violet-700">Filtered Archived</p>
-              <p className="mt-1 text-lg font-semibold text-violet-950">
-                {filteredArchivedCount}
-              </p>
+              <a
+                href={buildImportHistoryQuery({
+                  q,
+                  schoolYearId,
+                  createdByUserId,
+                  archived,
+                  page: Math.min(page + 1, totalPages),
+                })}
+                className={`inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 font-medium text-slate-700 ${
+                  page >= totalPages ? "pointer-events-none opacity-50" : ""
+                }`}
+              >
+                Next
+              </a>
             </div>
           </div>
-
-          {q || dateFrom || dateTo || schoolYearId || sectionId || createdByUserId ? (
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
-              {q ? (
-                <div>
-                  Search:
-                  <span className="ml-2 font-medium">{q}</span>
-                </div>
-              ) : null}
-              {dateFrom || dateTo ? (
-                <div className="mt-1">
-                  Date range:
-                  <span className="ml-2 font-medium">
-                    {dateFrom || "Any"} → {dateTo || "Any"}
-                  </span>
-                </div>
-              ) : null}
-              {schoolYearId ? (
-                <div className="mt-1">
-                  School year:
-                  <span className="ml-2 font-medium">
-                    {schoolYears.find((s) => s.id === schoolYearId)?.name ??
-                      schoolYearId}
-                  </span>
-                </div>
-              ) : null}
-              {sectionId ? (
-                <div className="mt-1">
-                  Section:
-                  <span className="ml-2 font-medium">
-                    {sections.find((s) => s.id === sectionId)?.name ?? sectionId}
-                  </span>
-                </div>
-              ) : null}
-              {createdByUserId ? (
-                <div className="mt-1">
-                  Created by:
-                  <span className="ml-2 font-medium">
-                    {importers.find((u) => u.id === createdByUserId)?.name
-                      ? `${importers.find((u) => u.id === createdByUserId)?.name} (${importers.find((u) => u.id === createdByUserId)?.email})`
-                      : importers.find((u) => u.id === createdByUserId)?.email ??
-                        createdByUserId}
-                  </span>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          {batches.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
-              No import history found.
-            </div>
-          ) : (
-            <>
-              <div className="space-y-4">
-                {batches.map((batch) => (
-                  <div
-                    key={batch.id}
-                    className="flex flex-col gap-4 rounded-xl border border-slate-200 p-4 md:flex-row md:items-center md:justify-between"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold text-slate-900">Batch ID</p>
-                        {batch.isArchived ? (
-                          <Badge variant="secondary">Archived</Badge>
-                        ) : (
-                          <Badge>Active</Badge>
-                        )}
-                      </div>
-
-                      <p className="break-all font-mono text-sm text-slate-700">
-                        {batch.id}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        Students in batch: {batch._count.students}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        School year: {batch.schoolYear?.name ?? "-"}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        Imported by:{" "}
-                        {batch.createdByUser?.name ??
-                          batch.createdByUser?.email ??
-                          "-"}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        Imported at: {formatManilaDateTime(batch.createdAt)}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      <CopyBatchIdButton value={batch.id} label="Copy Batch ID" />
-                      <BatchCardActions
-                        batchId={batch.id}
-                        isArchived={batch.isArchived}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Button variant="outline" asChild disabled={page <= 1}>
-                  <Link href={buildUrl(page - 1)}>Previous</Link>
-                </Button>
-
-                <span className="text-sm text-slate-500">
-                  Page {page} of {totalPages}
-                </span>
-
-                <Button variant="outline" asChild disabled={page >= totalPages}>
-                  <Link href={buildUrl(page + 1)}>Next</Link>
-                </Button>
-              </div>
-            </>
-          )}
         </CardContent>
       </Card>
     </div>
