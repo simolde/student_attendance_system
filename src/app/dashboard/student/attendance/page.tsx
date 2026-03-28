@@ -1,37 +1,56 @@
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
-import { hasRole, ROLES } from "@/lib/rbac";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { hasRole, ROLES } from "@/lib/rbac";
+import DashboardTopbar from "@/components/layout/dashboard-topbar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+  ClipboardList,
+  CalendarDays,
+  Clock3,
+  CheckCircle2,
+  XCircle,
+  FileCheck,
+} from "lucide-react";
 
-function getStatusVariant(status: string) {
+const demoAttendanceRows = [
+  {
+    id: "1",
+    date: "2026-03-28",
+    status: "PRESENT",
+    timeIn: "7:45 AM",
+    timeOut: "4:12 PM",
+    remarks: "-",
+  },
+  {
+    id: "2",
+    date: "2026-03-27",
+    status: "LATE",
+    timeIn: "8:08 AM",
+    timeOut: "4:05 PM",
+    remarks: "Arrived after flag ceremony",
+  },
+  {
+    id: "3",
+    date: "2026-03-26",
+    status: "EXCUSED",
+    timeIn: "-",
+    timeOut: "-",
+    remarks: "Medical reason",
+  },
+];
+
+function getStatusBadgeClass(status: string) {
   switch (status) {
     case "PRESENT":
-      return "default";
+      return "border-green-200 bg-green-50 text-green-700";
     case "LATE":
-      return "secondary";
+      return "border-amber-200 bg-amber-50 text-amber-700";
     case "ABSENT":
-      return "destructive";
+      return "border-rose-200 bg-rose-50 text-rose-700";
     case "EXCUSED":
-      return "outline";
+      return "border-sky-200 bg-sky-50 text-sky-700";
     default:
-      return "secondary";
+      return "border-slate-200 bg-slate-50 text-slate-700";
   }
 }
 
@@ -46,123 +65,152 @@ export default async function StudentAttendancePage() {
     redirect("/unauthorized");
   }
 
-  const student = await prisma.student.findUnique({
-    where: {
-      userId: session.user.id,
-    },
-    include: {
-      user: true,
-      section: true,
-      attendances: {
-        orderBy: {
-          date: "desc",
-        },
-      },
-    },
-  });
+  const displayName = session.user.name ?? session.user.email ?? "Student";
 
-  if (!student) {
-    return (
-      <div className="p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Student Record Not Found</CardTitle>
-            <CardDescription>
-              Your account does not have a linked student profile yet.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
+  const presentCount = demoAttendanceRows.filter((row) => row.status === "PRESENT").length;
+  const lateCount = demoAttendanceRows.filter((row) => row.status === "LATE").length;
+  const excusedCount = demoAttendanceRows.filter((row) => row.status === "EXCUSED").length;
 
   return (
-    <div className="p-6 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">My Attendance</h1>
-        <p className="mt-2 text-muted-foreground">
-          View your attendance history only.
-        </p>
-      </div>
+    <div className="portal-shell space-y-6">
+      <DashboardTopbar
+        title="My Attendance"
+        subtitle="Review your attendance records and recent daily status."
+        userName={displayName}
+      />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardDescription>Student Name</CardDescription>
-            <CardTitle className="text-xl">
-              {student.user.name ?? student.user.email}
-            </CardTitle>
-          </CardHeader>
+      <section className="portal-card overflow-hidden border-0 p-0">
+        <div className="portal-hero relative">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_28%)]" />
+          <div className="relative grid gap-6 px-6 py-8 md:px-8 md:py-10 xl:grid-cols-[1.45fr_0.95fr]">
+            <div className="space-y-4 text-white">
+              <div className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
+                Student Attendance Records
+              </div>
+
+              <div className="space-y-3">
+                <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+                  Keep track of your attendance
+                </h1>
+                <p className="max-w-2xl text-sm leading-6 text-blue-50/90 md:text-base">
+                  View recent attendance entries, time logs, and status remarks
+                  from your student portal.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
+                <div className="text-xs uppercase tracking-[0.16em] text-blue-100/80">
+                  Present
+                </div>
+                <div className="mt-2 text-2xl font-bold">{presentCount}</div>
+              </div>
+
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
+                <div className="text-xs uppercase tracking-[0.16em] text-blue-100/80">
+                  Late
+                </div>
+                <div className="mt-2 text-2xl font-bold">{lateCount}</div>
+              </div>
+
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
+                <div className="text-xs uppercase tracking-[0.16em] text-blue-100/80">
+                  Excused
+                </div>
+                <div className="mt-2 text-2xl font-bold">{excusedCount}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <Card className="portal-card">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              Good Standing
+            </div>
+            <div className="mt-2 text-2xl font-bold text-slate-900">Visible</div>
+          </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardDescription>Student Number</CardDescription>
-            <CardTitle className="text-xl">{student.studentNo}</CardTitle>
-          </CardHeader>
+        <Card className="portal-card">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <Clock3 className="h-4 w-4 text-amber-600" />
+              Late Alerts
+            </div>
+            <div className="mt-2 text-2xl font-bold text-slate-900">{lateCount}</div>
+          </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardDescription>Section</CardDescription>
-            <CardTitle className="text-xl">
-              {student.section?.name ?? "-"}
-            </CardTitle>
-          </CardHeader>
+        <Card className="portal-card">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <XCircle className="h-4 w-4 text-rose-600" />
+              Absences
+            </div>
+            <div className="mt-2 text-2xl font-bold text-slate-900">0</div>
+          </CardContent>
         </Card>
-      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Attendance Records</CardTitle>
-          <CardDescription>
-            Your saved attendance history.
-          </CardDescription>
+        <Card className="portal-card">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <FileCheck className="h-4 w-4 text-sky-600" />
+              Excused
+            </div>
+            <div className="mt-2 text-2xl font-bold text-slate-900">{excusedCount}</div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <Card className="portal-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-xl font-semibold text-slate-900">
+            <ClipboardList className="h-5 w-5 text-slate-700" />
+            Attendance History
+          </CardTitle>
         </CardHeader>
-
         <CardContent>
-          {student.attendances.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No attendance records found.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Remarks</TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {student.attendances.map((attendance) => (
-                  <TableRow key={attendance.id}>
-                    <TableCell>
-                      {new Date(attendance.date).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusVariant(attendance.status)}>
-                        {attendance.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{attendance.remarks ?? "-"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-slate-50/80">
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Date</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Status</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Time In</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Time Out</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-700">Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {demoAttendanceRows.map((row) => (
+                    <tr key={row.id} className="border-t border-slate-100">
+                      <td className="px-4 py-4 text-slate-700">{row.date}</td>
+                      <td className="px-4 py-4">
+                        <span
+                          className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusBadgeClass(
+                            row.status
+                          )}`}
+                        >
+                          {row.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-slate-700">{row.timeIn}</td>
+                      <td className="px-4 py-4 text-slate-700">{row.timeOut}</td>
+                      <td className="px-4 py-4 text-slate-600">{row.remarks}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </CardContent>
       </Card>
-
-      <div>
-        <Link
-          href="/dashboard/student"
-          className="inline-block rounded-md border px-4 py-2 text-sm hover:bg-accent"
-        >
-          Back to Student Dashboard
-        </Link>
-      </div>
     </div>
   );
 }
