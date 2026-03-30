@@ -5,6 +5,247 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String               @id @default(cuid())
+  name                 String?
+  email                String               @unique
+  password             String?
+  role                 Role                 @default(STUDENT)
+  isActive             Boolean              @default(true)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  emailVerified        DateTime?
+  image                String?
+  mustChangePassword   Boolean              @default(false)
+  accounts             Account[]
+  announcements        Announcement[]
+  announcementReads    AnnouncementRead[]
+  auditLogs            AuditLog[]
+  sessions             Session[]
+  student              Student?
+  studentImportBatches StudentImportBatch[] @relation("StudentImportBatchCreatedBy")
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  id                String  @id @default(cuid())
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @id @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model Section {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  gradeLevel  GradeLevel
+  rules       AttendanceRule[]
+  enrollments Enrollment[]
+  students    Student[]
+}
+
+model SchoolYear {
+  id                   String               @id @default(cuid())
+  name                 String               @unique
+  isActive             Boolean              @default(false)
+  startDate            DateTime?
+  endDate              DateTime?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  enrollments          Enrollment[]
+  studentImportBatches StudentImportBatch[]
+}
+
+model Student {
+  id            String              @id @default(cuid())
+  userId        String              @unique
+  studentNo     String              @unique
+  sectionId     String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  rfidUid       String?             @unique
+  importBatchId String?
+  attendances   Attendance[]
+  enrollments   Enrollment[]
+  rfidLogs      RfidLog[]
+  importBatch   StudentImportBatch? @relation(fields: [importBatchId], references: [id])
+  section       Section?            @relation(fields: [sectionId], references: [id])
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Enrollment {
+  id           String           @id @default(cuid())
+  studentId    String
+  schoolYearId String
+  sectionId    String
+  status       EnrollmentStatus @default(ENROLLED)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  attendances  Attendance[]
+  schoolYear   SchoolYear       @relation(fields: [schoolYearId], references: [id])
+  section      Section          @relation(fields: [sectionId], references: [id])
+  student      Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, schoolYearId])
+  @@index([schoolYearId, sectionId])
+}
+
+model Attendance {
+  id           String           @id @default(cuid())
+  studentId    String
+  date         DateTime         @db.Date
+  status       AttendanceStatus
+  remarks      String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  enrollmentId String?
+  source       AttendanceSource @default(MANUAL)
+  timeIn       DateTime?
+  timeOut      DateTime?
+  enrollment   Enrollment?      @relation(fields: [enrollmentId], references: [id])
+  student      Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, date])
+  @@index([enrollmentId, date])
+}
+
+model RfidDevice {
+  id         String    @id @default(cuid())
+  name       String
+  location   String?
+  deviceCode String?   @unique
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  rfidLogs   RfidLog[]
+}
+
+model RfidLog {
+  id        String         @id @default(cuid())
+  rfidUid   String
+  studentId String?
+  deviceId  String?
+  scanTime  DateTime       @default(now())
+  status    RfidScanStatus
+  message   String?
+  createdAt DateTime       @default(now())
+  device    RfidDevice?    @relation(fields: [deviceId], references: [id])
+  student   Student?       @relation(fields: [studentId], references: [id])
+
+  @@index([rfidUid])
+  @@index([studentId, scanTime])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  entity      String
+  entityId    String?
+  description String?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id])
+}
+
+model AttendanceRule {
+  id           String      @id @default(cuid())
+  name         String      @unique
+  timeInStart  String
+  timeInEnd    String
+  lateAfter    String
+  timeOutStart String?
+  timeOutEnd   String?
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  gradeLevel   GradeLevel?
+  isDefault    Boolean     @default(false)
+  sectionId    String?
+  section      Section?    @relation(fields: [sectionId], references: [id])
+
+  @@index([gradeLevel, isActive])
+  @@index([sectionId, isActive])
+}
+
+model StudentImportBatch {
+  id                 String      @id @default(cuid())
+  createdByUserId    String?
+  schoolYearId       String?
+  totalRows          Int         @default(0)
+  createdUsers       Int         @default(0)
+  createdStudents    Int         @default(0)
+  createdEnrollments Int         @default(0)
+  updatedUsers       Int         @default(0)
+  updatedStudents    Int         @default(0)
+  updatedEnrollments Int         @default(0)
+  skipped            Int         @default(0)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  isArchived         Boolean     @default(false)
+  students           Student[]
+  createdByUser      User?       @relation("StudentImportBatchCreatedBy", fields: [createdByUserId], references: [id])
+  schoolYear         SchoolYear? @relation(fields: [schoolYearId], references: [id])
+
+  @@index([createdAt])
+  @@index([isArchived, createdAt])
+}
+
+model Announcement {
+  id        String             @id @default(cuid())
+  title     String
+  content   String
+  createdAt DateTime           @default(now())
+  authorId  String?
+  isPinned  Boolean            @default(false)
+  status    AnnouncementStatus @default(PUBLISHED)
+  target    AnnouncementTarget @default(ALL)
+  updatedAt DateTime           @updatedAt
+  author    User?              @relation(fields: [authorId], references: [id])
+  reads     AnnouncementRead[]
+
+  @@index([status, target, createdAt(sort: Desc)])
+  @@index([isPinned, createdAt(sort: Desc)])
+}
+
+model AnnouncementRead {
+  id             String       @id @default(cuid())
+  announcementId String
+  userId         String
+  readAt         DateTime     @default(now())
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId])
+  @@index([userId])
 }
 
 enum Role {
@@ -50,7 +291,6 @@ enum GradeLevel {
   GRADE_1
   GRADE_2
   GRADE_3
-  GRADE_4
   GRADE_5
   GRADE_6
   GRADE_7
@@ -59,228 +299,18 @@ enum GradeLevel {
   GRADE_10
   GRADE_11
   GRADE_12
+  GRADE_4
 }
 
-model User {
-  id                   String              @id @default(cuid())
-  name                 String?
-  email                String              @unique
-  emailVerified        DateTime?
-  image                String?
-  password             String?
-  role                 Role                @default(STUDENT)
-  isActive             Boolean             @default(true)
-  mustChangePassword   Boolean             @default(false)
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
-
-  student              Student?
-  accounts             Account[]
-  sessions             Session[]
-  auditLogs            AuditLog[]
-  studentImportBatches StudentImportBatch[] @relation("StudentImportBatchCreatedBy")
+enum AnnouncementTarget {
+  ALL
+  TEACHER
+  STUDENT
+  ADMIN
 }
 
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
-model Session {
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([sessionToken])
-}
-
-model VerificationToken {
-  identifier String
-  token      String
-  expires    DateTime
-
-  @@id([identifier, token])
-}
-
-model Section {
-  id         String     @id @default(cuid())
-  name       String     @unique
-  gradeLevel GradeLevel
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-
-  students    Student[]
-  enrollments Enrollment[]
-  rules       AttendanceRule[]
-}
-
-model SchoolYear {
-  id                   String               @id @default(cuid())
-  name                 String               @unique
-  isActive             Boolean              @default(false)
-  startDate            DateTime?
-  endDate              DateTime?
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
-
-  enrollments          Enrollment[]
-  studentImportBatches StudentImportBatch[]
-}
-
-model Student {
-  id            String             @id @default(cuid())
-  userId        String             @unique
-  studentNo     String             @unique
-  rfidUid       String?            @unique
-  sectionId     String?
-  importBatchId String?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-
-  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  section       Section?           @relation(fields: [sectionId], references: [id])
-  importBatch   StudentImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
-  enrollments   Enrollment[]
-  attendances   Attendance[]
-  rfidLogs      RfidLog[]
-}
-
-model Enrollment {
-  id           String           @id @default(cuid())
-  studentId    String
-  schoolYearId String
-  sectionId    String
-  status       EnrollmentStatus @default(ENROLLED)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-
-  student     Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  schoolYear  SchoolYear   @relation(fields: [schoolYearId], references: [id], onDelete: Restrict)
-  section     Section      @relation(fields: [sectionId], references: [id], onDelete: Restrict)
-  attendances Attendance[]
-
-  @@unique([studentId, schoolYearId])
-  @@index([schoolYearId, sectionId])
-}
-
-model Attendance {
-  id           String           @id @default(cuid())
-  studentId    String
-  enrollmentId String?
-  date         DateTime         @db.Date
-  status       AttendanceStatus
-  source       AttendanceSource @default(MANUAL)
-  remarks      String?
-  timeIn       DateTime?
-  timeOut      DateTime?
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-
-  student    Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
-
-  @@unique([studentId, date])
-  @@index([enrollmentId, date])
-}
-
-model RfidDevice {
-  id         String   @id @default(cuid())
-  name       String
-  location   String?
-  deviceCode String?  @unique
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  rfidLogs RfidLog[]
-}
-
-model RfidLog {
-  id        String         @id @default(cuid())
-  rfidUid   String
-  studentId String?
-  deviceId  String?
-  scanTime  DateTime       @default(now())
-  status    RfidScanStatus
-  message   String?
-  createdAt DateTime       @default(now())
-
-  student Student?    @relation(fields: [studentId], references: [id], onDelete: SetNull)
-  device  RfidDevice? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
-
-  @@index([rfidUid])
-  @@index([studentId, scanTime])
-}
-
-model AuditLog {
-  id          String   @id @default(cuid())
-  userId      String?
-  action      String
-  entity      String
-  entityId    String?
-  description String?
-  createdAt   DateTime @default(now())
-
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-}
-
-model AttendanceRule {
-  id           String      @id @default(cuid())
-  name         String      @unique
-  gradeLevel   GradeLevel?
-  sectionId    String?
-  isDefault    Boolean     @default(false)
-  isActive     Boolean     @default(true)
-  timeInStart  String
-  timeInEnd    String
-  lateAfter    String
-  timeOutStart String?
-  timeOutEnd   String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-
-  section Section? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
-
-  @@index([gradeLevel, isActive])
-  @@index([sectionId, isActive])
-}
-
-model StudentImportBatch {
-  id                 String      @id @default(cuid())
-  createdByUserId    String?
-  schoolYearId       String?
-  totalRows          Int         @default(0)
-  createdUsers       Int         @default(0)
-  createdStudents    Int         @default(0)
-  createdEnrollments Int         @default(0)
-  updatedUsers       Int         @default(0)
-  updatedStudents    Int         @default(0)
-  updatedEnrollments Int         @default(0)
-  skipped            Int         @default(0)
-  isArchived         Boolean     @default(false)
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
-
-  createdByUser      User?       @relation("StudentImportBatchCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  schoolYear         SchoolYear? @relation(fields: [schoolYearId], references: [id], onDelete: SetNull)
-  students           Student[]
-
-  @@index([createdAt])
-  @@index([isArchived, createdAt])
+enum AnnouncementStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
 }

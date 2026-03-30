@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ShieldCheck, LockKeyhole, GraduationCap, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import LoginForm from "./login-form";
 
 export default function LoginPage() {
   return (
@@ -66,64 +67,7 @@ export default function LoginPage() {
         </section>
 
         <section className="mx-auto w-full max-w-xl">
-          <Card className="portal-card">
-            <CardContent className="p-6 md:p-8">
-              <div className="mb-8 space-y-2">
-                <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-50 text-blue-700">
-                  <LockKeyhole className="h-7 w-7" />
-                </div>
-                <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-                  Sign in to your portal
-                </h2>
-                <p className="text-sm leading-6 text-slate-600">
-                  Enter your account credentials to continue to the student attendance system.
-                </p>
-              </div>
-
-              <form className="space-y-5">
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium text-slate-700">
-                    Email address
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm shadow-sm outline-none transition focus:border-blue-300"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium text-slate-700">
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm shadow-sm outline-none transition focus:border-blue-300"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-primary px-5 text-sm font-medium text-primary-foreground"
-                >
-                  Sign In
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </button>
-              </form>
-
-              <div className="mt-6 flex items-center justify-between gap-3 text-sm">
-                <Link href="/" className="font-medium text-slate-600 hover:text-slate-900">
-                  Back to home
-                </Link>
-                <span className="text-slate-400">Secure school portal access</span>
-              </div>
-            </CardContent>
-          </Card>
+          <LoginForm />
         </section>
       </div>
     </div>

@@ -87,3 +87,13 @@ export type AttendanceRule = Prisma.AttendanceRuleModel
  * 
  */
 export type StudentImportBatch = Prisma.StudentImportBatchModel
+/**
+ * Model Announcement
+ * 
+ */
+export type Announcement = Prisma.AnnouncementModel
+/**
+ * Model AnnouncementRead
+ * 
+ */
+export type AnnouncementRead = Prisma.AnnouncementReadModel

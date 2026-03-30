@@ -21,6 +21,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import LogoutButton from "@/components/logout-button"
 
 function formatRole(role: string) {
   return role.replaceAll("_", " ");
@@ -51,6 +52,7 @@ export default async function DashboardPage() {
         subtitle="Monitor attendance, records, and school activity."
         userName={displayName}
       />
+      <LogoutButton />
 
       <section className="portal-card overflow-hidden border-0 p-0">
         <div className="portal-hero relative">
