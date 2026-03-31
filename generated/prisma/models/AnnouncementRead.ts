@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/library"
+import type * as runtime from "@prisma/client/runtime/client"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -151,7 +151,7 @@ export type AnnouncementReadGroupByOutputType = {
   _max: AnnouncementReadMaxAggregateOutputType | null
 }
 
-type GetAnnouncementReadGroupByPayload<T extends AnnouncementReadGroupByArgs> = Prisma.PrismaPromise<
+export type GetAnnouncementReadGroupByPayload<T extends AnnouncementReadGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<AnnouncementReadGroupByOutputType, T['by']> &
       {
@@ -1207,6 +1207,11 @@ export type AnnouncementReadFindManyArgs<ExtArgs extends runtime.Types.Extension
    * Skip the first `n` AnnouncementReads.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of AnnouncementReads.
+   */
   distinct?: Prisma.AnnouncementReadScalarFieldEnum | Prisma.AnnouncementReadScalarFieldEnum[]
 }
 

@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/library"
+import type * as runtime from "@prisma/client/runtime/client"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -172,7 +172,7 @@ export type RfidDeviceGroupByOutputType = {
   _max: RfidDeviceMaxAggregateOutputType | null
 }
 
-type GetRfidDeviceGroupByPayload<T extends RfidDeviceGroupByArgs> = Prisma.PrismaPromise<
+export type GetRfidDeviceGroupByPayload<T extends RfidDeviceGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<RfidDeviceGroupByOutputType, T['by']> &
       {
@@ -1154,6 +1154,11 @@ export type RfidDeviceFindManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Skip the first `n` RfidDevices.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of RfidDevices.
+   */
   distinct?: Prisma.RfidDeviceScalarFieldEnum | Prisma.RfidDeviceScalarFieldEnum[]
 }
 

@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/library"
+import type * as runtime from "@prisma/client/runtime/client"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -283,7 +283,7 @@ export type StudentImportBatchGroupByOutputType = {
   _max: StudentImportBatchMaxAggregateOutputType | null
 }
 
-type GetStudentImportBatchGroupByPayload<T extends StudentImportBatchGroupByArgs> = Prisma.PrismaPromise<
+export type GetStudentImportBatchGroupByPayload<T extends StudentImportBatchGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<StudentImportBatchGroupByOutputType, T['by']> &
       {
@@ -1860,6 +1860,11 @@ export type StudentImportBatchFindManyArgs<ExtArgs extends runtime.Types.Extensi
    * Skip the first `n` StudentImportBatches.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of StudentImportBatches.
+   */
   distinct?: Prisma.StudentImportBatchScalarFieldEnum | Prisma.StudentImportBatchScalarFieldEnum[]
 }
 

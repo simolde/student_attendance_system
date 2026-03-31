@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/library"
+import type * as runtime from "@prisma/client/runtime/client"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -214,7 +214,7 @@ export type AttendanceRuleGroupByOutputType = {
   _max: AttendanceRuleMaxAggregateOutputType | null
 }
 
-type GetAttendanceRuleGroupByPayload<T extends AttendanceRuleGroupByArgs> = Prisma.PrismaPromise<
+export type GetAttendanceRuleGroupByPayload<T extends AttendanceRuleGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<AttendanceRuleGroupByOutputType, T['by']> &
       {
@@ -1406,6 +1406,11 @@ export type AttendanceRuleFindManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Skip the first `n` AttendanceRules.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of AttendanceRules.
+   */
   distinct?: Prisma.AttendanceRuleScalarFieldEnum | Prisma.AttendanceRuleScalarFieldEnum[]
 }
 

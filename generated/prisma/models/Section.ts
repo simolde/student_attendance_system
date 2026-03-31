@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/library"
+import type * as runtime from "@prisma/client/runtime/client"
 import type * as $Enums from "../enums"
 import type * as Prisma from "../internal/prismaNamespace"
 
@@ -158,7 +158,7 @@ export type SectionGroupByOutputType = {
   _max: SectionMaxAggregateOutputType | null
 }
 
-type GetSectionGroupByPayload<T extends SectionGroupByArgs> = Prisma.PrismaPromise<
+export type GetSectionGroupByPayload<T extends SectionGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<SectionGroupByOutputType, T['by']> &
       {
@@ -1289,6 +1289,11 @@ export type SectionFindManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Skip the first `n` Sections.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of Sections.
+   */
   distinct?: Prisma.SectionScalarFieldEnum | Prisma.SectionScalarFieldEnum[]
 }
 
