@@ -4,8 +4,25 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { AnnouncementTarget, Prisma } from "@/../generated/prisma/client";
 
-// ── Mark single announcement as read ─────────────────────────────────────────
+/* ── Helpers ───────────────────────────────────────── */
+
+function getUserTargets(role: string): AnnouncementTarget[] {
+  switch (role) {
+    case "TEACHER":
+      return [AnnouncementTarget.ALL, AnnouncementTarget.TEACHER];
+    case "STUDENT":
+      return [AnnouncementTarget.ALL, AnnouncementTarget.STUDENT];
+    case "ADMIN":
+    case "SUPER_ADMIN":
+      return [AnnouncementTarget.ALL, AnnouncementTarget.ADMIN];
+    default:
+      return [AnnouncementTarget.ALL];
+  }
+}
+
+/* ── Mark single announcement as read ───────────────── */
 
 export async function markAnnouncementRead(announcementId: string) {
   const session = await auth();
@@ -23,27 +40,29 @@ export async function markAnnouncementRead(announcementId: string) {
         announcementId,
         userId: session.user.id,
       },
-      update: {}, // already read, no-op
+      update: {},
     });
   } catch {
-    // Silently ignore (race condition upsert)
+    // Ignore race condition
   }
 
   revalidatePath("/dashboard");
 }
 
-// ── Mark all visible announcements as read ────────────────────────────────────
+/* ── Mark all visible announcements as read ─────────── */
 
-export async function markAllAnnouncementsRead(formData: FormData) {
+export async function markAllAnnouncementsRead() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const role = session.user.role;
+  const userTargets = getUserTargets(session.user.role);
 
   const announcements = await prisma.announcement.findMany({
     where: {
       status: "PUBLISHED",
-      target: { in: ["ALL", role as "ALL" | "TEACHER" | "STUDENT" | "ADMIN"] },
+      targets: {
+        hasSome: userTargets, // ✅ FIXED
+      },
     },
     select: { id: true },
   });
@@ -71,7 +90,7 @@ export async function markAllAnnouncementsRead(formData: FormData) {
   revalidatePath("/dashboard/student/announcements");
 }
 
-// ── Fetch announcements for a given role with read status ─────────────────────
+/* ── Fetch announcements with read state ───────────── */
 
 export type AnnouncementReadFilters = {
   q?: string;
@@ -81,30 +100,49 @@ export type AnnouncementReadFilters = {
   role: string;
 };
 
-export async function getAnnouncementsForRole(filters: AnnouncementReadFilters) {
+export async function getAnnouncementsForRole(
+  filters: AnnouncementReadFilters
+) {
   const { q = "", page = 1, pageSize = 10, userId, role } = filters;
 
-  const targetFilter = {
-    in: ["ALL", role] as ("ALL" | "TEACHER" | "STUDENT" | "ADMIN")[],
-  };
+  const userTargets = getUserTargets(role);
 
-  const where = {
+  const where: Prisma.AnnouncementWhereInput = {
     AND: [
-      { status: "PUBLISHED" as const },
-      { target: targetFilter },
-      q
-        ? {
-            OR: [
-              { title: { contains: q, mode: "insensitive" as const } },
-              { content: { contains: q, mode: "insensitive" as const } },
-            ],
-          }
-        : {},
+      { status: "PUBLISHED" },
+
+      {
+        targets: {
+          hasSome: userTargets, // ✅ FIXED
+        },
+      },
+
+      ...(q
+        ? [
+            {
+              OR: [
+                {
+                  title: {
+                    contains: q,
+                    mode: Prisma.QueryMode.insensitive,
+                  },
+                },
+                {
+                  content: {
+                    contains: q,
+                    mode: Prisma.QueryMode.insensitive,
+                  },
+                },
+              ],
+            },
+          ]
+        : []),
     ],
   };
 
   const [totalCount, announcements, unreadCount] = await Promise.all([
     prisma.announcement.count({ where }),
+
     prisma.announcement.findMany({
       where,
       include: {
@@ -118,12 +156,16 @@ export async function getAnnouncementsForRole(filters: AnnouncementReadFilters) 
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),
-    // unread count (across ALL pages)
+
     prisma.announcement.count({
       where: {
         status: "PUBLISHED",
-        target: targetFilter,
-        reads: { none: { userId } },
+        targets: {
+          hasSome: userTargets, // ✅ FIXED
+        },
+        reads: {
+          none: { userId },
+        },
       },
     }),
   ]);

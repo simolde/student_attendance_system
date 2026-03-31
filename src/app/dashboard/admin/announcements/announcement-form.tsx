@@ -16,9 +16,9 @@ type Props = {
     id: string;
     title: string;
     content: string;
-    target: string;
+    targets: ("ALL" | "ADMIN" | "TEACHER" | "STUDENT")[];
     isPinned: boolean;
-    status: string;
+    status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   } | null;
   onSuccess?: () => void;
   submitLabel?: string;
@@ -86,7 +86,7 @@ export default function AnnouncementForm({
           </label>
           <select
             name="target"
-            defaultValue={initialData?.target ?? "ALL"}
+            defaultValue={initialData?.targets ?? "ALL"}
             className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-blue-300"
           >
             <option value="ALL">All Users</option>

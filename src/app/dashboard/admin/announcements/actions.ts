@@ -7,16 +7,24 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAudit } from "@/lib/audit";
+import { Prisma } from "@prisma/client";
 
 export type AnnouncementFormState = {
   error?: string;
   success?: string;
 };
 
+type Target = "ALL" | "TEACHER" | "STUDENT" | "ADMIN";
+
+// ── Validation ────────────────────────────────────────────────────────────────
+
 const announcementSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title too long"),
   content: z.string().min(1, "Content is required").max(5000, "Content too long"),
-  target: z.enum(["ALL", "TEACHER", "STUDENT", "ADMIN"]).default("ALL"),
+  targets: z
+    .array(z.enum(["ALL", "TEACHER", "STUDENT", "ADMIN"]))
+    .min(1, "Select at least one target")
+    .default(["ALL"]),
   isPinned: z.boolean().optional(),
   status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]).default("PUBLISHED"),
 });
@@ -25,17 +33,20 @@ const updateAnnouncementSchema = announcementSchema.extend({
   id: z.string().min(1, "ID is required"),
 });
 
+// ── Auth Guard ────────────────────────────────────────────────────────────────
+
 async function requireAdmin() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+
   if (!hasRole(session.user.role, [ROLES.SUPER_ADMIN, ROLES.ADMIN])) {
     redirect("/unauthorized");
   }
+
   return session;
 }
 
-// ── Fetch with search + pagination ────────────────────────────────────────────
-
+// ── Fetch with filters + pagination ───────────────────────────────────────────
 export type AnnouncementFilters = {
   q?: string;
   target?: string;
@@ -53,34 +64,43 @@ export async function getAnnouncements(filters: AnnouncementFilters = {}) {
     pageSize = 10,
   } = filters;
 
+  // Prisma input type inferred automatically
   const where = {
-    AND: [
-      target ? { target: target as "ALL" | "TEACHER" | "STUDENT" | "ADMIN" } : {},
-      status
-        ? { status: status as "DRAFT" | "PUBLISHED" | "ARCHIVED" }
-        : {},
-      q
-        ? {
-            OR: [
-              { title: { contains: q, mode: "insensitive" as const } },
-              { content: { contains: q, mode: "insensitive" as const } },
-            ],
-          }
-        : {},
-    ],
+    AND: [] as any[], // Let TypeScript infer types here
   };
+
+  // Filter by target
+  if (target) {
+    where.AND.push({
+      OR: [
+        { targets: { has: target } },
+        { targets: { has: "ALL" } },
+      ],
+    });
+  }
+
+  // Filter by status
+  if (status) {
+    where.AND.push({ status });
+  }
+
+  // Search by title or content
+  if (q) {
+    where.AND.push({
+      OR: [
+        { title: { contains: q, mode: "insensitive" } },
+        { content: { contains: q, mode: "insensitive" } },
+      ],
+    });
+  }
 
   const [totalCount, announcements] = await Promise.all([
     prisma.announcement.count({ where }),
     prisma.announcement.findMany({
       where,
       include: {
-        author: {
-          select: { name: true, email: true },
-        },
-        _count: {
-          select: { reads: true },
-        },
+        author: { select: { name: true, email: true } },
+        _count: { select: { reads: true } },
       },
       orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
       skip: (page - 1) * pageSize,
@@ -108,24 +128,29 @@ export async function createAnnouncement(
   const parsed = announcementSchema.safeParse({
     title: formData.get("title"),
     content: formData.get("content"),
-    target: formData.get("target") || "ALL",
+    targets: formData.getAll("targets"),
     isPinned: formData.get("isPinned") === "on",
-    status: formData.get("status") || "PUBLISHED",
+    status: formData.get("status"),
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message || "Invalid data" };
   }
 
-  const { title, content, target, isPinned, status } = parsed.data;
+  let { title, content, targets, isPinned, status } = parsed.data;
+
+  // ✅ Normalize "ALL"
+  if (targets.includes("ALL")) {
+    targets = ["ALL"];
+  }
 
   try {
     const created = await prisma.announcement.create({
       data: {
         title: title.trim(),
         content: content.trim(),
-        target,
-        isPinned: isPinned,
+        targets,
+        isPinned,
         status,
         authorId: session.user.id,
       },
@@ -162,16 +187,21 @@ export async function updateAnnouncement(
     id: formData.get("id"),
     title: formData.get("title"),
     content: formData.get("content"),
-    target: formData.get("target") || "ALL",
+    targets: formData.getAll("targets"),
     isPinned: formData.get("isPinned") === "on",
-    status: formData.get("status") || "PUBLISHED",
+    status: formData.get("status"),
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message || "Invalid data" };
   }
 
-  const { id, title, content, target, isPinned, status } = parsed.data;
+  let { id, title, content, targets, isPinned, status } = parsed.data;
+
+  // ✅ Normalize "ALL"
+  if (targets.includes("ALL")) {
+    targets = ["ALL"];
+  }
 
   try {
     const updated = await prisma.announcement.update({
@@ -179,8 +209,8 @@ export async function updateAnnouncement(
       data: {
         title: title.trim(),
         content: content.trim(),
-        target,
-        isPinned: isPinned,
+        targets,
+        isPinned,
         status,
       },
     });
@@ -259,7 +289,9 @@ export async function toggleAnnouncementPin(formData: FormData) {
     action: announcement.isPinned ? "UNPIN_ANNOUNCEMENT" : "PIN_ANNOUNCEMENT",
     entity: "Announcement",
     entityId: id,
-    description: `${announcement.isPinned ? "Unpinned" : "Pinned"} announcement "${announcement.title}"`,
+    description: `${
+      announcement.isPinned ? "Unpinned" : "Pinned"
+    } announcement "${announcement.title}"`,
   });
 
   revalidatePath("/dashboard/admin/announcements");

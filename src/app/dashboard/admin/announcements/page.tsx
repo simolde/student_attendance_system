@@ -327,13 +327,14 @@ export default async function AdminAnnouncementsPage({
                         </td>
 
                         <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getTargetBadgeClass(
-                              ann.target
-                            )}`}
-                          >
-                            {ann.target}
-                          </span>
+                          {ann.targets.map((t) => (
+                            <span
+                              key={t}
+                              className={`inline-flex mr-1 rounded-full border px-2.5 py-1 text-xs font-medium ${getTargetBadgeClass(t)}`}
+                            >
+                              {t}
+                            </span>
+                          ))}
                         </td>
 
                         <td className="px-4 py-4">

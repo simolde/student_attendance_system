@@ -227,12 +227,12 @@ model Announcement {
   authorId  String?
   isPinned  Boolean            @default(false)
   status    AnnouncementStatus @default(PUBLISHED)
-  target    AnnouncementTarget @default(ALL)
+  targets   AnnouncementTarget[] @default([ALL])
   updatedAt DateTime           @updatedAt
   author    User?              @relation(fields: [authorId], references: [id])
   reads     AnnouncementRead[]
 
-  @@index([status, target, createdAt(sort: Desc)])
+  @@index([status, createdAt(sort: Desc)])
   @@index([isPinned, createdAt(sort: Desc)])
 }
 
@@ -291,6 +291,7 @@ enum GradeLevel {
   GRADE_1
   GRADE_2
   GRADE_3
+  GRADE_4
   GRADE_5
   GRADE_6
   GRADE_7
@@ -299,7 +300,6 @@ enum GradeLevel {
   GRADE_10
   GRADE_11
   GRADE_12
-  GRADE_4
 }
 
 enum AnnouncementTarget {

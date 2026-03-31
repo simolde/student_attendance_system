@@ -1,7 +1,8 @@
-import Link from "next/link";
-import { ShieldCheck, LockKeyhole, GraduationCap, ArrowRight } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+"use client";
+
+import { Suspense } from "react";
 import LoginForm from "./login-form";
+import { ShieldCheck, GraduationCap } from "lucide-react";
 
 export default function LoginPage() {
   return (
@@ -67,7 +68,10 @@ export default function LoginPage() {
         </section>
 
         <section className="mx-auto w-full max-w-xl">
-          <LoginForm />
+          <Suspense fallback={<div>Loading...</div>}>
+            <LoginForm />
+          </Suspense>
+          
         </section>
       </div>
     </div>

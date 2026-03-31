@@ -14,14 +14,12 @@ export default async function UnreadAnnouncementsBadge({
   userId: string;
   role: string;
 }) {
-  const targetFilter = {
-    in: ["ALL", role] as ("ALL" | "TEACHER" | "STUDENT" | "ADMIN")[],
-  };
+  const targetFilter = ["ALL", role] as ("ALL" | "TEACHER" | "STUDENT" | "ADMIN")[];
 
   const count = await prisma.announcement.count({
     where: {
       status: "PUBLISHED",
-      target: targetFilter,
+      targets: { hasSome: targetFilter },
       reads: { none: { userId } },
     },
   });

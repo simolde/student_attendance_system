@@ -6,13 +6,14 @@ import ConfirmActionDialog from "@/components/confirm-action-dialog";
 import { deleteAnnouncement, toggleAnnouncementPin } from "./actions";
 import EditAnnouncementDialog from "./edit-announcement-dialog";
 
-type AnnouncementRow = {
+// Match the backend model
+export type AnnouncementRow = {
   id: string;
   title: string;
   content: string;
-  target: string;
+  targets: ("ALL" | "ADMIN" | "TEACHER" | "STUDENT")[];
   isPinned: boolean;
-  status: string;
+  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
 };
 
 export default function AnnouncementRowActions({

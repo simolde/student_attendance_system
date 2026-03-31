@@ -4,14 +4,15 @@ import { Bell, Pin, CheckCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { markAllAnnouncementsRead } from "./shared-actions";
 import { Button } from "@/components/ui/button";
+import { AnnouncementStatus, AnnouncementTarget } from "../../../../generated/prisma/enums";
 
 type AnnouncementItem = {
   id: string;
   title: string;
   content: string;
-  target: string;
+  targets: AnnouncementTarget[]; // ✅ FIXED
   isPinned: boolean;
-  status: string;
+  status: AnnouncementStatus; // ✅ better typing
   isRead: boolean;
   createdAt: Date;
   author: { name: string | null; email: string } | null;
@@ -29,7 +30,7 @@ function formatDateTime(date: Date) {
   }).format(date);
 }
 
-function getTargetBadgeClass(target: string) {
+function getTargetBadgeClass(target: AnnouncementTarget) {
   switch (target) {
     case "ALL":
       return "border-blue-200 bg-blue-50 text-blue-700";
@@ -41,6 +42,19 @@ function getTargetBadgeClass(target: string) {
       return "border-amber-200 bg-amber-50 text-amber-700";
     default:
       return "border-slate-200 bg-slate-50 text-slate-700";
+  }
+}
+
+function formatTarget(target: AnnouncementTarget) {
+  switch (target) {
+    case "ALL":
+      return "All Users";
+    case "TEACHER":
+      return "Teachers";
+    case "STUDENT":
+      return "Students";
+    case "ADMIN":
+      return "Admins";
   }
 }
 
@@ -97,13 +111,18 @@ export default function AnnouncementCardList({
                     Pinned
                   </span>
                 )}
-                <span
-                  className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getTargetBadgeClass(
-                    ann.target
-                  )}`}
-                >
-                  {ann.target === "ALL" ? "All Users" : ann.target}
-                </span>
+
+                {ann.targets.map((target) => (
+                  <span
+                    key={target}
+                    className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getTargetBadgeClass(
+                      target
+                    )}`}
+                  >
+                    {target === "ALL" ? "All Users" : target.replaceAll("_", " ")}
+                  </span>
+                ))}
+
                 {!ann.isRead && (
                   <span className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
                     New

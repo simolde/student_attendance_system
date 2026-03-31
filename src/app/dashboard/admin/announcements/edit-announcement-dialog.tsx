@@ -18,9 +18,9 @@ type AnnouncementRow = {
   id: string;
   title: string;
   content: string;
-  target: string;
+  targets: ("ALL" | "TEACHER" | "STUDENT" | "ADMIN")[];
   isPinned: boolean;
-  status: string;
+  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
 };
 
 export default function EditAnnouncementDialog({
