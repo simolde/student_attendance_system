@@ -7,7 +7,6 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAudit } from "@/lib/audit";
-import { Prisma } from "@prisma/client";
 
 export type AnnouncementFormState = {
   error?: string;
