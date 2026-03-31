@@ -1,55 +1,62 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
-import AnnouncementForm from "../../../../components/announcements/announcement-form";
+import AnnouncementForm from "./announcement-form";
+import { updateAnnouncement } from "./actions";
 
-type AnnouncementData = {
+type AnnouncementRow = {
   id: string;
   title: string;
   content: string;
   target: string;
-  status: string;
   isPinned: boolean;
+  status: string;
 };
 
 export default function EditAnnouncementDialog({
   announcement,
 }: {
-  announcement: AnnouncementData;
+  announcement: AnnouncementRow;
 }) {
   const [open, setOpen] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 rounded-lg">
-          <Pencil className="mr-1.5 h-3.5 w-3.5" />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 rounded-lg px-2.5 text-xs"
+        >
+          <Pencil className="h-3.5 w-3.5" />
           Edit
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Edit Announcement</DialogTitle>
           <DialogDescription>
-            Update the announcement details below.
+            Update the details of your announcement below.
           </DialogDescription>
         </DialogHeader>
 
         <AnnouncementForm
-          mode="edit"
-          announcement={announcement}
+          formAction={updateAnnouncement}
+          initialData={announcement}
           onSuccess={() => setOpen(false)}
+          submitLabel="Save Changes"
         />
       </DialogContent>
     </Dialog>

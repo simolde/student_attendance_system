@@ -3,49 +3,101 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasRole, ROLES } from "@/lib/rbac";
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAudit } from "@/lib/audit";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 export type AnnouncementFormState = {
   error?: string;
   success?: string;
-  fieldErrors?: Record<string, string>;
 };
 
-// ─── Schemas ─────────────────────────────────────────────────────────────────
-
 const announcementSchema = z.object({
-  title: z
-    .string()
-    .min(3, "Title must be at least 3 characters")
-    .max(200, "Title must be 200 characters or fewer"),
-  content: z
-    .string()
-    .min(10, "Content must be at least 10 characters")
-    .max(5000, "Content must be 5000 characters or fewer"),
-  target: z.enum(["ALL", "TEACHER", "STUDENT", "ADMIN"]),
+  title: z.string().min(1, "Title is required").max(200, "Title too long"),
+  content: z.string().min(1, "Content is required").max(5000, "Content too long"),
+  target: z.enum(["ALL", "TEACHER", "STUDENT", "ADMIN"]).default("ALL"),
+  isPinned: z.boolean().optional(),
   status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]).default("PUBLISHED"),
-  isPinned: z
-    .string()
-    .optional()
-    .transform((v) => v === "on"),
 });
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+const updateAnnouncementSchema = announcementSchema.extend({
+  id: z.string().min(1, "ID is required"),
+});
 
 async function requireAdmin() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (!hasRole(session.user.role, [ROLES.SUPER_ADMIN, ROLES.ADMIN]))
+  if (!hasRole(session.user.role, [ROLES.SUPER_ADMIN, ROLES.ADMIN])) {
     redirect("/unauthorized");
+  }
   return session;
 }
 
-// ─── CREATE ───────────────────────────────────────────────────────────────────
+// ── Fetch with search + pagination ────────────────────────────────────────────
+
+export type AnnouncementFilters = {
+  q?: string;
+  target?: string;
+  status?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export async function getAnnouncements(filters: AnnouncementFilters = {}) {
+  const {
+    q = "",
+    target = "",
+    status = "",
+    page = 1,
+    pageSize = 10,
+  } = filters;
+
+  const where = {
+    AND: [
+      target ? { target: target as "ALL" | "TEACHER" | "STUDENT" | "ADMIN" } : {},
+      status
+        ? { status: status as "DRAFT" | "PUBLISHED" | "ARCHIVED" }
+        : {},
+      q
+        ? {
+            OR: [
+              { title: { contains: q, mode: "insensitive" as const } },
+              { content: { contains: q, mode: "insensitive" as const } },
+            ],
+          }
+        : {},
+    ],
+  };
+
+  const [totalCount, announcements] = await Promise.all([
+    prisma.announcement.count({ where }),
+    prisma.announcement.findMany({
+      where,
+      include: {
+        author: {
+          select: { name: true, email: true },
+        },
+        _count: {
+          select: { reads: true },
+        },
+      },
+      orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+  ]);
+
+  return {
+    announcements,
+    totalCount,
+    totalPages: Math.max(Math.ceil(totalCount / pageSize), 1),
+    page,
+    pageSize,
+  };
+}
+
+// ── Create ────────────────────────────────────────────────────────────────────
 
 export async function createAnnouncement(
   prevState: AnnouncementFormState,
@@ -53,34 +105,28 @@ export async function createAnnouncement(
 ): Promise<AnnouncementFormState> {
   const session = await requireAdmin();
 
-  const raw = {
+  const parsed = announcementSchema.safeParse({
     title: formData.get("title"),
     content: formData.get("content"),
-    target: formData.get("target"),
-    status: formData.get("status") ?? "PUBLISHED",
-    isPinned: formData.get("isPinned"),
-  };
-
-  const parsed = announcementSchema.safeParse(raw);
+    target: formData.get("target") || "ALL",
+    isPinned: formData.get("isPinned") === "on",
+    status: formData.get("status") || "PUBLISHED",
+  });
 
   if (!parsed.success) {
-    const fieldErrors: Record<string, string> = {};
-    for (const [field, errors] of Object.entries(
-      parsed.error.flatten().fieldErrors
-    )) {
-      fieldErrors[field] = errors[0] ?? "Invalid value";
-    }
-    return { error: "Please fix the errors below.", fieldErrors };
+    return { error: parsed.error.issues[0]?.message || "Invalid data" };
   }
 
+  const { title, content, target, isPinned, status } = parsed.data;
+
   try {
-    const announcement = await prisma.announcement.create({
+    const created = await prisma.announcement.create({
       data: {
-        title: parsed.data.title.trim(),
-        content: parsed.data.content.trim(),
-        target: parsed.data.target,
-        status: parsed.data.status,
-        isPinned: parsed.data.isPinned,
+        title: title.trim(),
+        content: content.trim(),
+        target,
+        isPinned: isPinned,
+        status,
         authorId: session.user.id,
       },
     });
@@ -89,27 +135,22 @@ export async function createAnnouncement(
       userId: session.user.id,
       action: "CREATE_ANNOUNCEMENT",
       entity: "Announcement",
-      entityId: announcement.id,
-      description: `Created announcement "${announcement.title}" targeting ${announcement.target}`,
+      entityId: created.id,
+      description: `Created announcement "${created.title}"`,
     });
 
     revalidatePath("/dashboard/admin/announcements");
     revalidatePath("/dashboard/teacher/announcements");
     revalidatePath("/dashboard/student/announcements");
-    revalidatePath("/dashboard/announcements");
 
-    return { success: "Announcement created successfully." };
+    return { success: "Announcement created successfully" };
   } catch (error) {
-    console.error("createAnnouncement error:", error);
-    return { error: "Failed to create announcement. Please try again." };
+    console.error(error);
+    return { error: "Failed to create announcement" };
   }
 }
 
-// ─── UPDATE ───────────────────────────────────────────────────────────────────
-
-const updateAnnouncementSchema = announcementSchema.extend({
-  announcementId: z.string().min(1, "Announcement ID is required"),
-});
+// ── Update ────────────────────────────────────────────────────────────────────
 
 export async function updateAnnouncement(
   prevState: AnnouncementFormState,
@@ -117,43 +158,30 @@ export async function updateAnnouncement(
 ): Promise<AnnouncementFormState> {
   const session = await requireAdmin();
 
-  const raw = {
-    announcementId: formData.get("announcementId"),
+  const parsed = updateAnnouncementSchema.safeParse({
+    id: formData.get("id"),
     title: formData.get("title"),
     content: formData.get("content"),
-    target: formData.get("target"),
-    status: formData.get("status") ?? "PUBLISHED",
-    isPinned: formData.get("isPinned"),
-  };
-
-  const parsed = updateAnnouncementSchema.safeParse(raw);
-
-  if (!parsed.success) {
-    const fieldErrors: Record<string, string> = {};
-    for (const [field, errors] of Object.entries(
-      parsed.error.flatten().fieldErrors
-    )) {
-      fieldErrors[field] = errors[0] ?? "Invalid value";
-    }
-    return { error: "Please fix the errors below.", fieldErrors };
-  }
-
-  const existing = await prisma.announcement.findUnique({
-    where: { id: parsed.data.announcementId },
-    select: { id: true },
+    target: formData.get("target") || "ALL",
+    isPinned: formData.get("isPinned") === "on",
+    status: formData.get("status") || "PUBLISHED",
   });
 
-  if (!existing) return { error: "Announcement not found." };
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || "Invalid data" };
+  }
+
+  const { id, title, content, target, isPinned, status } = parsed.data;
 
   try {
     const updated = await prisma.announcement.update({
-      where: { id: parsed.data.announcementId },
+      where: { id },
       data: {
-        title: parsed.data.title.trim(),
-        content: parsed.data.content.trim(),
-        target: parsed.data.target,
-        status: parsed.data.status,
-        isPinned: parsed.data.isPinned,
+        title: title.trim(),
+        content: content.trim(),
+        target,
+        isPinned: isPinned,
+        status,
       },
     });
 
@@ -168,31 +196,28 @@ export async function updateAnnouncement(
     revalidatePath("/dashboard/admin/announcements");
     revalidatePath("/dashboard/teacher/announcements");
     revalidatePath("/dashboard/student/announcements");
-    revalidatePath("/dashboard/announcements");
 
-    return { success: "Announcement updated successfully." };
+    return { success: "Announcement updated successfully" };
   } catch (error) {
-    console.error("updateAnnouncement error:", error);
-    return { error: "Failed to update announcement. Please try again." };
+    console.error(error);
+    return { error: "Failed to update announcement" };
   }
 }
 
-// ─── DELETE ───────────────────────────────────────────────────────────────────
+// ── Delete ────────────────────────────────────────────────────────────────────
 
-export async function deleteAnnouncement(
-  formData: FormData
-): Promise<void> {
+export async function deleteAnnouncement(formData: FormData) {
   const session = await requireAdmin();
 
-  const id = formData.get("announcementId");
-  if (typeof id !== "string" || !id) return;
+  const id = formData.get("id") as string;
+  if (!id) throw new Error("ID is required");
 
-  const existing = await prisma.announcement.findUnique({
+  const announcement = await prisma.announcement.findUnique({
     where: { id },
     select: { id: true, title: true },
   });
 
-  if (!existing) return;
+  if (!announcement) throw new Error("Announcement not found");
 
   await prisma.announcement.delete({ where: { id } });
 
@@ -201,103 +226,41 @@ export async function deleteAnnouncement(
     action: "DELETE_ANNOUNCEMENT",
     entity: "Announcement",
     entityId: id,
-    description: `Deleted announcement "${existing.title}"`,
+    description: `Deleted announcement "${announcement.title}"`,
   });
 
   revalidatePath("/dashboard/admin/announcements");
   revalidatePath("/dashboard/teacher/announcements");
   revalidatePath("/dashboard/student/announcements");
-  revalidatePath("/dashboard/announcements");
 }
 
-// ─── TOGGLE PIN ───────────────────────────────────────────────────────────────
+// ── Toggle Pin ────────────────────────────────────────────────────────────────
 
-export async function toggleAnnouncementPin(formData: FormData): Promise<void> {
+export async function toggleAnnouncementPin(formData: FormData) {
   const session = await requireAdmin();
 
-  const id = formData.get("announcementId");
-  if (typeof id !== "string" || !id) return;
+  const id = formData.get("id") as string;
+  if (!id) throw new Error("ID is required");
 
-  const existing = await prisma.announcement.findUnique({
+  const announcement = await prisma.announcement.findUnique({
     where: { id },
     select: { id: true, isPinned: true, title: true },
   });
 
-  if (!existing) return;
+  if (!announcement) throw new Error("Announcement not found");
 
-  const updated = await prisma.announcement.update({
+  await prisma.announcement.update({
     where: { id },
-    data: { isPinned: !existing.isPinned },
+    data: { isPinned: !announcement.isPinned },
   });
 
   await logAudit({
     userId: session.user.id,
-    action: updated.isPinned ? "PIN_ANNOUNCEMENT" : "UNPIN_ANNOUNCEMENT",
+    action: announcement.isPinned ? "UNPIN_ANNOUNCEMENT" : "PIN_ANNOUNCEMENT",
     entity: "Announcement",
     entityId: id,
-    description: `${updated.isPinned ? "Pinned" : "Unpinned"} announcement "${existing.title}"`,
+    description: `${announcement.isPinned ? "Unpinned" : "Pinned"} announcement "${announcement.title}"`,
   });
 
   revalidatePath("/dashboard/admin/announcements");
-}
-
-// ─── MARK AS READ ─────────────────────────────────────────────────────────────
-
-export async function markAnnouncementRead(
-  announcementId: string
-): Promise<void> {
-  const session = await auth();
-  if (!session?.user?.id) return;
-
-  await prisma.announcementRead.upsert({
-    where: {
-      announcementId_userId: {
-        announcementId,
-        userId: session.user.id,
-      },
-    },
-    update: {},
-    create: {
-      announcementId,
-      userId: session.user.id,
-    },
-  });
-}
-
-// ─── GET UNREAD COUNT (for badge) ────────────────────────────────────────────
-
-export async function getUnreadAnnouncementCount(
-  userId: string,
-  userRole: string
-): Promise<number> {
-  const targetFilter = buildTargetFilter(userRole);
-
-  const count = await prisma.announcement.count({
-    where: {
-      status: "PUBLISHED",
-      ...targetFilter,
-      reads: {
-        none: {
-          userId,
-        },
-      },
-    },
-  });
-
-  return count;
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-export async function buildTargetFilter(role: string) {
-  if (role === ROLES.SUPER_ADMIN || role === ROLES.ADMIN) {
-    return {}; // admins see everything
-  }
-  if (role === ROLES.TEACHER) {
-    return { target: { in: ["ALL", "TEACHER"] as const } };
-  }
-  if (role === ROLES.STUDENT) {
-    return { target: { in: ["ALL", "STUDENT"] as const } };
-  }
-  return { target: { in: ["ALL"] as const } };
 }
